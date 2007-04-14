@@ -1,0 +1,27 @@
+The Music Player Daemon code compiles "as-is" for the gp2x with a small config file modification and alot of command line options.  As such, I am not currently not going to redisribute the mpd source. It is available at http://www.musicpd.org. These instructions apply to version 0.12.2...otherwise your mileage may vary...
+
+This file contains instructions on compiling mpd for your gp2x the rough, ugly and manual intervention way.  The was done using the open2x toolchain, so it expects $OPEN2X to be defined...
+
+1. Add the following following to config.sub.  Look for similar lines and just add it anywhere, I choose to leave them in alphabetical order...
+
+	open2x)
+		basic_machine=arm-gp2x
+		os=-linux-gnu
+		;;
+
+2. Export the following...probably want to go ahead and type out the path to $OPEN2X...or fix the below so that the command line accepts it...
+
+	export CC='open2x-gcc'
+	export CXX='open2x-g++'
+	export CFLAGS='-O3 -ffast-math -fomit-frame-pointer -mcpu=arm920t -I$(OPEN2X)/include'
+	export LDFLAGS='-L$(OPEN2X)/lib'
+
+3. Configure with the below line.  This assumes you have libmad, libid3tag, libvorbis, libvorbisfile, libogg, and libfaad2(libfaad softlink).  Disable more formats if you don't have the libs...feel free to change --build to your platform also...
+
+./configure --prefix=/usr/local/open2x --build=x86_64 --host=open2x --enable-static --disable-alsa --disable-iconv --disable-ipv6 --disable-sun --disable-pulse --disable-oggflac --disable-flac --disable-audiofile --disable-mpc --enable-shared=no --enable-mod=no
+
+4. Search for lnsl in Makefile and src/Makefile and remove all references.  I didn't take the time to figure out where this was coming from...
+
+5. type make and let it run after it finishes(or fails depending if you have shared libs avaiable or not) change to the src directory and run the following to link statically.  Again, I didn't take the time to figure out how to force configure to make a static executable....
+
+open2x-gcc -static -O3 -ffast-math -fomit-frame-pointer -mcpu=arm920t -I/usr/local/open2x/include -o mpd mpd-audioOutput_alsa.o mpd-audioOutput_ao.o mpd-audioOutput_oss.o mpd-audioOutput_osx.o mpd-audioOutput_pulse.o mpd-audioOutput_mvp.o mpd-audioOutput_shout.o mpd-_flac_common.o mpd-_ogg_common.o mpd-oggflac_plugin.o mpd-oggvorbis_plugin.o mpd-aac_plugin.o mpd-audiofile_plugin.o mpd-flac_plugin.o mpd-mod_plugin.o mpd-mp3_plugin.o mpd-mp4_plugin.o mpd-mpc_plugin.o mpd-audio.o mpd-audioOutput.o mpd-buffer2array.o mpd-charConv.o mpd-command.o mpd-conf.o mpd-dbUtils.o mpd-decode.o mpd-directory.o mpd-inputPlugin.o mpd-inputStream.o mpd-inputStream_file.o mpd-inputStream_http.o mpd-interface.o mpd-list.o mpd-listen.o mpd-log.o mpd-ls.o mpd-main.o mpd-metadataChunk.o mpd-myfprintf.o mpd-normalize.o mpd-compress.o mpd-outputBuffer.o mpd-path.o mpd-pcm_utils.o mpd-permission.o mpd-player.o mpd-playerData.o mpd-playlist.o mpd-replayGain.o mpd-sig_handlers.o mpd-signal_check.o mpd-sllist.o mpd-song.o mpd-state_file.o mpd-stats.o mpd-tag.o mpd-tagTracker.o mpd-tree.o mpd-utils.o mpd-volume.o mpd-utf8.o  -L/usr/local/open2x/lib /usr/local/open2x/lib/libid3tag.a -lz /usr/local/open2x/lib/libmad.a -lfaad /usr/local/open2x/lib/libvorbisfile.a /usr/local/open2x/lib/libvorbis.a /usr/local/open2x/lib/libogg.a -lm mp4ff/.libs/libmp4ff.a -Wl,--rpath -Wl,/usr/local/open2x/lib -Wl,--rpath -Wl,/usr/local/open2x/lib
