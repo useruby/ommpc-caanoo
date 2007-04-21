@@ -18,8 +18,9 @@ public:
 
 	Playlist(mpd_Connection* mpd, SDL_Surface* screen, TTF_Font* font, Config& config, SDL_Rect& rect, int skipVal, int numPerScreen);
 	void load(std::string dir);
-	void updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus, int repeatDelay);
-    void processCommand(int event, int delay);
+	void updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus, 
+							int rtmpdStatusChanged, mpd_Status* rtmpdStatus, int repeatDelay);
+    void processCommand(int event, int& rtmpdStatusChanged, mpd_Status* rtmpdStatus, int repeatDelay);
     void draw(bool force);
 	std::string currentItemName();
 	std::string currentItemPath();
@@ -47,7 +48,8 @@ protected:
 	std::vector<std::string> m_all;	
 	std::string m_name;
 	int m_id;
-
+	int m_moveFrom;
+	int m_moveTo;
 };
 
 #endif

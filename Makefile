@@ -43,7 +43,7 @@ CXXFLAGS      = $(OPTIMIZATION_FLAG) $(INCDIR) $(LIB)
 .cpp:
 	$(CXX) $(CXXFLAGS) $< -o $@
 
-SRC     = plBrowser.cpp browser.cpp playlist.cpp main.cpp config.cpp nowPlaying.cpp statsBar.cpp commandFactory.cpp popup.cpp scroller.cpp timestamp.cpp helpBar.cpp
+SRC     = plBrowser.cpp browser.cpp playlist.cpp main.cpp config.cpp nowPlaying.cpp statsBar.cpp commandFactory.cpp popup.cpp scroller.cpp timestamp.cpp helpBar.cpp 
 
 OBJ = $(SRC:.cpp=.o) libmpdclient.o
 #-------------------------------------------------------------------------------
@@ -54,7 +54,7 @@ LIBS = -lSDL -lSDLmain -lSDL_ttf
 #-------------------------------------------------------------------------------
 # Target for creating simple client
 #-------------------------------------------------------------------------------
-ommp2x: $(OBJ)
+ommpc: $(OBJ)
 	@echo $(OBJ)
 	@echo $(SRC)
 	$(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(LDFLAGS) \
@@ -128,7 +128,7 @@ playlist.o: /usr/include/SDL/SDL_video.h /usr/include/SDL/SDL_joystick.h
 playlist.o: /usr/include/SDL/SDL_quit.h /usr/include/SDL/SDL_loadso.h
 playlist.o: /usr/include/SDL/SDL_timer.h /usr/include/SDL/SDL_version.h
 playlist.o: /usr/include/SDL/SDL_ttf.h config.h libmpdclient.h scroller.h
-playlist.o: threadParms.h commandFactory.h popup.h
+playlist.o: threadParms.h commandFactory.h popup.h timestamp.h
 main.o: /usr/include/SDL/SDL.h /usr/include/SDL/SDL_main.h
 main.o: /usr/include/SDL/SDL_stdinc.h /usr/include/SDL/SDL_config.h
 main.o: /usr/include/SDL/SDL_platform.h /usr/include/SDL/begin_code.h
@@ -144,7 +144,7 @@ main.o: /usr/include/SDL/SDL_quit.h /usr/include/SDL/SDL_loadso.h
 main.o: /usr/include/SDL/SDL_timer.h /usr/include/SDL/SDL_version.h
 main.o: /usr/include/SDL/SDL_ttf.h config.h browser.h libmpdclient.h
 main.o: scroller.h plBrowser.h playlist.h nowPlaying.h threadFunctions.h
-main.o: threadParms.h commandFactory.h statsBar.h timer.h popup.h
+main.o: threadParms.h commandFactory.h statsBar.h helpBar.h timer.h popup.h
 config.o: config.h
 nowPlaying.o: nowPlaying.h /usr/include/SDL/SDL.h /usr/include/SDL/SDL_main.h
 nowPlaying.o: /usr/include/SDL/SDL_stdinc.h /usr/include/SDL/SDL_config.h
@@ -176,9 +176,9 @@ statsBar.o: /usr/include/SDL/SDL_quit.h /usr/include/SDL/SDL_loadso.h
 statsBar.o: /usr/include/SDL/SDL_timer.h /usr/include/SDL/SDL_version.h
 statsBar.o: /usr/include/SDL/SDL_ttf.h libmpdclient.h config.h playlist.h
 statsBar.o: scroller.h threadParms.h
-commandFactory.o: commandFactory.h /usr/include/SDL/SDL.h
-commandFactory.o: /usr/include/SDL/SDL_main.h /usr/include/SDL/SDL_stdinc.h
-commandFactory.o: /usr/include/SDL/SDL_config.h
+commandFactory.o: commandFactory.h threadParms.h libmpdclient.h
+commandFactory.o: /usr/include/SDL/SDL.h /usr/include/SDL/SDL_main.h
+commandFactory.o: /usr/include/SDL/SDL_stdinc.h /usr/include/SDL/SDL_config.h
 commandFactory.o: /usr/include/SDL/SDL_platform.h
 commandFactory.o: /usr/include/SDL/begin_code.h /usr/include/SDL/close_code.h
 commandFactory.o: /usr/include/SDL/SDL_audio.h /usr/include/SDL/SDL_error.h
@@ -207,3 +207,32 @@ popup.o: /usr/include/SDL/SDL_quit.h /usr/include/SDL/SDL_loadso.h
 popup.o: /usr/include/SDL/SDL_timer.h /usr/include/SDL/SDL_version.h
 popup.o: /usr/include/SDL/SDL_ttf.h libmpdclient.h config.h playlist.h
 popup.o: scroller.h threadParms.h commandFactory.h
+scroller.o: scroller.h /usr/include/SDL/SDL.h /usr/include/SDL/SDL_main.h
+scroller.o: /usr/include/SDL/SDL_stdinc.h /usr/include/SDL/SDL_config.h
+scroller.o: /usr/include/SDL/SDL_platform.h /usr/include/SDL/begin_code.h
+scroller.o: /usr/include/SDL/close_code.h /usr/include/SDL/SDL_audio.h
+scroller.o: /usr/include/SDL/SDL_error.h /usr/include/SDL/SDL_endian.h
+scroller.o: /usr/include/SDL/SDL_mutex.h /usr/include/SDL/SDL_thread.h
+scroller.o: /usr/include/SDL/SDL_rwops.h /usr/include/SDL/SDL_cdrom.h
+scroller.o: /usr/include/SDL/SDL_cpuinfo.h /usr/include/SDL/SDL_events.h
+scroller.o: /usr/include/SDL/SDL_active.h /usr/include/SDL/SDL_keyboard.h
+scroller.o: /usr/include/SDL/SDL_keysym.h /usr/include/SDL/SDL_mouse.h
+scroller.o: /usr/include/SDL/SDL_video.h /usr/include/SDL/SDL_joystick.h
+scroller.o: /usr/include/SDL/SDL_quit.h /usr/include/SDL/SDL_loadso.h
+scroller.o: /usr/include/SDL/SDL_timer.h /usr/include/SDL/SDL_version.h
+scroller.o: /usr/include/SDL/SDL_ttf.h libmpdclient.h commandFactory.h
+timestamp.o: timestamp.h
+helpBar.o: helpBar.h /usr/include/SDL/SDL.h /usr/include/SDL/SDL_main.h
+helpBar.o: /usr/include/SDL/SDL_stdinc.h /usr/include/SDL/SDL_config.h
+helpBar.o: /usr/include/SDL/SDL_platform.h /usr/include/SDL/begin_code.h
+helpBar.o: /usr/include/SDL/close_code.h /usr/include/SDL/SDL_audio.h
+helpBar.o: /usr/include/SDL/SDL_error.h /usr/include/SDL/SDL_endian.h
+helpBar.o: /usr/include/SDL/SDL_mutex.h /usr/include/SDL/SDL_thread.h
+helpBar.o: /usr/include/SDL/SDL_rwops.h /usr/include/SDL/SDL_cdrom.h
+helpBar.o: /usr/include/SDL/SDL_cpuinfo.h /usr/include/SDL/SDL_events.h
+helpBar.o: /usr/include/SDL/SDL_active.h /usr/include/SDL/SDL_keyboard.h
+helpBar.o: /usr/include/SDL/SDL_keysym.h /usr/include/SDL/SDL_mouse.h
+helpBar.o: /usr/include/SDL/SDL_video.h /usr/include/SDL/SDL_joystick.h
+helpBar.o: /usr/include/SDL/SDL_quit.h /usr/include/SDL/SDL_loadso.h
+helpBar.o: /usr/include/SDL/SDL_timer.h /usr/include/SDL/SDL_version.h
+helpBar.o: /usr/include/SDL/SDL_ttf.h libmpdclient.h config.h

@@ -23,7 +23,7 @@ Popup::Popup(mpd_Connection* mpd, SDL_Surface* screen, Config& config, SDL_Rect&
 int Popup::selectedAction()
 {
 	int action;
-	if(m_type == 0) 
+	if(m_type == POPUP_SAVE_PL || m_type == POPUP_MENU) 
 		action= m_listing[m_curItemNum].second;
 	else 
 		action = -1;
@@ -34,7 +34,7 @@ int Popup::selectedAction()
 string Popup::selectedText()
 {
 	string r;
-	if(m_type == 0) 
+	if(m_type == POPUP_SAVE_PL || m_type == POPUP_MENU) 
 		r = m_listing[m_curItemNum].first;
 	else 
 		r = "";
@@ -42,7 +42,7 @@ string Popup::selectedText()
 	return r;
 }
 
-void Popup::setItemsText(Scroller::listing_t& items)
+void Popup::setItemsText(Scroller::listing_t& items, int type)
 {
 	m_listing.clear();
 	m_listing = items;
@@ -55,7 +55,7 @@ void Popup::setItemsText(Scroller::listing_t& items)
 	}
 */
 	m_lastItemNum = m_listing.size()-1;
-	m_type = 0;
+	m_type = type;
 }
 
 void Popup::setTitle(std::string name)
@@ -80,13 +80,11 @@ void Popup::setSize(SDL_Rect& rect)
 
 int Popup::processCommand(int command) 
 {
-	int rCommand = 0;
+	int rCommand = command;
 
 	if(Scroller::processCommand(command)) {
-		//
-	} else if(command == CMD_PLAY_PAUSE) {
-		rCommand = CMD_POP_SELECT;				
-	}
+		rCommand = 0;
+	} 
 
 	return rCommand;
 
@@ -96,12 +94,12 @@ void Popup::draw()
 {
 	switch(m_type) {
 		case POPUP_LIST: 
+		case POPUP_MENU:
 			drawSelectList();
 		break;
 		case POPUP_CONFIRM:
 //			drawConfirm();
 		break;
-		case POPUP_MENU:
 //			drawMenu();
 		break;
 		default:

@@ -20,6 +20,8 @@ Playlist::Playlist(mpd_Connection* mpd, SDL_Surface* screen, TTF_Font* font, Con
 , m_otg(false)
 , m_modified(false)
 , m_name("")
+, m_moveTo(-1)
+, m_moveFrom(-1)
 {
 	m_origY = m_destRect.y;
 
@@ -80,13 +82,14 @@ bool Playlist::showSaveDialog(Popup& popup)
 	bool show = false;	
 	
 	Scroller::listing_t items;
-	int type = Popup::POPUP_SAVE_PL;
+	int type = Popup::POPUP_LIST;
 	if(!m_name.empty())
 		items.push_back(make_pair(m_name, type));	
 			
-	items.push_back(make_pair("playlist_" + ts.currentTimeAsString(3, false), type)); 
-	items.push_back(make_pair("Cancel", type)); 
-	popup.setItemsText(items);
+	items.push_back(make_pair("playlist_" + ts.currentTimeAsString(3, false), 
+								(int)Popup::POPUP_DO_SAVE_PL)); 
+	items.push_back(make_pair("Cancel", (int)Popup::POPUP_CANCEL)); 
+	popup.setItemsText(items, type);
 	SDL_Rect popRect;
 	popRect.w = 180;
 	popRect.h = m_skipVal*5+15;
@@ -164,19 +167,31 @@ std::string Playlist::nowPlayingText(int song)
 		return "";
 }
 
-void Playlist::updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus, int repeatDelay)
+void Playlist::updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus,
+							int rtmpdStatusChanged, mpd_Status* rtmpdStatus, int repeatDelay)
 {
-	if(mpdStatusChanged & PL_CHG) {
+	mpd_Status * status;
+	int statusChanged;
+
+	if(rtmpdStatusChanged > 0) {
+		status = rtmpdStatus;
+		statusChanged = rtmpdStatusChanged;
+	} else {
+		status = mpdStatus;
+		statusChanged = mpdStatusChanged;
+	}
+
+	if(statusChanged & PL_CHG) {
 		load("");
 	}		
-	if((mpdStatusChanged & ELAPSED_CHG) && repeatDelay == 0) { 
-		m_curElapsed = mpdStatus->elapsedTime;	
+	if((statusChanged & ELAPSED_CHG) && repeatDelay == 0) { 
+		m_curElapsed = status->elapsedTime;	
 	}
-	if(mpdStatusChanged & STATE_CHG) { 
-		m_curState = mpdStatus->state;
+	if(statusChanged & STATE_CHG) { 
+		m_curState = status->state;
 	}
-	if(mpdStatusChanged & SONG_CHG) {
-		m_nowPlaying = mpdStatus->song;	
+	if(statusChanged & SONG_CHG) {
+		m_nowPlaying = status->song;	
 		m_curItemNum = m_nowPlaying;
 		makeNowPlayingVisible();
 /*
@@ -195,9 +210,11 @@ void Playlist::updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus, int rep
 
 }
 
-void Playlist::processCommand(int command, int repeatDelay)
+void Playlist::processCommand(int command, int& rtmpdStatusChanged, mpd_Status* rtmpdStatus, int repeatDelay)
 {
-
+	if(m_moveFrom >= 0 && command != 0 && command != CMD_UP && command != CMD_DOWN && command != CMD_MOVE_IN_PL) {
+		m_moveFrom = -1;
+	}	
 	if(Scroller::processCommand(command)) {
 		//scroller command...parent class processes
 	} else if(command == CMD_PLAY_PAUSE) {
@@ -211,6 +228,8 @@ void Playlist::processCommand(int command, int repeatDelay)
 				mpd_sendPauseCommand(m_mpd, 1);
 				mpd_finishCommand(m_mpd);
 			} else {
+				mpd_sendStopCommand(m_mpd);
+				mpd_finishCommand(m_mpd);
 				mpd_sendPlayCommand(m_mpd, m_curItemNum);
 				mpd_finishCommand(m_mpd);
 			}
@@ -223,12 +242,19 @@ void Playlist::processCommand(int command, int repeatDelay)
 		mpd_finishCommand(m_mpd);
 	} else if(command == CMD_FF) {
 		if(repeatDelay > 0) {
-			mpd_sendSeekCommand(m_mpd, m_curItemNum, m_curElapsed + repeatDelay);
+			cout << repeatDelay << endl;
+			if(repeatDelay > 20)
+				mpd_sendSeekCommand(m_mpd, m_curItemNum, m_curElapsed + repeatDelay*2);
+			else 	
+				mpd_sendSeekCommand(m_mpd, m_curItemNum, m_curElapsed + repeatDelay);
 			mpd_finishCommand(m_mpd);
 		}
 	} else if(command == CMD_RW) {
 		if(repeatDelay > 0) {
-			mpd_sendSeekCommand(m_mpd, m_curItemNum, m_curElapsed - repeatDelay);
+			if(repeatDelay > 20)
+				mpd_sendSeekCommand(m_mpd, m_curItemNum, m_curElapsed - repeatDelay*2);
+			else 	
+				mpd_sendSeekCommand(m_mpd, m_curItemNum, m_curElapsed - repeatDelay);
 			mpd_finishCommand(m_mpd);
 		}
 	} else if(command == CMD_TOGGLE_VIEW) {
@@ -241,6 +267,22 @@ void Playlist::processCommand(int command, int repeatDelay)
 	} else if(command == CMD_DEL_FROM_PL) {
 		mpd_sendDeleteCommand(m_mpd, m_curItemNum);
 		mpd_finishCommand(m_mpd);
+		rtmpdStatusChanged += PL_CHG;
+		mpd_sendStatusCommand(m_mpd);
+		rtmpdStatus = mpd_getStatus(m_mpd);
+	} else if(command == CMD_MOVE_IN_PL) {
+		if(m_moveFrom >= 0) {
+			m_moveTo = m_curItemNum;
+			mpd_sendMoveCommand(m_mpd, m_moveFrom, m_moveTo);
+			mpd_finishCommand(m_mpd);
+			m_moveFrom = -1;
+			rtmpdStatusChanged += PL_CHG;
+			mpd_sendStatusCommand(m_mpd);
+			rtmpdStatus = mpd_getStatus(m_mpd);
+			} else if(command == CMD_TOGGLE_MODE) {
+		} else {	
+			m_moveFrom = m_curItemNum;
+		}
 	}
 }
 

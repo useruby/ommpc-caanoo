@@ -1,6 +1,9 @@
 #include "scroller.h"
 #include "commandFactory.h"
 
+#include <iostream>
+using namespace std;
+
 Scroller::Scroller(mpd_Connection* mpd, SDL_Surface* screen, TTF_Font* font, 
 		SDL_Rect& rect,int skipVal, int numPerScreen)
 	: m_mpd(mpd)
@@ -45,6 +48,10 @@ bool Scroller::processCommand(int command)
 	return done;
 }
 
+int Scroller::skipVal()
+{
+	return m_skipVal;
+}	
 void Scroller::draw() 
 {
 	SDL_Surface *sText;
@@ -55,14 +62,15 @@ void Scroller::draw()
 		vIter != m_listing.end() && (numDisplayed <= m_numPerScreen);
 		++vIter) {
 		if(numProcessed >= m_topItemNum) {
-			SDL_Surface *sText;
 			if(numProcessed == m_curItemNum) {
     			SDL_Color curColor = { 255,0,255, 0 };
 				sText = TTF_RenderText_Solid(m_font, (*vIter).first.c_str(), curColor);
 				m_curItemName = (*vIter).first;
 				m_curItemType = (*vIter).second;
 			} else {
-				sText = TTF_RenderText_Solid(m_font, (*vIter).first.c_str(), color);
+				//sText = TTF_RenderText_Solid(m_font, (*vIter).first.c_str(), color);
+				sText = TTF_RenderText_Blended(m_font, (*vIter).first.c_str(), color);
+				//sText = TTF_RenderText_Shaded(m_font, (*vIter).first.c_str(), color, bgcolor);
 			}
 
 			SDL_BlitSurface(sText,NULL, m_screen, &m_destRect );
@@ -72,4 +80,5 @@ void Scroller::draw()
 		}
 			++numProcessed;
 	}
+
 }

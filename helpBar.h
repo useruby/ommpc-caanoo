@@ -26,6 +26,8 @@ protected:
 	int m_pos;
 	int m_inc;
 	int m_origY;
+
+	int m_skipVal;
 		
 	std::vector<std::vector<std::string> >m_modeCmdText;
 };

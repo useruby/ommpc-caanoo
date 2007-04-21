@@ -17,6 +17,7 @@ public:
 	bool processCommand(int command);
 	void draw();
 
+	int skipVal();
 protected:
 	mpd_Connection* m_mpd;
 

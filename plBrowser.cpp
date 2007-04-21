@@ -104,6 +104,11 @@ void PLBrowser::processCommand(int command)
 			mpd_sendLoadCommand(m_mpd, pl.c_str());
 			mpd_finishCommand(m_mpd);
 		}
+	} else if(command == CMD_DEL_PL) {
+		mpd_sendRmCommand(m_mpd, m_curItemName.c_str());
+		mpd_finishCommand(m_mpd);
+		ls("");
+		
 	} 
 }
 

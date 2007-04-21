@@ -14,12 +14,13 @@
 class Popup : public Scroller
 {
 public:
-	typedef enum {POPUP_LIST, POPUP_CONFIRM, POPUP_MENU};
-	typedef enum {POPUP_SAVE_PL };
+	typedef enum {POPUP_LIST, POPUP_CONFIRM, POPUP_MENU}; // popup types
+	typedef enum {POPUP_CANCEL, POPUP_SAVE_PL, POPUP_LAUNCH, POPUP_DETACH, 
+				  POPUP_EXIT, POPUP_DO_SAVE_PL}; //popup action
 	Popup(mpd_Connection* mpd, SDL_Surface* screen, Config& config, SDL_Rect& rect,
 				int skipVal, int numPerScreen);
 	
-	void setItemsText(Scroller::listing_t& items);
+	void setItemsText(Scroller::listing_t& items, int type);
 	void setSize(SDL_Rect& rect);
 	void setTitle(std::string name);
 	std::string selectedText();

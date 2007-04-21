@@ -10,14 +10,35 @@ Browser::Browser(mpd_Connection* mpd, SDL_Surface* screen,
 					TTF_Font* font, SDL_Rect& rect,	int skipVal, int numPerScreen)
 : Scroller(mpd, screen, font, rect, skipVal, numPerScreen)
 , m_nowPlaying(0)
+, m_view(0)
+, m_curTitle("")
+, m_curAlbum("")
 {
     ls("tim");
 }
 
-void Browser::ls(std::string dir)
+void Browser::ls(std::string item)
 {
-	mpd_sendLsInfoCommand(m_mpd, dir.c_str());
+	switch(m_view) {
+		case 0:
+			browseFileSystem(item);
+			break;
+		case 1:
+			if(item.empty() || (m_curTitle.empty() && item == ".."))
+				browseArtists();
+			else if(m_curAlbum.empty())
+				browseAlbumsByArtist(item);
+//			else
+//				browseTitleByAlbum(item);
+			break;
+		default:
+			browseFileSystem(item);
+			break;
+	}
+}
 
+void Browser::browseFileSystem(std::string dir) {
+	mpd_sendLsInfoCommand(m_mpd, dir.c_str());
 	m_curDir = dir;
 	m_listing.clear();
 	m_listing.push_back(make_pair("..", 0));
@@ -43,6 +64,34 @@ void Browser::ls(std::string dir)
 		m_listing.push_back(make_pair(item, type));
 		mpd_freeInfoEntity(mpdItem);
 		mpdItem = mpd_getNextInfoEntity(m_mpd);
+	}
+	m_lastItemNum = m_listing.size()-1;
+}
+
+void Browser::browseArtists() {
+	mpd_sendListCommand(m_mpd, MPD_TAG_ITEM_ARTIST, NULL);
+
+	m_listing.clear();
+	char * artist = mpd_getNextArtist(m_mpd);	
+	while(artist != NULL) {
+		m_listing.push_back(make_pair(artist, 6));
+		free(artist);
+		artist = mpd_getNextArtist(m_mpd);	
+	}
+	m_lastItemNum = m_listing.size()-1;
+
+}
+
+void Browser::browseAlbumsByArtist(string artist) {
+	mpd_sendListCommand(m_mpd, MPD_TAG_ITEM_ALBUM, artist.c_str());
+cout << "artist " << artist << endl;
+	m_listing.clear();
+	m_listing.push_back(make_pair("..", 0));
+	char * album = mpd_getNextAlbum(m_mpd);	
+	while(album != NULL) {
+		m_listing.push_back(make_pair(album, 0));
+		free(album);
+		album = mpd_getNextAlbum(m_mpd);	
 	}
 	m_lastItemNum = m_listing.size()-1;
 }
@@ -98,6 +147,8 @@ void Browser::processCommand(int command) {
 			mpd_finishCommand(m_mpd);
 			mpd_sendPlayCommand(m_mpd, m_nowPlaying+1);
 			mpd_finishCommand(m_mpd);
+		} else if(m_curItemType == 6) {
+			ls(m_curItemName);	
 		}
 	} else if(command  == CMD_ADD_TO_PL) {
 		if(m_curItemType == 1) {
@@ -108,6 +159,17 @@ void Browser::processCommand(int command) {
 			mpd_sendAddCommand(m_mpd, song.c_str());
 			mpd_finishCommand(m_mpd);
 		}
+	} else if(command == CMD_TOGGLE_VIEW) {
+	/*
+		if(m_view == 1)
+			m_view = 0;
+		else
+			++m_view;
+		if(m_view == 0)
+			ls(m_curDir);
+		else 
+			ls("");
+	*/
 	}
 
 }
