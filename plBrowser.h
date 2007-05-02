@@ -9,12 +9,14 @@
 #include "scroller.h"
 
 class Playlist;
+class Config;
 
 class PLBrowser : public Scroller
 {
 public:
 	typedef std::vector<std::pair<std::string, int> >listing_t;
-    PLBrowser(mpd_Connection* mpd, SDL_Surface* screen, TTF_Font* font, SDL_Rect& rect, int skipVal, int numPerScreen, Playlist& pl);
+    PLBrowser(mpd_Connection* mpd, SDL_Surface* screen, TTF_Font* font, SDL_Rect& rect, 
+				Config& config, int skipVal, int numPerScreen, Playlist& pl);
     void ls(std::string dir="");
 
 	void updateListing();

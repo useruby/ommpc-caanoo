@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <fstream>
 #include <SDL.h>
 #include <SDL_ttf.h>
 #include "config.h"
@@ -25,6 +26,9 @@ public:
 	std::string currentItemName();
 	std::string currentItemPath();
 
+
+	void saveState(std::ofstream& ommcState);
+	void loadState(Config& stateConfig);
 	void makeNowPlayingVisible();
 	bool showSaveDialog(Popup& popup);
 	int getRand(int max);
@@ -32,12 +36,13 @@ public:
 	void initNewPlaylist();
 	void initName(std::string name);
 	void save();
-	std::string nowPlayingText(int song);
+	std::string nowPlayingText(int song=-1);
 	void nowPlaying(int song);
 protected:
 	std::string m_curDir;
 
-	Config& m_config;
+	SDL_Color m_pauseColor;
+	SDL_Color m_pauseItemColor;
 	int m_view;
 	int m_curElapsed;
 	int m_curState;
@@ -50,6 +55,8 @@ protected:
 	int m_id;
 	int m_moveFrom;
 	int m_moveTo;
+
+	bool m_refresh;
 };
 
 #endif

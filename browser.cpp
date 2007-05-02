@@ -1,20 +1,26 @@
 #include "browser.h"
 #include "threadParms.h"
 #include "commandFactory.h"
+#include "config.h"
 #include <iostream>
 #include <stdexcept>
 
 using namespace std;
 
-Browser::Browser(mpd_Connection* mpd, SDL_Surface* screen, 
-					TTF_Font* font, SDL_Rect& rect,	int skipVal, int numPerScreen)
-: Scroller(mpd, screen, font, rect, skipVal, numPerScreen)
+Browser::Browser(mpd_Connection* mpd, SDL_Surface* screen, TTF_Font* font, SDL_Rect& rect,	
+					Config& config, int skipVal, int numPerScreen)
+: Scroller(mpd, screen, font, rect, config, skipVal, numPerScreen)
 , m_nowPlaying(0)
 , m_view(0)
 , m_curTitle("")
 , m_curAlbum("")
 {
-    ls("tim");
+	m_config.getItemAsColor("sk_main_backColor", m_backColor.r, m_backColor.g, m_backColor.b);
+	m_config.getItemAsColor("sk_main_itemColor", m_itemColor.r, m_itemColor.g, m_itemColor.b);
+	m_config.getItemAsColor("sk_main_curItemBackColor", m_curItemBackColor.r, m_curItemBackColor.g, m_curItemBackColor.b);
+	m_config.getItemAsColor("sk_main_curItemColor", m_curItemColor.r, m_curItemColor.g, m_curItemColor.b);
+    ls("");
+    //ls("tim");
 }
 
 void Browser::ls(std::string item)
@@ -175,17 +181,16 @@ void Browser::processCommand(int command) {
 }
 void Browser::draw(bool forceRefresh)
 {
-	m_destRect.y = m_origY;
 	//clear this portion of the screen 
 	SDL_SetClipRect(m_screen, &m_clearRect);
-	SDL_FillRect(m_screen, &m_clearRect, SDL_MapRGB(m_screen->format, 0, 0, 0));
-    SDL_Color color = { 255,255,255, 0 };
+	SDL_FillRect(m_screen, &m_clearRect, SDL_MapRGB(m_screen->format, m_backColor.r, m_backColor.g, m_backColor.b));
 
 	SDL_Surface *sText;
-	sText = TTF_RenderText_Solid(m_font, m_curDir.c_str(), color);
+	sText = TTF_RenderText_Blended(m_font, m_curDir.c_str(), m_itemColor);
 	SDL_BlitSurface(sText,NULL, m_screen, &m_destRect );
 	SDL_FreeSurface(sText);
 	m_destRect.y += m_skipVal*2;
+	m_curItemClearRect.y += m_skipVal*2;
 
 	Scroller::draw();	
 }

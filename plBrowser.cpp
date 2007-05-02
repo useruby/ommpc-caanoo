@@ -2,15 +2,21 @@
 #include "threadParms.h"
 #include "commandFactory.h"
 #include "playlist.h"
+#include "config.h"
 #include <iostream>
 #include <stdexcept>
 
 using namespace std;
 
-PLBrowser::PLBrowser(mpd_Connection* mpd, SDL_Surface* screen, TTF_Font* font, SDL_Rect& rect, int skipVal, int numPerScreen, Playlist& pl)
-: Scroller(mpd, screen, font, rect, skipVal, numPerScreen)
+PLBrowser::PLBrowser(mpd_Connection* mpd, SDL_Surface* screen, TTF_Font* font, SDL_Rect& rect, 
+						Config& config, int skipVal, int numPerScreen, Playlist& pl)
+: Scroller(mpd, screen, font, rect, config, skipVal, numPerScreen)
 , m_playlist(pl)
 {
+	m_config.getItemAsColor("sk_main_backColor", m_backColor.r, m_backColor.g, m_backColor.b);
+	m_config.getItemAsColor("sk_main_itemColor", m_itemColor.r, m_itemColor.g, m_itemColor.b);
+	m_config.getItemAsColor("sk_main_curItemBackColor", m_curItemBackColor.r, m_curItemBackColor.g, m_curItemBackColor.b);
+	m_config.getItemAsColor("sk_main_curItemColor", m_curItemColor.r, m_curItemColor.g, m_curItemColor.b);
     ls("");
 }
 
@@ -26,25 +32,15 @@ void PLBrowser::ls(std::string dir)
 	while(mpdItem != NULL) {
 		std::string item = "";
 		int type = mpdItem->type;
-		if(type == 2) 
+		if(type == 2) { 
 			item = mpdItem->info.playlistFile->path;
-	/*
-		if(type == 0) {
-			item = mpdItem->info.directory->path;
-		} else if(type == 1) {
-			item = mpdItem->info.song->file;
-		} else if(type == 2) {
-			item = mpdItem->info.playlistFile->path;
-		} else {
-			throw runtime_error("Unknown mpd entity");
-		}
-	*/
-		int pos = item.rfind("/");;
-		if(pos != string::npos) {
-			item = item.substr(pos+1);
-		}
-		if(type != 1)
+			int pos = item.rfind("/");;
+			if(pos != string::npos) {
+				item = item.substr(pos+1);
+			}
+
 			m_listing.push_back(make_pair(item, type));
+		}
 		mpd_freeInfoEntity(mpdItem);
 		mpdItem = mpd_getNextInfoEntity(m_mpd);
 	}
@@ -118,16 +114,14 @@ void PLBrowser::draw(bool forceRefresh)
 		ls("");
 	//clear this portion of the screen 
 	SDL_SetClipRect(m_screen, &m_clearRect);
-	SDL_FillRect(m_screen, &m_clearRect, SDL_MapRGB(m_screen->format, 0, 0, 0));
-	m_destRect.y = m_origY;
-
-    SDL_Color color = { 255,255,255, 0 };
+	SDL_FillRect(m_screen, &m_clearRect, SDL_MapRGB(m_screen->format, m_backColor.r, m_backColor.g, m_backColor.b));
 
 	SDL_Surface *sText;
-	sText = TTF_RenderText_Solid(m_font, "Playlists", color);
+	sText = TTF_RenderText_Solid(m_font, "Playlists", m_itemColor);
 	SDL_BlitSurface(sText,NULL, m_screen, &m_destRect );
 	SDL_FreeSurface(sText);
 	m_destRect.y += m_skipVal*2;
+	m_curItemClearRect.y += m_skipVal*2;
 
 	Scroller::draw();	
 }

@@ -11,6 +11,7 @@ CommandFactory::CommandFactory()
 : m_timer(0)
 , m_next(false)
 , m_prev(false)
+, m_start(false)
 {
 
 }
@@ -34,17 +35,27 @@ int CommandFactory::getCommand(bool keysHeld[], int curMode, int& repeatDelay, b
 			command = CMD_UP;	
 		else if (keysHeld[GP2X_VK_DOWN] || keysHeld[SDLK_DOWN]||keysHeld[SDLK_j])
 			command = CMD_DOWN;
+		else if (keysHeld[GP2X_VK_LEFT] || keysHeld[SDLK_UP]||keysHeld[SDLK_LEFT])
+			command = CMD_LEFT;	
+		else if (keysHeld[GP2X_VK_RIGHT] || keysHeld[SDLK_RIGHT]||keysHeld[SDLK_RIGHT])
+			command = CMD_RIGHT;
 		else if (keysHeld[GP2X_VK_VOL_UP] || keysHeld[SDLK_0])
 			command = CMD_VOL_UP;
 		else if (keysHeld[GP2X_VK_VOL_DOWN] || keysHeld[SDLK_9])
 			command = CMD_VOL_DOWN;
-		else if (keysHeld[SDLK_v])
-//		else if (keysHeld[GP2X_VK_FA])
+//		else if (keysHeld[SDLK_v])
+		else if (keysHeld[GP2X_VK_FA])
 			command	= CMD_TOGGLE_VIEW;
 		else if (keysHeld[GP2X_VK_SELECT] || keysHeld[SDLK_m])
 			command	= CMD_TOGGLE_MODE;
-		else if (keysHeld[GP2X_VK_START] || keysHeld[SDLK_c])
-			command	= CMD_SHOW_MENU;
+		else if (keysHeld[GP2X_VK_START] || keysHeld[SDLK_c]) {
+			if(repeatDelay == DELAY*5) {
+				command	= CMD_TOGGLE_SCREEN;
+				m_start = false;
+			} else if(repeatDelay < DELAY*5){
+				m_start = true;
+			}
+		}
 		else {
 			if(popupVisible) {
 				if (keysHeld[GP2X_VK_FB] ||keysHeld[SDLK_RETURN] || keysHeld[SDLK_p] || keysHeld[SDLK_SPACE])
@@ -104,6 +115,13 @@ int CommandFactory::getCommand(bool keysHeld[], int curMode, int& repeatDelay, b
 										m_prev = false;
 									}
 								}
+								if (!keysHeld[GP2X_VK_START] && !keysHeld[SDLK_c]) {
+									if(m_start) {
+										command	= CMD_SHOW_MENU;
+										m_start = false;
+									}
+								}
+						
 							}
 						}
 						break;
@@ -111,10 +129,34 @@ int CommandFactory::getCommand(bool keysHeld[], int curMode, int& repeatDelay, b
 						{ //playlist browser
 							if (keysHeld[GP2X_VK_FB] ||keysHeld[SDLK_RETURN] || keysHeld[SDLK_p])
 								command = CMD_LOAD_PL;
-							if (keysHeld[SDLK_a])
+							else if (keysHeld[SDLK_a])
 								command = CMD_APPEND_PL;
-							if (keysHeld[SDLK_d])
+							else if (keysHeld[SDLK_d])
 								command = CMD_DEL_PL;
+							else { 
+								if (!keysHeld[GP2X_VK_START] && !keysHeld[SDLK_c]) {
+									if(m_start) {
+										command	= CMD_SHOW_MENU;
+										m_start = false;
+									}
+								}
+							}
+						}
+						break;
+					case 3:
+						{ //bookmark browser
+							if (keysHeld[GP2X_VK_FB] ||keysHeld[SDLK_RETURN] || keysHeld[SDLK_p])
+								command = CMD_LOAD_BKMRK;
+							else if (keysHeld[SDLK_d])
+								command = CMD_DEL_BKMRK;
+							else { 
+								if (!keysHeld[GP2X_VK_START] && !keysHeld[SDLK_c]) {
+									if(m_start) {
+										command	= CMD_SHOW_MENU;
+										m_start = false;
+									}
+								}
+							}
 
 						}
 						break;

@@ -9,9 +9,20 @@ Config::Config()
 	init();
 }
 
+Config::Config(string file)
+{
+    ifstream configFile(file.c_str(), ios::in);
+    if(configFile.fail()) {
+		std::string msg = "CONFIG: Unable to open config file: " + file;
+        throw runtime_error(msg.c_str());
+	}
+	
+	readConfigFile(configFile);
+}
+
 void Config::init()
 {
-
+	m_configItems.clear();
     ifstream configFile("ommpc.conf", ios::in);
 
     if(configFile.fail()) {
@@ -52,6 +63,26 @@ void Config::readConfigFile(ifstream& configFile)
 	}
 }
 
+void Config::saveConfigFile()
+{
+	ofstream configFile("ommpc.conf", ios::out|ios::trunc);
+
+    if(configFile.fail()) {
+		std::string msg = "CONFIG: Unable to open config file: ommpc.conf";
+        throw runtime_error(msg.c_str());
+	}
+
+	for(std::map<std::string, std::string>::iterator cIter =  m_configItems.begin();
+	cIter != m_configItems.end();
+	++cIter) {
+		if((*cIter).first.substr(0,3) != "sk_") {
+			configFile << (*cIter).first << "=" << (*cIter).second << endl;
+		}
+	}
+
+}
+
+
 std::string Config::getItem(std::string itemName)
 {
     std::map<std::string, std::string>::iterator mIter = m_configItems.find(itemName);
@@ -61,6 +92,12 @@ std::string Config::getItem(std::string itemName)
     } else {
         return "";
     }
+}
+
+void Config::setItem(string itemName, string value) 
+{
+	//this is intentially this simple to allow inserting of new config item....
+	m_configItems[itemName] = value;
 }
 
 int Config::getItemAsNum(std::string itemName)
@@ -89,3 +126,16 @@ void Config::trimStr(std::string & inStr)
 
 }
 
+void Config::getItemAsColor(std::string name, Uint8& red, Uint8& green, Uint8& blue)
+{
+    std::map<std::string, std::string>::iterator mIter = m_configItems.find(name);
+
+    if(mIter != m_configItems.end()) {
+       	int commaPos1 = (*mIter).second.find(',');
+		red = atoi(((*mIter).second.substr(0, commaPos1)).c_str());
+		int commaPos2 = (*mIter).second.find(',', commaPos1+1);
+		green = atoi(((*mIter).second.substr(commaPos1+1, commaPos2-commaPos1)).c_str());;
+		int commaPos3 = (*mIter).second.find(',', commaPos2+1);
+		blue = atoi(((*mIter).second.substr(commaPos2+1, commaPos3-commaPos2)).c_str());
+	}
+}

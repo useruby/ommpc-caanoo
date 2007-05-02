@@ -33,6 +33,12 @@ protected:
 	int m_delayCnt;
 
 	int m_nowPlaying;
+	
+	//colors
+	SDL_Color m_backColor;
+	SDL_Color m_itemColor;
+	SDL_Color m_curItemBackColor;
+	SDL_Color m_curItemColor;
 };
 
 #endif

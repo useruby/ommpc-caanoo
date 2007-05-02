@@ -30,6 +30,12 @@ protected:
 	int m_skipVal;
 		
 	std::vector<std::vector<std::string> >m_modeCmdText;
+	
+	//colors
+	SDL_Color m_backColor;
+	SDL_Color m_itemColor;
+	SDL_Color m_curItemBackColor;
+	SDL_Color m_curItemColor;
 };
 
 #endif
