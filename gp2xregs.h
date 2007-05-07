@@ -8,7 +8,6 @@
 #define PWR_TFT_BIT        (2)
 #define SYS_CLK_FREQ 7372800 
 
-#define GP2X 
 
 class GP2XRegs
 {

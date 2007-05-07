@@ -4,7 +4,7 @@
 #include "libmpdclient.h"
 #include <SDL.h>
 #include <string>
-/*
+
 #ifndef GP2X
 #define GP2X_VK_FY  SDLK_d
 #define GP2X_VK_FX  SDLK_s
@@ -21,9 +21,9 @@
 #define GP2X_VK_SELECT  SDLK_m
 #define GP2X_VK_START  SDLK_c
 #endif
-*/
 
-typedef enum { SONG_CHG=1, PL_CHG=2, RPT_CHG=4, RND_CHG=8, RATE_CHG=16, ELAPSED_CHG=32, VOL_CHG=64, STATE_CHG=128 };
+
+typedef enum { SONG_CHG=1, PL_CHG=2, RPT_CHG=4, RND_CHG=8, RATE_CHG=16, ELAPSED_CHG=32, VOL_CHG=64, STATE_CHG=128, UPDB_CHG=256};
 
 typedef struct {
 	mpd_Connection* mpd;

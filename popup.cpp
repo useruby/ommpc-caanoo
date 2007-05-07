@@ -65,7 +65,7 @@ void Popup::setOptionsText()
 {
 	vector<string> curOption;
 	vector<string>::iterator curIter;
-	for(int i=100; i<=220; i+=5) {
+	for(int i=50; i<=220; i+=5) {
 		ostringstream mhz;
 		mhz << i;
 		curOption.push_back(mhz.str());

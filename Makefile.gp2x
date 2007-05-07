@@ -26,7 +26,7 @@ LIB = -L. -L/usr/local/open2x/lib
 #-------------------------------------------------------------------------------
 # Compiler flags
 #-------------------------------------------------------------------------------
-CXXFLAGS      = `$(SDL_BASE)sdl-config --cflags` $(OPTIMIZATION_FLAG) $(INCDIR) $(LIB)
+CXXFLAGS      = `$(SDL_BASE)sdl-config --cflags` $(OPTIMIZATION_FLAG) $(INCDIR) $(LIB) -DGP2X
 LDFLAGS = -static
 #-------------------------------------------------------------------------------
 # The .cpp files used to compile the client

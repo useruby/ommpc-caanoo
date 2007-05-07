@@ -31,7 +31,8 @@ int pollMpdStatus(void *data)
 	int prevVol = -1;
 	int curState = -1;
 	int prevState = -1;
-
+	int curUpDb = -1;
+	int prevUpDb = -1;
 	while(!threadParms->pollStatusDone) {
 		SDL_mutexP(threadParms->lockConnection);
 //	std::cout << "polling status" << std::endl;
@@ -47,6 +48,7 @@ int pollMpdStatus(void *data)
 		curTotal = threadParms->mpdStatus->totalTime;
 		curVol = threadParms->mpdStatus->volume;		
 		curState = threadParms->mpdStatus->state;	
+		curUpDb = threadParms->mpdStatus->updatingDb;
 
 		if(prevSong != curSong) {
 			threadParms->mpdStatusChanged += SONG_CHG;
@@ -80,12 +82,16 @@ int pollMpdStatus(void *data)
 			threadParms->mpdStatusChanged += STATE_CHG;
 			prevState = curState;
 		}	
+		if(curUpDb != prevUpDb) {
+			threadParms->mpdStatusChanged += UPDB_CHG;
+			prevUpDb = curUpDb;
+		}
 		SDL_mutexV(threadParms->lockConnection);
 		while(threadParms->mpdStatusChanged != 0) {
-			SDL_Delay(300);
+			SDL_Delay(200);
 		}
 		mpd_freeStatus(threadParms->mpdStatus);
-		SDL_Delay(700);
+		SDL_Delay(200);
 	
 	}
 
@@ -96,6 +102,7 @@ int pollMpdStatus(void *data)
 int loadAlbumArt(void* data) 
 {
 	artThreadParms_t* artParms = (artThreadParms_t*) data;
+	//while(config.getItem("showAlbumArt") == "true") {
 	while(true) {
 		if(artParms->doArtLoad) {
 			SDL_FreeSurface(artParms->artSurface);

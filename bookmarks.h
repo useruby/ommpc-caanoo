@@ -31,6 +31,8 @@ protected:
 	std::string m_curDir;
 
 	int m_nowPlaying;
+	int m_curState;
+	int m_refresh;
 	Playlist& m_playlist;
 	StatsBar& m_sb;
 };

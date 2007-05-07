@@ -33,9 +33,6 @@
 #include "unistd.h"
 #include <dirent.h>
 
-#define GP2X 
-
-
 using namespace std;
 
 
@@ -197,6 +194,7 @@ int processOptionsMenuItem(int action, Popup& popup)
 
 int main ( int argc, char** argv )
 {
+	bool initVolume = false;
 	int pid;
 	int wpid;
 	int status;
@@ -216,7 +214,6 @@ int main ( int argc, char** argv )
 			cout << "waitpid failed" << endl;
 			exit(-1);
 		}
-
 		try {
 			Config config;
 
@@ -323,7 +320,7 @@ int main ( int argc, char** argv )
 #ifdef GP2X
 			mpd_sendPauseCommand(threadParms.mpd, 1);
 			mpd_finishCommand(threadParms.mpd);
-			//gp2xRegs.setClock(config.getItemAsNum("cpuSpeed"));
+			gp2xRegs.setClock(config.getItemAsNum("cpuSpeed"));
 			mpd_sendPauseCommand(threadParms.mpd, 0);
 			mpd_finishCommand(threadParms.mpd);
 #endif	
@@ -336,10 +333,32 @@ int main ( int argc, char** argv )
 			Playlist playlist(threadParms.mpd, screen, font, config, mainRect, skipVal, numPerScreen);
 			PLBrowser plBrowser(threadParms.mpd, screen, font, mainRect, config, skipVal, numPerScreen, playlist);
 			NowPlaying playing(threadParms.mpd, threadParms.lockConnection, screen, config, nowPlayingRect, playlist);
-			StatsBar statsBar(threadParms.mpd, threadParms.lockConnection, screen, config, statsRect);
+			StatsBar statsBar(threadParms.mpd, threadParms.lockConnection, screen, config, statsRect, initVolume);
 			HelpBar helpBar(threadParms.mpd, screen, config, helpRect);
 			Bookmarks bookmarks(threadParms.mpd, screen, font, mainRect, skipVal, numPerScreen, playlist, config, statsBar);
-			CommandFactory commandFactory;
+			CommandFactory commandFactory(threadParms.mpd);
+			
+			int curMode = 1;	
+			int volume = 50;
+			try {
+				SDL_mutexP(threadParms.lockConnection);
+				Config stateConfig(".ommcState");
+				curMode = stateConfig.getItemAsNum("mode");
+				volume = stateConfig.getItemAsNum("vol");	
+				mpd_sendSetvolCommand(threadParms.mpd, -100);
+				mpd_finishCommand(threadParms.mpd);
+				mpd_sendSetvolCommand(threadParms.mpd, volume);
+				mpd_finishCommand(threadParms.mpd);
+				initVolume = true;
+#ifdef GP2X
+				if(status == 0)   //only load playlist if mpd isn't already running...
+					playlist.loadState(stateConfig);
+#endif
+				SDL_mutexV(threadParms.lockConnection);
+			} catch(exception& e) {
+				SDL_mutexV(threadParms.lockConnection);
+				//carry on
+			}
 
 			//polling thread that gets current status from mpd
 			SDL_Thread *statusThread;
@@ -372,40 +391,26 @@ int main ( int argc, char** argv )
 			bool killMpd = false;
 			int command = -1;
 			bool keysHeld[323] = {false};
-			int curMode = 1;	
 			int repeatDelay = 0;
 			bool forceRefresh = true;
 			bool processedEvent = false;
-			int volume = 50;
 			bool repeat = false;
 			bool random = false;
 			int frame = 0;
 			bool popupVisible = false;
+			SDL_Color backColor;
+			config.getItemAsColor("sk_screen_color", backColor.r, backColor.g, backColor.b);
 
-			try {
-				SDL_mutexP(threadParms.lockConnection);
-				Config stateConfig(".ommcState");
-				curMode = stateConfig.getItemAsNum("mode");
-				volume = stateConfig.getItemAsNum("vol");	
-				mpd_sendSetvolCommand(threadParms.mpd, -100);
-				mpd_finishCommand(threadParms.mpd);
-				mpd_sendSetvolCommand(threadParms.mpd, volume);
-				mpd_finishCommand(threadParms.mpd);
-
-				playlist.loadState(stateConfig);
-				SDL_mutexV(threadParms.lockConnection);
-			} catch(exception& e) {
-				SDL_mutexV(threadParms.lockConnection);
-				//carry on
-			}
 
 			Timer timer;	
+			Timer delayTimer;
+			delayTimer.stop();
 			while (!done)
 			{
 				SDL_mutexP(threadParms.lockConnection);
 				// let's start with checking some polled status items
 				if(threadParms.mpdStatusChanged & VOL_CHG) {
-					volume = threadParms.mpdStatus->volume;
+					//volume = threadParms.mpdStatus->volume;
 				}
 				if(threadParms.mpdStatusChanged & RND_CHG) {
 					random = threadParms.mpdStatus->random;
@@ -419,17 +424,21 @@ int main ( int argc, char** argv )
 				{
 					if (event.type == SDL_KEYDOWN) {
 						keysHeld[event.key.keysym.sym] = true;
+						delayTimer.start();
 					}
 					if (event.type == SDL_KEYUP) {
 						keysHeld[event.key.keysym.sym] = false;
 						repeatDelay = 1;
+						delayTimer.stop();
 					}
 					if(event.type == SDL_JOYBUTTONDOWN)  {
 						keysHeld[event.jbutton.button] = true;
+						delayTimer.start();
 					}
 					if(event.type == SDL_JOYBUTTONUP) {
 						keysHeld[event.jbutton.button] = false;
 						repeatDelay = 1;
+						delayTimer.stop();
 					}
 					/*
 					   if(event.type == SDL_MOUSEBUTTONDOWN)
@@ -440,10 +449,15 @@ int main ( int argc, char** argv )
 					processedEvent = true;
 				} // end of message processing
 
+				long delayTime = delayTimer.check();
 				if(processedEvent || repeatDelay > 0) {	
-					if (event.type == SDL_KEYDOWN || event.type == SDL_JOYBUTTONDOWN) 
+					if (event.type == SDL_KEYDOWN || event.type == SDL_JOYBUTTONDOWN)
 						++repeatDelay;
-					command = commandFactory.getCommand(keysHeld, curMode, repeatDelay, popupVisible);
+					if(!gp2xRegs.screenIsOff()) 
+						command = commandFactory.getCommand(keysHeld, curMode, repeatDelay, popupVisible, volume, delayTime);
+					else
+						command = commandFactory.getCommandWhileLocked(keysHeld, curMode, repeatDelay, popupVisible, delayTime);
+		
 					if (event.type == SDL_KEYUP || event.type == SDL_JOYBUTTONUP) 
 						repeatDelay = 0;
 					processedEvent = false;
@@ -521,6 +535,30 @@ int main ( int argc, char** argv )
 						mpd_sendStatusCommand(threadParms.mpd);
 						rtmpdStatus = mpd_getStatus(threadParms.mpd);
 						break;
+					case CMD_RAND_RPT:
+						if(!random && !repeat) {
+							random = true;
+							mpd_sendRandomCommand(threadParms.mpd, random);
+							mpd_finishCommand(threadParms.mpd);
+							rtmpdStatusChanged += RND_CHG;
+						} else if(random && !repeat) {
+							repeat = true;
+							mpd_sendRepeatCommand(threadParms.mpd, repeat);
+							mpd_finishCommand(threadParms.mpd);
+							rtmpdStatusChanged += RPT_CHG;
+						} else if(random && repeat) {
+							random = false;
+							mpd_sendRandomCommand(threadParms.mpd, random);
+							mpd_finishCommand(threadParms.mpd);
+							rtmpdStatusChanged += RND_CHG;
+						} else if(!random && repeat) {
+							repeat = false;
+							mpd_sendRepeatCommand(threadParms.mpd, repeat);
+							mpd_finishCommand(threadParms.mpd);
+							rtmpdStatusChanged += RPT_CHG;
+						}
+						mpd_sendStatusCommand(threadParms.mpd);
+						rtmpdStatus = mpd_getStatus(threadParms.mpd);
 					case CMD_TOGGLE_MODE:
 						++curMode;
 						if(curMode == 4)
@@ -542,7 +580,6 @@ int main ( int argc, char** argv )
 						popupVisible = showOptionsMenu(screen, popup, config);
 						break;
 					case CMD_MPD_UPDATE:
-						cout << "should be updateing" << endl;
 						mpd_sendUpdateCommand(threadParms.mpd, "");
 						mpd_finishCommand(threadParms.mpd);
 						break;	
@@ -552,7 +589,7 @@ int main ( int argc, char** argv )
 				browser.updateStatus(threadParms.mpdStatusChanged, threadParms.mpdStatus);
 				playlist.updateStatus(threadParms.mpdStatusChanged, threadParms.mpdStatus, 
 								rtmpdStatusChanged, rtmpdStatus, repeatDelay);
-				//plBrowser.updateStatus(threadParms.mpdStatusChanged, threadParms.mpdStatus);
+				plBrowser.updateStatus(threadParms.mpdStatusChanged, threadParms.mpdStatus);
 				playing.updateStatus(threadParms.mpdStatusChanged, threadParms.mpdStatus);
 				albumArt.updateStatus(threadParms.mpdStatusChanged, threadParms.mpdStatus,
 						rtmpdStatusChanged, rtmpdStatus);
@@ -561,36 +598,35 @@ int main ( int argc, char** argv )
 				bookmarks.updateStatus(threadParms.mpdStatusChanged, threadParms.mpdStatus);
 
 				// DRAWING STARTS HERE
+				if(forceRefresh) {
+					SDL_SetClipRect(screen, &clearRect);
+					SDL_FillRect(screen, &clearRect, SDL_MapRGB(screen->format, backColor.r, backColor.g, backColor.b));
+				}
 
 //				SDL_BlitSurface(bmp, NULL,screen, &dstrect );
 				playing.draw();
 				statsBar.draw(forceRefresh);
-
-				albumArt.draw(forceRefresh);
-//				if(forceRefresh)
-					SDL_FillRect(screen, &clearRect, SDL_MapRGB(screen->format, 255, 255, 255));
+				if(config.getItem("showAlbumArt") == "true")
+					albumArt.draw(forceRefresh);
 				switch (curMode) {
 					case 0:
 						browser.processCommand(command);
-						if(command != 0 || forceRefresh) 
-							browser.draw(forceRefresh);
+						browser.draw(forceRefresh);
 						break;
 					case 1:
-						playlist.processCommand(command, rtmpdStatusChanged, rtmpdStatus, repeatDelay);
+						playlist.processCommand(command, rtmpdStatusChanged, rtmpdStatus, repeatDelay, volume, delayTime);
 						playlist.draw(forceRefresh);
 						break;
 					case 2:
-						plBrowser.processCommand(command);
-						if(command != 0 || forceRefresh) 
-							plBrowser.draw(forceRefresh);
+						curMode = plBrowser.processCommand(command, curMode);
+						plBrowser.draw(forceRefresh);
 						break;
 					case 3:
 						bookmarks.processCommand(command);
-						if(command != 0 || forceRefresh) 
-							bookmarks.draw(forceRefresh);
+						bookmarks.draw(forceRefresh);
 						break;
 					default: 
-						playlist.processCommand(command, rtmpdStatusChanged, rtmpdStatus, repeatDelay);
+						playlist.processCommand(command, rtmpdStatusChanged, rtmpdStatus, repeatDelay, volume, delayTime);
 						playlist.updateStatus(threadParms.mpdStatusChanged, threadParms.mpdStatus, 
 								rtmpdStatusChanged, rtmpdStatus, repeatDelay);
 						if(command != 0 || forceRefresh) 

@@ -9,12 +9,15 @@
 #include <time.h>
 
 using namespace std;
+#define X2DELAY 5000000
+#define X4DELAY 10000000
+#define X8DELAY 50000000
+#define FFWAIT 500000
 
 Playlist::Playlist(mpd_Connection* mpd, SDL_Surface* screen, TTF_Font* font, Config& config, SDL_Rect& rect, int skipVal, int numPerScreen)
 : Scroller(mpd, screen, font, rect, config, skipVal, numPerScreen)
 , m_curElapsed(0)
 , m_view(0)
-, m_curState(0)
 , m_random(false)
 , m_otg(false)
 , m_modified(false)
@@ -28,16 +31,17 @@ Playlist::Playlist(mpd_Connection* mpd, SDL_Surface* screen, TTF_Font* font, Con
 	m_config.getItemAsColor("sk_main_itemColor", m_itemColor.r, m_itemColor.g, m_itemColor.b);
 	m_config.getItemAsColor("sk_main_curItemBackColor", m_curItemBackColor.r, m_curItemBackColor.g, m_curItemBackColor.b);
 	m_config.getItemAsColor("sk_main_curItemColor", m_curItemColor.r, m_curItemColor.g, m_curItemColor.b);
-	m_config.getItemAsColor("sk_popup_backColor", m_pauseColor.r, m_pauseColor.g, m_pauseColor.b);
-	m_config.getItemAsColor("sk_popup_itemColor", m_pauseItemColor.r, m_pauseItemColor.g, m_pauseItemColor.b);
 
 	load("");
+	m_timer.stop();
 }
 
 void Playlist::saveState(ofstream& ommcState)
 {
 	ommcState << "plview=" << m_view << endl;
 
+	mpd_sendRmCommand(m_mpd, ".ommcPL");
+	mpd_finishCommand(m_mpd);
 	mpd_sendSaveCommand(m_mpd, ".ommcPL");
 	mpd_finishCommand(m_mpd);
 }
@@ -45,6 +49,8 @@ void Playlist::saveState(ofstream& ommcState)
 void Playlist::loadState(Config& stateConfig)
 {
 	m_view = stateConfig.getItemAsNum("plview");
+	mpd_sendClearCommand(m_mpd);
+	mpd_finishCommand(m_mpd);
 	mpd_sendLoadCommand(m_mpd, ".ommcPL");	
 	mpd_finishCommand(m_mpd);
 }
@@ -239,7 +245,7 @@ void Playlist::updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus,
 
 }
 
-void Playlist::processCommand(int command, int& rtmpdStatusChanged, mpd_Status* rtmpdStatus, int repeatDelay)
+void Playlist::processCommand(int command, int& rtmpdStatusChanged, mpd_Status* rtmpdStatus, int repeatDelay, int volume, long delayTime)
 {
 	if(command > 0) {
 		m_refresh = true;
@@ -263,30 +269,79 @@ void Playlist::processCommand(int command, int& rtmpdStatusChanged, mpd_Status* 
 					mpd_finishCommand(m_mpd);
 					mpd_sendPlayCommand(m_mpd, m_curItemNum);
 					mpd_finishCommand(m_mpd);
+					mpd_sendSetvolCommand( m_mpd, volume);
+					mpd_finishCommand(m_mpd);
 				}
+			}
+		} else if(command == CMD_PAUSE) {
+			if(m_curState == MPD_STATUS_STATE_PAUSE) {
+				m_curState = MPD_STATUS_STATE_PLAY;	
+				mpd_sendPauseCommand(m_mpd, 0);
+				mpd_finishCommand(m_mpd);
+			} else if(m_curState == MPD_STATUS_STATE_PLAY) {
+				m_curState = MPD_STATUS_STATE_PAUSE;
+				mpd_sendPauseCommand(m_mpd, 1);
+				mpd_finishCommand(m_mpd);
 			}
 		} else if(command == CMD_NEXT) {
 			mpd_sendNextCommand(m_mpd);
+			mpd_sendPauseCommand(m_mpd, 0);
+			mpd_sendPauseCommand(m_mpd, 1);
+			mpd_finishCommand(m_mpd);
+			mpd_sendSetvolCommand( m_mpd, volume);
 			mpd_finishCommand(m_mpd);
 		} else if(command == CMD_PREV) {
 			mpd_sendPrevCommand(m_mpd);
+			mpd_sendPauseCommand(m_mpd, 0);
+			mpd_sendPauseCommand(m_mpd, 1);
+			mpd_finishCommand(m_mpd);
+			mpd_sendSetvolCommand( m_mpd, volume);
 			mpd_finishCommand(m_mpd);
 		} else if(command == CMD_FF) {
 			if(repeatDelay > 0) {
-				cout << repeatDelay << endl;
-				if(repeatDelay > 20)
-					mpd_sendSeekCommand(m_mpd, m_curItemNum, m_curElapsed + repeatDelay*2);
+				m_timer.start();
+				int jump = 0;
+				if(delayTime > X2DELAY) {
+					if(delayTime > X8DELAY)
+						jump = 16;	
+					else if(delayTime > X4DELAY)
+						jump = 8;	
+					else
+						jump = 4;
+				}
 				else 	
-					mpd_sendSeekCommand(m_mpd, m_curItemNum, m_curElapsed + repeatDelay);
-				mpd_finishCommand(m_mpd);
-			}
+					jump = 2;
+			
+				if(jump > 0 && (m_timer.check() > FFWAIT)) {	
+					cout << jump << endl;
+					mpd_sendSeekCommand(m_mpd, m_curItemNum, m_curElapsed + jump);
+					mpd_finishCommand(m_mpd);
+					m_curElapsed += jump;
+					m_timer.stop();
+					m_timer.start();
+				}
+			} 
 		} else if(command == CMD_RW) {
 			if(repeatDelay > 0) {
-				if(repeatDelay > 20)
-					mpd_sendSeekCommand(m_mpd, m_curItemNum, m_curElapsed - repeatDelay*2);
+				int jump = 0;
+				if(delayTime > X2DELAY) {
+					if(delayTime > X8DELAY)
+						jump = 16;	
+					else if(delayTime > X4DELAY)
+						jump = 8;	
+					else
+						jump = 4;
+				}
 				else 	
-					mpd_sendSeekCommand(m_mpd, m_curItemNum, m_curElapsed - repeatDelay);
-				mpd_finishCommand(m_mpd);
+					jump = 2;
+			
+				if(jump > 0 && (m_timer.check() > FFWAIT)) {	
+					mpd_sendSeekCommand(m_mpd, m_curItemNum, m_curElapsed - jump);
+					mpd_finishCommand(m_mpd);
+					m_curElapsed -= jump;
+					m_timer.stop();
+					m_timer.start();
+				}
 			}
 		} else if(command == CMD_TOGGLE_VIEW) {
 			if(m_view == 2)
@@ -327,19 +382,6 @@ void Playlist::draw(bool forceRefresh)
 		
 		Scroller::draw();
 
-		SDL_Surface *sText;
-		if(m_curState == MPD_STATUS_STATE_PAUSE) {
-			SDL_Rect dstrect;
-			dstrect.x = (m_screen->w - 50) / 2;
-			dstrect.y = (m_screen->h - m_skipVal) / 2;
-			dstrect.w = 50;
-			dstrect.h = m_skipVal;
-			
-			SDL_FillRect(m_screen, &dstrect, SDL_MapRGB(m_screen->format, m_pauseColor.r, m_pauseColor.g, m_pauseColor.b));
-			sText = TTF_RenderText_Blended(m_font, "PAUSED", m_pauseItemColor);
-			SDL_BlitSurface(sText,NULL, m_screen, &dstrect );
-			SDL_FreeSurface(sText);
-		}
 		m_refresh = false;
 	}
 }

@@ -1,4 +1,5 @@
 #include "scroller.h"
+#include "config.h"
 #include "commandFactory.h"
 
 #include <iostream>
@@ -16,11 +17,14 @@ Scroller::Scroller(mpd_Connection* mpd, SDL_Surface* screen, TTF_Font* font,
 	, m_curItemNum(0)
 	, m_clearRect(rect)
 	, m_lastItemNum(0)
+	, m_curState(0)
 {
 	m_destRect.x = rect.x;
 	m_destRect.y = rect.y;
 	m_origY = m_destRect.y;
 	m_curItemClearRect = m_destRect;
+	m_config.getItemAsColor("sk_popup_backColor", m_pauseColor.r, m_pauseColor.g, m_pauseColor.b);
+	m_config.getItemAsColor("sk_popup_itemColor", m_pauseItemColor.r, m_pauseItemColor.g, m_pauseItemColor.b);
 }
 
 bool Scroller::processCommand(int command)
@@ -89,6 +93,18 @@ void Scroller::draw()
 	m_destRect.y = m_origY;
 	m_curItemClearRect.y = m_origY;
 
+	if(m_curState == MPD_STATUS_STATE_PAUSE) {
+		SDL_Rect dstrect;
+		dstrect.x = (m_screen->w - 50) / 2;
+		dstrect.y = (m_screen->h - m_skipVal) / 2;
+		dstrect.w = 50;
+		dstrect.h = m_skipVal;
+
+		SDL_FillRect(m_screen, &dstrect, SDL_MapRGB(m_screen->format, m_pauseColor.r, m_pauseColor.g, m_pauseColor.b));
+		sText = TTF_RenderText_Blended(m_font, "PAUSED", m_pauseItemColor);
+		SDL_BlitSurface(sText,NULL, m_screen, &dstrect );
+		SDL_FreeSurface(sText);
+	}
 }
 
 void Scroller::draw(vector<string>& selectedOptions) 

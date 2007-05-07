@@ -15,6 +15,7 @@ Bookmarks::Bookmarks(mpd_Connection* mpd, SDL_Surface* screen, TTF_Font* font, S
 : Scroller(mpd, screen, font, rect, config, skipVal, numPerScreen)
 , m_playlist(pl)
 , m_sb(sb)
+, m_refresh(true)
 {
 	m_curDir = config.getItem("programRoot") + "bookmarks/";
 	
@@ -71,6 +72,10 @@ void Bookmarks::updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus)
 	if(mpdStatusChanged & SONG_CHG) {
 		m_nowPlaying = mpdStatus->song;	
 	}
+	if(mpdStatusChanged & STATE_CHG) { 
+		m_curState = mpdStatus->state;
+		m_refresh = true;
+	}
 }
 
 void Bookmarks::doSave()
@@ -118,6 +123,16 @@ void Bookmarks::processCommand(int command)
 				mpd_finishCommand(m_mpd);
 			}
 		}	
+	} else if(command == CMD_PAUSE) {
+		if(m_curState == MPD_STATUS_STATE_PAUSE) {
+			m_curState = MPD_STATUS_STATE_PLAY;	
+			mpd_sendPauseCommand(m_mpd, 0);
+			mpd_finishCommand(m_mpd);
+		} else if(m_curState == MPD_STATUS_STATE_PLAY) {
+			m_curState = MPD_STATUS_STATE_PAUSE;
+			mpd_sendPauseCommand(m_mpd, 1);
+			mpd_finishCommand(m_mpd);
+		}
 	} else if(command == CMD_SAVE_BKMRK) {
 		doSave();
 	} else if(command == CMD_DEL_BKMRK) {
@@ -128,19 +143,20 @@ void Bookmarks::processCommand(int command)
 
 void Bookmarks::draw(bool forceRefresh)
 {
-	if(forceRefresh)
+	if(forceRefresh || m_refresh) {
 		ls("");
-	//clear this portion of the screen 
-	SDL_SetClipRect(m_screen, &m_clearRect);
-	SDL_FillRect(m_screen, &m_clearRect, SDL_MapRGB(m_screen->format, m_backColor.r, m_backColor.g, m_backColor.b));
+		//clear this portion of the screen 
+		SDL_SetClipRect(m_screen, &m_clearRect);
+		SDL_FillRect(m_screen, &m_clearRect, SDL_MapRGB(m_screen->format, m_backColor.r, m_backColor.g, m_backColor.b));
 
-	SDL_Surface *sText;
-	sText = TTF_RenderText_Blended(m_font, "Bookmarks", m_itemColor);
-	SDL_BlitSurface(sText,NULL, m_screen, &m_destRect );
-	SDL_FreeSurface(sText);
-	m_destRect.y += m_skipVal*2;
-	m_curItemClearRect.y += m_skipVal*2;
+		SDL_Surface *sText;
+		sText = TTF_RenderText_Blended(m_font, "Bookmarks", m_itemColor);
+		SDL_BlitSurface(sText,NULL, m_screen, &m_destRect );
+		SDL_FreeSurface(sText);
+		m_destRect.y += m_skipVal*2;
+		m_curItemClearRect.y += m_skipVal*2;
 
-	Scroller::draw();	
+		Scroller::draw();		
+	}
 }
 

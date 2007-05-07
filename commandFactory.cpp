@@ -5,13 +5,21 @@
 
 
 
-#define DELAY 5 
+#define DELAY 800000
 using namespace std;
-CommandFactory::CommandFactory()
+CommandFactory::CommandFactory(mpd_Connection* mpd)
 : m_timer(0)
 , m_next(false)
 , m_prev(false)
 , m_start(false)
+, m_select(false)
+, m_play(false)
+, m_prevDir(false)
+, m_rand(false)
+, m_append(false)
+, m_mpd(mpd)
+, m_setVol(false)
+, m_delayCommand(false)
 {
 
 }
@@ -21,16 +29,14 @@ CommandFactory::CommandFactory()
   CMD_ADD_TO_PL, CMD_APPEND_PL, CMD_NEW_PL, CMD_LOAD_PL, CMD_DEL_FROM_PL, CMD_IMMEDIATE_PLAY, 
   CMD_SELECT_MODE, CMD_TOGGLE_VIEW, CMD_SHOW_MENU
   CMD_MODE_RANDOM, CMD_MODE_REPEAT, CMD_QUIT */
-int CommandFactory::getCommand(bool keysHeld[], int curMode, int& repeatDelay, bool popupVisible)
+int CommandFactory::getCommand(bool keysHeld[], int curMode, int& repeatDelay, bool popupVisible, int volume, long delayTime)
 {
 	int command = 0;
 	
-	if(repeatDelay == 1 || repeatDelay > DELAY) {
+	if(repeatDelay == 1 || delayTime > DELAY) {
 		//common commands
-		if (keysHeld[GP2X_VK_FY] || keysHeld[SDLK_ESCAPE])
-			command = CMD_QUIT;	
-		else if (keysHeld[GP2X_VK_FX] || keysHeld[SDLK_s])
-			command = CMD_STOP;
+		if (keysHeld[SDLK_ESCAPE])
+			command = CMD_DETACH;	
 		else if (keysHeld[GP2X_VK_UP] || keysHeld[SDLK_UP]||keysHeld[SDLK_k])
 			command = CMD_UP;	
 		else if (keysHeld[GP2X_VK_DOWN] || keysHeld[SDLK_DOWN]||keysHeld[SDLK_j])
@@ -43,76 +49,173 @@ int CommandFactory::getCommand(bool keysHeld[], int curMode, int& repeatDelay, b
 			command = CMD_VOL_UP;
 		else if (keysHeld[GP2X_VK_VOL_DOWN] || keysHeld[SDLK_9])
 			command = CMD_VOL_DOWN;
-//		else if (keysHeld[SDLK_v])
-		else if (keysHeld[GP2X_VK_FA])
-			command	= CMD_TOGGLE_VIEW;
-		else if (keysHeld[GP2X_VK_SELECT] || keysHeld[SDLK_m])
-			command	= CMD_TOGGLE_MODE;
+		else if (keysHeld[GP2X_VK_SELECT] || keysHeld[SDLK_m]) {
+			if(!m_delayCommand) {
+				if(delayTime >= DELAY) {
+					command	= CMD_TOGGLE_VIEW;
+					m_select = false;
+					m_delayCommand = true;
+				} else if(delayTime < DELAY){
+					m_select = true;
+				}
+			}
+		}
 		else if (keysHeld[GP2X_VK_START] || keysHeld[SDLK_c]) {
-			if(repeatDelay == DELAY*5) {
-				command	= CMD_TOGGLE_SCREEN;
-				m_start = false;
-			} else if(repeatDelay < DELAY*5){
-				m_start = true;
+			if(!m_delayCommand) {
+				if(delayTime >= DELAY*4) {
+					command	= CMD_TOGGLE_SCREEN;
+					m_start = false;
+					m_delayCommand = true;
+				} else if(delayTime < DELAY*4){
+					m_start = true;
+				}
+			}
+		}
+		else if (keysHeld[GP2X_VK_FB] || keysHeld[SDLK_p]) {
+			if(popupVisible) {
+					command = CMD_POP_SELECT;
+			} else {
+				if(!m_delayCommand) {
+					if(delayTime >= DELAY) {
+						command	= CMD_PAUSE;
+						m_play = false;
+						m_delayCommand = true;
+					} else if(delayTime < DELAY){
+						m_play = true;
+					}
+				}
 			}
 		}
 		else {
 			if(popupVisible) {
-				if (keysHeld[GP2X_VK_FB] ||keysHeld[SDLK_RETURN] || keysHeld[SDLK_p] || keysHeld[SDLK_SPACE])
-					command = CMD_POP_SELECT;
-				else if (keysHeld[GP2X_VK_FX] || keysHeld[SDLK_s])
+				if (keysHeld[GP2X_VK_FX] || keysHeld[SDLK_s])
 					command = CMD_POP_CANCEL;
 			} else {
 				switch(curMode) {
 					case 0:
 						{ //song browser
-							if (keysHeld[GP2X_VK_FB] ||keysHeld[SDLK_RETURN] || keysHeld[SDLK_p])
-								command = CMD_IMMEDIATE_PLAY;
-							else if (keysHeld[SDLK_i])
+							if (keysHeld[GP2X_VK_FA] || keysHeld[SDLK_i])
 								command = CMD_ADD_TO_PL;
+							else if (keysHeld[GP2X_VK_FX] || keysHeld[SDLK_s]) {
+								if(!m_delayCommand) {
+									if(delayTime >= DELAY) {
+										command	= CMD_STOP;
+										m_prevDir = false;
+										m_delayCommand = true;
+									} else if(delayTime < DELAY){
+										m_prevDir = true;
+									}
+								}
+							}
+							else {
+								if (!keysHeld[GP2X_VK_FB]) {
+									if(m_play) {
+										command	= CMD_IMMEDIATE_PLAY;
+										m_play = false;
+									}
+									m_delayCommand = false;
+								}
+								if (!keysHeld[GP2X_VK_START]) {
+									if(m_start) {
+										command	= CMD_SHOW_MENU;
+										m_start = false;
+									}
+									m_delayCommand = false;
+								}
+								if (!keysHeld[GP2X_VK_FX]) {
+									if(m_prevDir) {
+										command = CMD_PREV_DIR;
+										m_prevDir = false;
+									}
+									m_delayCommand = false;
+								}
+								if (!keysHeld[GP2X_VK_SELECT]) {
+									if(m_select) {
+										command = CMD_TOGGLE_MODE;
+										m_select = false;
+									}
+									m_delayCommand = false;
+								}
+							}
 						}
 						break;
 					case 1:
 						{ //playlist
-							if (keysHeld[GP2X_VK_FB] ||keysHeld[SDLK_RETURN] || keysHeld[SDLK_p] || keysHeld[SDLK_SPACE])
-								command = CMD_PLAY_PAUSE;
-							else if (keysHeld[SDLK_d])
-								command = CMD_DEL_FROM_PL;
+							if (keysHeld[GP2X_VK_FY])
+								command	= CMD_MOVE_IN_PL;
+							else if (keysHeld[GP2X_VK_FX])
+								command = CMD_STOP;
 							else if (keysHeld[GP2X_VK_FR] || keysHeld[SDLK_n]) {
-								if(repeatDelay > DELAY) {
+								if(delayTime > DELAY) {
+									if(volume != 0)
+										m_volume = volume;
+									m_setVol = true;
+									//mpd_sendSetvolCommand(m_mpd, -100);
+									//mpd_finishCommand(m_mpd);
 									command = CMD_FF;
 									m_next = false;
 								}
 								else
 									m_next = true;
 							} else if (keysHeld[GP2X_VK_FL] || keysHeld[SDLK_b]) {
-								if(repeatDelay > DELAY) {
+								if(delayTime > DELAY) {
+									if(volume != 0)
+										m_volume = volume;
+									m_setVol = true;
+									//mpd_sendSetvolCommand(m_mpd, -100);
+									//mpd_finishCommand(m_mpd);
 									command = CMD_RW;	
 									m_prev = false;
 								}
 								else
 									m_prev = true;
+							} else if (keysHeld[GP2X_VK_FA] || keysHeld[SDLK_s]) {
+								if(!m_delayCommand) {
+									if(delayTime >= DELAY) {
+										command	= CMD_DEL_FROM_PL;
+										m_rand = false;
+										m_delayCommand = true;
+									} else if(delayTime < DELAY){
+										m_rand = true;
+									}
+								}
 							} else if (keysHeld[SDLK_r]) {
 								command = CMD_MODE_RANDOM;
 							}  else if (keysHeld[SDLK_t]) {
 								command = CMD_MODE_REPEAT;
-							}  else if (keysHeld[SDLK_w]) {
-								command = CMD_SAVE_PL;
-							}  else if (keysHeld[SDLK_d]) {
-								command = CMD_DEL_FROM_PL;
-							}  else if (keysHeld[SDLK_h]) {
-								command = CMD_MOVE_IN_PL;
 							} else { 
+								if (!keysHeld[GP2X_VK_FB]) {
+									if(m_play) {
+										command	= CMD_PLAY_PAUSE;
+										m_play = false;
+									}
+									m_delayCommand = false;
+								}
+								if (!keysHeld[GP2X_VK_FA]) {
+									if(m_rand) {
+										command	= CMD_RAND_RPT;
+										m_rand = false;
+									}
+									m_delayCommand = false;
+								}
 								if(!keysHeld[GP2X_VK_FR] && !keysHeld[SDLK_n]) {
 									if(m_next) {
 										command = CMD_NEXT;
 										m_next = false;
+									} else if(m_setVol){
+									//	mpd_sendSetvolCommand(m_mpd, m_volume);
+									//	mpd_finishCommand(m_mpd);
+										m_setVol = false;
 									}
 								}
 								if (!keysHeld[GP2X_VK_FL] && !keysHeld[SDLK_b]) {
 									if(m_prev) {
 										command = CMD_PREV;
 										m_prev = false;
+									} else if(m_setVol){
+								//		mpd_sendSetvolCommand(m_mpd, m_volume);
+								//		mpd_finishCommand(m_mpd);
+										m_setVol = false;
 									}
 								}
 								if (!keysHeld[GP2X_VK_START] && !keysHeld[SDLK_c]) {
@@ -120,41 +223,101 @@ int CommandFactory::getCommand(bool keysHeld[], int curMode, int& repeatDelay, b
 										command	= CMD_SHOW_MENU;
 										m_start = false;
 									}
+									m_delayCommand = false;
 								}
-						
+								if (!keysHeld[GP2X_VK_SELECT]) {
+									if(m_select) {
+										command = CMD_TOGGLE_MODE;
+										m_select = false;
+									}
+									m_delayCommand = false;
+								}
 							}
 						}
 						break;
 					case 2: 
 						{ //playlist browser
-							if (keysHeld[GP2X_VK_FB] ||keysHeld[SDLK_RETURN] || keysHeld[SDLK_p])
-								command = CMD_LOAD_PL;
-							else if (keysHeld[SDLK_a])
-								command = CMD_APPEND_PL;
-							else if (keysHeld[SDLK_d])
-								command = CMD_DEL_PL;
+							if (keysHeld[GP2X_VK_FX])
+								command = CMD_STOP;
+							else if (keysHeld[GP2X_VK_FA] || keysHeld[SDLK_s]) {
+								if(!m_delayCommand) {
+									if(delayTime >= DELAY) {
+										command	= CMD_DEL_PL;
+										m_append = false;
+										m_delayCommand = true;
+									} else if(delayTime < DELAY){
+										m_append = true;
+									}
+								}
+							}
 							else { 
+								if (!keysHeld[GP2X_VK_FB]) {
+									if(m_play) {
+										command	= CMD_LOAD_PL;
+										m_play = false;
+									}
+									m_delayCommand = false;
+								}
 								if (!keysHeld[GP2X_VK_START] && !keysHeld[SDLK_c]) {
 									if(m_start) {
 										command	= CMD_SHOW_MENU;
 										m_start = false;
 									}
+									m_delayCommand = false;
+								}
+								if (!keysHeld[GP2X_VK_SELECT]) {
+									if(m_select) {
+										command = CMD_TOGGLE_MODE;
+										m_select = false;
+									}
+									m_delayCommand = false;
+								}
+								if (!keysHeld[GP2X_VK_FA]) {
+									if(m_append) {
+										command	= CMD_APPEND_PL;
+										m_append = false;
+									}
+									m_delayCommand = false;
 								}
 							}
 						}
 						break;
 					case 3:
 						{ //bookmark browser
-							if (keysHeld[GP2X_VK_FB] ||keysHeld[SDLK_RETURN] || keysHeld[SDLK_p])
-								command = CMD_LOAD_BKMRK;
-							else if (keysHeld[SDLK_d])
-								command = CMD_DEL_BKMRK;
+							if (keysHeld[GP2X_VK_FX])
+								command = CMD_STOP;
+							else if (keysHeld[GP2X_VK_FA] || keysHeld[SDLK_s]) {
+								if(!m_delayCommand) {
+									if(delayTime >= DELAY) {
+										command	= CMD_DEL_BKMRK;
+										m_append = false;
+										m_delayCommand = true;
+									} else if(delayTime < DELAY){
+										m_append = true;
+									}
+								}
+							}
 							else { 
+								if (!keysHeld[GP2X_VK_FB]) {
+									if(m_play) {
+										command	= CMD_LOAD_BKMRK;
+										m_play = false;
+									}
+									m_delayCommand = false;
+								}
 								if (!keysHeld[GP2X_VK_START] && !keysHeld[SDLK_c]) {
 									if(m_start) {
 										command	= CMD_SHOW_MENU;
 										m_start = false;
 									}
+									m_delayCommand = false;
+								}
+								if (!keysHeld[GP2X_VK_SELECT]) {
+									if(m_select) {
+										command = CMD_TOGGLE_MODE;
+										m_select = false;
+									}
+									m_delayCommand = false;
 								}
 							}
 
@@ -166,5 +329,34 @@ int CommandFactory::getCommand(bool keysHeld[], int curMode, int& repeatDelay, b
 			}
 		}
 	}
+	return command;
+}
+
+
+int CommandFactory::getCommandWhileLocked(bool keysHeld[], int curMode, int& repeatDelay, bool popupVisible, long delayTime)
+{
+	int command = 0;
+	
+	if(repeatDelay == 1 || delayTime > DELAY) {
+		if (keysHeld[GP2X_VK_START] || keysHeld[SDLK_c]) {
+			if(!m_delayCommand) {
+				if(delayTime >= DELAY*4) {
+					command	= CMD_TOGGLE_SCREEN;
+					m_start = false;
+					m_delayCommand = true;
+				} else if(delayTime < DELAY*4){
+					m_start = true;
+				}
+			}
+		} else {
+			if (!keysHeld[GP2X_VK_START] && !keysHeld[SDLK_c]) {
+				if(m_start) {
+					m_start = false;
+				}
+				m_delayCommand = false;
+			}
+		}
+	}
+
 	return command;
 }

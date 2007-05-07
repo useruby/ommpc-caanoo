@@ -26,13 +26,17 @@ public:
 	std::string currentItemName();
 	std::string currentItemPath();
 
+	bool updatingDb() { return m_updatingDb;}
 protected:
 	std::string m_curDir;
 	
 	int m_view;
+	int m_curState;
 	std::string m_curTitle;
 	std::string m_curAlbum;	
 	int m_nowPlaying;
+	bool m_updatingDb;
+	bool m_refresh;
 };
 
 #endif

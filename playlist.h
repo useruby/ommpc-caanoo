@@ -9,6 +9,7 @@
 #include "config.h"
 #include "libmpdclient.h"
 #include "scroller.h"
+#include "timer.h"
 
 class Popup;
 
@@ -21,7 +22,7 @@ public:
 	void load(std::string dir);
 	void updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus, 
 							int rtmpdStatusChanged, mpd_Status* rtmpdStatus, int repeatDelay);
-    void processCommand(int event, int& rtmpdStatusChanged, mpd_Status* rtmpdStatus, int repeatDelay);
+    void processCommand(int event, int& rtmpdStatusChanged, mpd_Status* rtmpdStatus, int repeatDelay, int volume, long delayTime);
     void draw(bool force);
 	std::string currentItemName();
 	std::string currentItemPath();
@@ -41,11 +42,8 @@ public:
 protected:
 	std::string m_curDir;
 
-	SDL_Color m_pauseColor;
-	SDL_Color m_pauseItemColor;
 	int m_view;
 	int m_curElapsed;
-	int m_curState;
 	int m_nowPlaying;
 	int m_random;
 	bool m_otg;
@@ -57,6 +55,7 @@ protected:
 	int m_moveTo;
 
 	bool m_refresh;
+	Timer m_timer;
 };
 
 #endif

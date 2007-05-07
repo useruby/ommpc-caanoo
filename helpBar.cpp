@@ -1,7 +1,7 @@
 #include "helpBar.h"
 #include <iostream>
 #include <stdexcept>
-#define GP2X
+
 using namespace std;
 
 HelpBar::HelpBar(mpd_Connection* mpd, SDL_Surface* screen, Config& config, SDL_Rect& rect)
@@ -59,6 +59,18 @@ HelpBar::HelpBar(mpd_Connection* mpd, SDL_Surface* screen, Config& config, SDL_R
 	tmp.push_back("p-Prev");	
 	tmp.push_back("d-Delete");	
 	tmp.push_back("h-Move");	
+	m_modeCmdText.push_back(tmp);
+	tmp.clear();
+	//pl browser
+	tmp.push_back("B-Load");	
+	tmp.push_back("A-Append");	
+	tmp.push_back("Y-Delete");	
+	m_modeCmdText.push_back(tmp);
+	tmp.clear();
+	//bookmarks
+	tmp.push_back("B-Load");	
+	tmp.push_back("Y-Delete");	
+	m_modeCmdText.push_back(tmp);
 #endif
 	
 	m_config.getItemAsColor("sk_help_backColor", m_backColor.r, m_backColor.g, m_backColor.b);

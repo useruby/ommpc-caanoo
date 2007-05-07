@@ -25,7 +25,10 @@ class Timer {
         void start ()
         {
 #ifdef __unix__
-            gettimeofday (&m_start, 0) ;
+			if(!m_active) {
+				gettimeofday (&m_start, 0) ;
+				m_active = true;
+			}
 #else
             m_start = GetTickCount () ;
 #endif
@@ -35,6 +38,7 @@ class Timer {
         {
 #ifdef __unix__
             gettimeofday (&m_stop, 0) ;
+			m_active = false;
 #else
             m_stop = GetTickCount () ;
 #endif
@@ -50,11 +54,32 @@ class Timer {
             return static_cast <long> (m_stop - m_start) * 1000L ;
 #endif
         }
+	
+		int elaspedSeconds() const
+		{
+			return (m_stop.tv_sec - m_start.tv_sec);
+		}
+	
+		long check()
+		{
+            gettimeofday (&m_stop, 0) ;
+			
+            long delay = static_cast <long> (m_stop.tv_usec) +
+                (m_stop.tv_sec - m_start.tv_sec) * 1000000L
+                - m_start.tv_usec ;
+			return delay;
+		}
+
+		bool active()
+		{
+			return m_active;
+		}
 
     private:
 #ifdef __unix__
         struct timeval  m_start ;
         struct timeval  m_stop ;
+		bool m_active;
 #else
         DWORD           m_start ;
         DWORD           m_stop ;

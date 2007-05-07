@@ -1,12 +1,13 @@
 #include "statsBar.h"
 #include "threadParms.h"
+#include "commandFactory.h"
 #include <iostream>
 #include <stdexcept>
 #include <sstream>
 #include <iomanip>
 using namespace std;
 
-StatsBar::StatsBar(mpd_Connection* mpd, SDL_mutex* lock, SDL_Surface* screen, Config& config, SDL_Rect& rect)
+StatsBar::StatsBar(mpd_Connection* mpd, SDL_mutex* lock, SDL_Surface* screen, Config& config, SDL_Rect& rect, bool& initVolume)
 : m_mpd(mpd)
 , m_lock(lock)
 , m_screen(screen)
@@ -19,6 +20,7 @@ StatsBar::StatsBar(mpd_Connection* mpd, SDL_mutex* lock, SDL_Surface* screen, Co
 , m_total("")
 , m_bitRate("")
 , m_cols(config.getItemAsNum("sk_stats_numCols"))
+, m_firstPass(initVolume)
 {
 	m_destRect.x = rect.x;
 	m_destRect.y = rect.y;
@@ -47,10 +49,11 @@ void StatsBar::updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus,
 {
 	mpd_Status * status;
 	int statusChanged;
-
+	bool doVol = false;
 	if(rtmpdStatusChanged > 0) {
 		status = rtmpdStatus;
 		statusChanged = rtmpdStatusChanged;
+		doVol = true;
 	} else {
 		status = mpdStatus;
 		statusChanged = mpdStatusChanged;
@@ -59,10 +62,21 @@ void StatsBar::updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus,
 	if(statusChanged > 0) {
 		ostringstream out;
 		if(statusChanged & VOL_CHG) { 
-			out << "Vol: " << status->volume/5;
-			m_items[0] = out.str();
-		} 
-	
+			if(doVol || m_firstPass) {
+				out << "Vol: " << status->volume/5;
+				m_items[0] = out.str();
+				m_curVol = status->volume;
+				m_firstPass = false;
+			} /*else {
+				cout << "resetting" << endl;
+				mpd_sendSetvolCommand(m_mpd, -100);
+				mpd_finishCommand(m_mpd);
+				mpd_sendSetvolCommand(m_mpd, m_curVol);
+				mpd_finishCommand(m_mpd);
+
+			} */
+		}
+
 		if(statusChanged & RPT_CHG || statusChanged & RND_CHG) { 
 			out.str("");
 			string playType = "";

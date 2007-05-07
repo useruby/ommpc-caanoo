@@ -21,7 +21,7 @@ public:
 
 	void updateListing();
 	void updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus);
-	void processCommand(int command);
+	int processCommand(int command, int curMode);
 	void draw(bool forceRefresh);
 	std::string currentItemName();
 	std::string currentItemPath();
@@ -30,6 +30,8 @@ protected:
 	std::string m_curDir;
 
 	Playlist& m_playlist;
+	bool m_refresh;
+	int m_curState;
 };
 
 #endif

@@ -39,6 +39,7 @@ protected:
 	int m_lastItemNum;
 	std::string m_curItemName;
 	int m_curItemType;
+	int m_curState;
 	
 	int m_skipVal;
 	int m_numPerScreen;
@@ -48,6 +49,9 @@ protected:
 	SDL_Color m_itemColor;
 	SDL_Color m_curItemBackColor;
 	SDL_Color m_curItemColor;
+	
+	SDL_Color m_pauseColor;
+	SDL_Color m_pauseItemColor;
 	
 };
 

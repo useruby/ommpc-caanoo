@@ -12,7 +12,7 @@
 class StatsBar
 {
 public:
-	StatsBar(mpd_Connection* mpd, SDL_mutex* lock,  SDL_Surface* screen, Config& config, SDL_Rect& rect);
+	StatsBar(mpd_Connection* mpd, SDL_mutex* lock,  SDL_Surface* screen, Config& config, SDL_Rect& rect, bool&);
 
 	std::string formattedElapsedTime();
 	int elapsedTime();
@@ -45,7 +45,10 @@ protected:
 	int m_pos;
 	int m_inc;
 	int m_origY;
-	
+
+	int m_curVol;	
+	bool& m_firstPass;
+
 	//colors
 	SDL_Color m_backColor;
 	SDL_Color m_itemColor;
