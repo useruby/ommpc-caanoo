@@ -1,3 +1,25 @@
+/*****************************************************************************************
+
+ommpc(One More Music Player Client) - A Music Player Daemon client targetted for the gp2x
+
+Copyright (C) 2007 - Tim Temple(codertimt@gmail.com)
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+*****************************************************************************************/
+
 #include "playlist.h"
 #include "threadParms.h"
 #include "commandFactory.h"
@@ -5,6 +27,7 @@
 #include "timestamp.h"
 
 #include <iostream>
+#include <sstream>
 #include <stdexcept>
 #include <time.h>
 
@@ -59,11 +82,11 @@ void Playlist::load(std::string dir)
 {
 	if(!dir.empty()) { //load playlist from disk
 	}
-
 	mpd_sendPlaylistInfoCommand(m_mpd, -1);
-
+cout <<"here" <<endl;
 	//m_path = dir;
 	m_listing.clear();	
+	m_songsInfo.clear();
 	mpd_InfoEntity* mpdItem = mpd_getNextInfoEntity(m_mpd);
 	while(mpdItem != NULL) {
 		std::string item = "";
@@ -79,17 +102,28 @@ void Playlist::load(std::string dir)
 			} else {
 				item = mpdItem->info.song->file;
 			}
+			int pos = item.rfind("/");;
+			if(pos != string::npos) {
+				item = item.substr(pos+1);
+			}
+			m_listing.push_back(make_pair(item, type));
+			songInfo_t song;
+			if(mpdItem->info.song->title != NULL)
+				song.title  = mpdItem->info.song->title;
+			else 
+				song.title  = mpdItem->info.song->file;
+			if(mpdItem->info.song->artist != NULL)
+				song.artist  = mpdItem->info.song->artist;
+			song.file  = mpdItem->info.song->file;
+			m_songsInfo.push_back(song);
+			mpd_freeInfoEntity(mpdItem);
+			mpdItem = mpd_getNextInfoEntity(m_mpd);
 		} else {
 			throw runtime_error("Unknown mpd entity for playlist");
 		}
-		int pos = item.rfind("/");;
-		if(pos != string::npos) {
-			item = item.substr(pos+1);
-		}
-		m_listing.push_back(make_pair(item, type));
-		mpd_freeInfoEntity(mpdItem);
-		mpdItem = mpd_getNextInfoEntity(m_mpd);
 	}
+//	mpd_finishCommand(m_mpd);
+
 	m_lastItemNum = m_listing.size()-1;
 }
 
@@ -105,7 +139,6 @@ void Playlist::makeNowPlayingVisible()
 
 bool Playlist::showSaveDialog(Popup& popup)
 {
-	TimeStamp ts;
 	bool show = false;	
 	
 	Scroller::listing_t items;
@@ -113,8 +146,10 @@ bool Playlist::showSaveDialog(Popup& popup)
 	if(!m_name.empty())
 		items.push_back(make_pair(m_name, type));	
 			
-	items.push_back(make_pair("playlist_" + ts.currentTimeAsString(3, false), 
-								(int)Popup::POPUP_DO_SAVE_PL)); 
+	int num = m_config.getItemAsNum("nextPlaylistNum");
+	ostringstream numStr;
+	numStr << num;
+	items.push_back(make_pair("playlist_" + numStr.str(), (int)Popup::POPUP_DO_SAVE_PL)); 
 	items.push_back(make_pair("Cancel", (int)Popup::POPUP_CANCEL)); 
 	popup.setItemsText(items, type);
 	SDL_Rect popRect;
@@ -127,6 +162,18 @@ bool Playlist::showSaveDialog(Popup& popup)
 	show = true;
 
 	return show;
+}
+
+void Playlist::setNextNumOnSave()
+{
+	int num = m_config.getItemAsNum("nextPlaylistNum");
+	
+	++num;
+	ostringstream numStr;
+	numStr << num;
+	m_config.setItem("nextPlaylistNum", numStr.str().c_str());
+	m_config.saveConfigFile();
+//	m_config.readConfigFile();
 }
 
 int Playlist::getRand(int max)
@@ -187,16 +234,69 @@ std::string Playlist::currentItemPath()
 
 }
 
-std::string Playlist::nowPlayingText(int song)
+std::string Playlist::nowPlayingTitle(int song)
 {
 	if(song == -1) {
-		return m_listing[m_nowPlaying].first;
-	} else {
-		if(song <= m_listing.size() && !m_listing.empty())
-			return m_listing[song].first;
-		else 
-			return "";
+		song = m_nowPlaying;
 	}
+
+	if(song <= m_songsInfo.size() && !m_songsInfo.empty())
+		return m_songsInfo[song].title;
+	else 
+		return "";
+}
+
+std::string Playlist::nowPlayingArtist(int song)
+{
+	if(song == -1) {
+		song = m_nowPlaying;
+	}
+
+	if(song <= m_songsInfo.size() && !m_songsInfo.empty())
+		return m_songsInfo[song].artist;
+	else 
+		return "";
+}
+
+std::string Playlist::nowPlayingFile(int song)
+{
+	if(song == -1) {
+		song = m_nowPlaying;
+	}
+
+	if(song <= m_songsInfo.size() && !m_songsInfo.empty())
+		return m_songsInfo[song].file;
+	else 
+		return "";
+}
+
+std::string Playlist::nowPlayingFormat(int song)
+{
+	if(song == -1) {
+		song = m_nowPlaying;
+	}
+
+	if(song <= m_songsInfo.size() && !m_songsInfo.empty()) {
+		string title =  m_songsInfo[song].file;
+		int pos = title.rfind('.');
+		string ext = title.substr(pos+1);
+		if(ext == "mp3")
+			ext = " MP3";
+		else if(ext == "ogg")
+			ext = " OGG";
+		else if(ext == "mp4" || ext == "m4p")
+			ext = " AAC";
+		else if (ext == "flac")
+			ext = "FLAC";
+		else if (ext.length() == 2)
+			ext = "  " + ext;
+		else if (ext.length() == 3)
+			ext = " " + ext;
+
+		return ext;
+	}
+	else 
+		return "";
 }
 
 void Playlist::updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus,
@@ -379,6 +479,13 @@ void Playlist::draw(bool forceRefresh)
 		//clear this portion of the screen 
 		SDL_SetClipRect(m_screen, &m_clearRect);
 		SDL_FillRect(m_screen, &m_clearRect, SDL_MapRGB(m_screen->format, m_backColor.r, m_backColor.g, m_backColor.b));
+		
+	if(m_listing.size() == 0) {
+			SDL_Surface *sText;
+			sText = TTF_RenderText_Blended(m_font, "No songs in playlist...", m_itemColor);
+			SDL_BlitSurface(sText,NULL, m_screen, &m_destRect );
+			SDL_FreeSurface(sText);
+		}
 		
 		Scroller::draw();
 

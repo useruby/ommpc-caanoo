@@ -1,3 +1,25 @@
+/*****************************************************************************************
+
+ommpc(One More Music Player Client) - A Music Player Daemon client targetted for the gp2x
+
+Copyright (C) 2007 - Tim Temple(codertimt@gmail.com)
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+*****************************************************************************************/
+
 #ifdef __cplusplus
     #include <cstdlib>
 #else
@@ -58,7 +80,7 @@ bool showMainMenu(SDL_Surface* screen, Popup& popup)
 	popRect.x = (screen->w - popRect.w) / 2;
 	popRect.y = (screen->h - popRect.h) / 2;
 	popup.setSize(popRect);
-	popup.setTitle("Main Menu");
+	popup.setTitle("Main Menu      ommpc v0.1.0");
 	show = true;
 
 	return show;
@@ -204,7 +226,7 @@ int main ( int argc, char** argv )
 	if(pid ==-1) {
 		cout << "Fork failed" << endl;
 	} else if(pid == 0) { //child..attempt to launch mpd
-		execlp("./mpd", "./mpd", "mpd.conf",  NULL);
+		execlp("./mpd/mpd", "./mpd/mpd", "mpd.conf",  NULL);
 		cout << errno << " " << strerror(errno) << endl;
 	} else {
 
@@ -256,17 +278,17 @@ int main ( int argc, char** argv )
 			SDL_ShowCursor(SDL_DISABLE);
 
 			// load an image
-			SDL_Surface* bmp = IMG_Load("bg.jpg");
+/*			SDL_Surface* bmp = IMG_Load("bg.jpg");
 			if (!bmp)
 			{
 				printf("Unable to load bitmap: %s\n", SDL_GetError());
 				return 1;
 			}
-
 			// centre the bitmap on screen
 			SDL_Rect dstrect;
 			dstrect.x = (screen->w - bmp->w) / 2;
 			dstrect.y = (screen->h - bmp->h) / 2;
+*/
 
 			SDL_Rect mainRect = { config.getItemAsNum("sk_main_x"),
 				config.getItemAsNum("sk_main_y"),
@@ -333,7 +355,7 @@ int main ( int argc, char** argv )
 			Playlist playlist(threadParms.mpd, screen, font, config, mainRect, skipVal, numPerScreen);
 			PLBrowser plBrowser(threadParms.mpd, screen, font, mainRect, config, skipVal, numPerScreen, playlist);
 			NowPlaying playing(threadParms.mpd, threadParms.lockConnection, screen, config, nowPlayingRect, playlist);
-			StatsBar statsBar(threadParms.mpd, threadParms.lockConnection, screen, config, statsRect, initVolume);
+			StatsBar statsBar(threadParms.mpd, threadParms.lockConnection, screen, config, statsRect, initVolume, playlist);
 			HelpBar helpBar(threadParms.mpd, screen, config, helpRect);
 			Bookmarks bookmarks(threadParms.mpd, screen, font, mainRect, skipVal, numPerScreen, playlist, config, statsBar);
 			CommandFactory commandFactory(threadParms.mpd);
@@ -474,6 +496,7 @@ int main ( int argc, char** argv )
 									mpd_sendSaveCommand(threadParms.mpd, selText.c_str());
 									mpd_finishCommand(threadParms.mpd);
 									plBrowser.updateListing();
+									playlist.setNextNumOnSave();
 								}
 							} else if(action == Popup::POPUP_DO_LAUNCH){
 								command = processLaunchMenuItem(action, config.getItem("programRoot") + "shortcuts/" + selText);
@@ -559,6 +582,7 @@ int main ( int argc, char** argv )
 						}
 						mpd_sendStatusCommand(threadParms.mpd);
 						rtmpdStatus = mpd_getStatus(threadParms.mpd);
+						break;
 					case CMD_TOGGLE_MODE:
 						++curMode;
 						if(curMode == 4)
@@ -653,7 +677,7 @@ int main ( int argc, char** argv )
 				// finally, update the screen :)
 				if(!gp2xRegs.screenIsOff()) 
 					SDL_Flip(screen);
-				SDL_Delay(75);
+				SDL_Delay(85);
 				++frame;
 				/*	
 					++frame;
@@ -681,7 +705,7 @@ int main ( int argc, char** argv )
 			if(killMpd) {
 				SDL_Quit();
 			cout << "killit" << endl;
-				execlp("./mpd", "./mpd", "--kill", "mpd.conf", NULL);
+				execlp("./mpd/mpd", "./mpd/mpd", "--kill", "mpd.conf", NULL);
 			}
 #endif
 			printf("Exited cleanly\n");

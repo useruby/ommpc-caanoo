@@ -430,7 +430,6 @@ static void mpd_executeCommand(mpd_Connection * connection, char * command) {
 	fd_set fds;
 	char * commandPtr = command;
 	int commandLen = strlen(command);
-
 	if(!connection->doneProcessing && !connection->commandList) {
 		strcpy(connection->errorStr,"not done processing current command");
 		connection->error = 1;

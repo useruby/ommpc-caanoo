@@ -1,3 +1,25 @@
+/*****************************************************************************************
+
+ommpc(One More Music Player Client) - A Music Player Daemon client targetted for the gp2x
+
+Copyright (C) 2007 - Tim Temple(codertimt@gmail.com)
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+*****************************************************************************************/
+
 #include "threadFunctions.h"
 
 #include <iostream>
@@ -16,6 +38,8 @@ int pollMpdStatus(void *data)
 	threadParms_t* threadParms = (threadParms_t*) data;
 	int prevSong = -1;
 	int curSong = -1;
+	int prevSongId = -1;
+	int curSongId = -1;
 	long long  prevPlaylist = -1;
 	long long  curPlaylist = -1;
 	int prevRpt = -1;
@@ -40,6 +64,7 @@ int pollMpdStatus(void *data)
 		threadParms->mpdStatus = mpd_getStatus(threadParms->mpd);
 		mpd_finishCommand(threadParms->mpd);
 		curSong = threadParms->mpdStatus->song;
+		curSongId = threadParms->mpdStatus->songid;
 		curPlaylist = threadParms->mpdStatus->playlist;
 		curRpt = threadParms->mpdStatus->repeat;
 		curRnd = threadParms->mpdStatus->random;
@@ -50,9 +75,10 @@ int pollMpdStatus(void *data)
 		curState = threadParms->mpdStatus->state;	
 		curUpDb = threadParms->mpdStatus->updatingDb;
 
-		if(prevSong != curSong) {
+		if(prevSongId != curSongId) {
 			threadParms->mpdStatusChanged += SONG_CHG;
 			prevSong = curSong;
+			prevSongId = curSongId;
 		}
 		if(prevPlaylist != curPlaylist) {
 			threadParms->mpdStatusChanged += PL_CHG;
@@ -88,10 +114,10 @@ int pollMpdStatus(void *data)
 		}
 		SDL_mutexV(threadParms->lockConnection);
 		while(threadParms->mpdStatusChanged != 0) {
-			SDL_Delay(200);
+			SDL_Delay(300);
 		}
 		mpd_freeStatus(threadParms->mpdStatus);
-		SDL_Delay(200);
+		SDL_Delay(300);
 	
 	}
 
@@ -194,6 +220,6 @@ int loadAlbumArt(void* data)
 			artParms->doArtLoad = false;
 		}
 
-		SDL_Delay(200);
+		SDL_Delay(300);
 	}
 }

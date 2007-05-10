@@ -1,3 +1,25 @@
+/*****************************************************************************************
+
+ommpc(One More Music Player Client) - A Music Player Daemon client targetted for the gp2x
+
+Copyright (C) 2007 - Tim Temple(codertimt@gmail.com)
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+*****************************************************************************************/
+
 #ifndef __NOWPLAYING_H__
 #define __NOWPLAYING_H__
 
@@ -22,16 +44,30 @@ protected:
 	SDL_mutex* m_lock;
 	SDL_Surface* m_screen;
 	SDL_Rect m_destRect;
+	SDL_Rect m_artistRect;
 	SDL_Rect& m_clearRect;
+	SDL_Rect m_scrollClearRect;
+	SDL_Rect m_artistClearRect;
 	Config& m_config;
 	TTF_Font* m_font;
+	TTF_Font* m_fontSmall;
 	Playlist& m_playlist;
-	std::string m_name;
+	std::string m_title;
+	std::string m_artist;
+	std::string m_scrollingText;
+
+	std::string m_lastScrollText;
+	std::string m_lastArtistText;
+	int m_format;
+	int m_skipVal;
 	int m_pos;
 	int m_inc;
 	int m_origY;
 	int m_delayCnt;
+	int m_delayCnt2;
 
+	bool m_artistNoScroll;
+	bool m_noScroll;
 	int m_nowPlaying;
 	
 	//colors

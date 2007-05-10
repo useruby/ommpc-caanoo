@@ -1,3 +1,25 @@
+/*****************************************************************************************
+
+ommpc(One More Music Player Client) - A Music Player Daemon client targetted for the gp2x
+
+Copyright (C) 2007 - Tim Temple(codertimt@gmail.com)
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+*****************************************************************************************/
+
 #include "popup.h"
 #include "threadParms.h"
 #include "commandFactory.h"
@@ -7,6 +29,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <algorithm>
+#include <dirent.h>
 using namespace std;
 
 Popup::Popup(mpd_Connection* mpd, SDL_Surface* screen, Config& config, SDL_Rect& rect,
@@ -31,7 +54,7 @@ Popup::Popup(mpd_Connection* mpd, SDL_Surface* screen, Config& config, SDL_Rect&
 int Popup::selectedAction()
 {
 	int action;
-	if(m_type == POPUP_SAVE_PL || m_type == POPUP_MENU || m_type == POPUP_OPTIONS) 
+	if(m_type == POPUP_LIST || m_type == POPUP_MENU || m_type == POPUP_OPTIONS) 
 		action= m_listing[m_curItemNum].second;
 	else 
 		action = -1;
@@ -42,7 +65,7 @@ int Popup::selectedAction()
 string Popup::selectedText()
 {
 	string r;
-	if(m_type == POPUP_SAVE_PL || m_type == POPUP_MENU || m_type == POPUP_OPTIONS) 
+	if(m_type == POPUP_LIST || m_type == POPUP_MENU || m_type == POPUP_OPTIONS) 
 		r = m_listing[m_curItemNum].first;
 	else 
 		r = "";
@@ -78,12 +101,40 @@ void Popup::setOptionsText()
 	m_optionsText.push_back(curOption);
 	curOption.clear();
 
+	DIR * udir = opendir("skins/");
+
+	if(udir != NULL) {
+		struct dirent * dirent = readdir(udir);
+
+		bool done = false;
+		while(dirent != NULL) {
+			if(dirent->d_name[0] != '.') {
+				string ename = "skins/";
+				ename += dirent->d_name;
+				struct stat s;
+
+				if (stat(ename.c_str(), &s) < 0) {
+					string msg = "error calling stat on ";
+					msg += ename;
+					throw runtime_error(msg.c_str());
+				}
+
+				if (S_ISDIR(s.st_mode)) 
+					curOption.push_back(dirent->d_name);
+			}
+			dirent = readdir(udir);
+		}
+	}
+	m_optionsText.push_back(curOption);
+	curOption.clear();
+
 	m_optionsIters.clear();	
 	curIter = find(m_optionsText[0].begin(), m_optionsText[0].end(), m_config.getItem("cpuSpeed"));
 	m_optionsIters.push_back(curIter);
 	curIter = find(m_optionsText[1].begin(), m_optionsText[1].end(), m_config.getItem("showAlbumArt"));
 	m_optionsIters.push_back(curIter);
-
+	curIter = find(m_optionsText[2].begin(), m_optionsText[2].end(), m_config.getItem("skin"));
+	m_optionsIters.push_back(curIter);
 }
 
 void Popup::saveOptions()
@@ -102,6 +153,8 @@ void Popup::saveOptions()
 				name = "cpuSpeed";
 			else if(itemNum == 1)
 				name = "showAlbumArt";
+			else if(itemNum == 2)
+				name = "skin";
 			m_config.setItem(name, (*m_optionsIters[itemNum]));
 		}
 		++itemNum;
@@ -206,7 +259,7 @@ void Popup::drawSelectList()
 		m_selectedOptions.clear();
 		m_selectedOptions.push_back((*m_optionsIters[0]));
 		m_selectedOptions.push_back((*m_optionsIters[1]));
-		m_selectedOptions.push_back("Soon");
+		m_selectedOptions.push_back((*m_optionsIters[2]));
 		Scroller::draw(m_selectedOptions);
 	}
 	else 

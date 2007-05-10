@@ -1,3 +1,25 @@
+/*****************************************************************************************
+
+ommpc(One More Music Player Client) - A Music Player Daemon client targetted for the gp2x
+
+Copyright (C) 2007 - Tim Temple(codertimt@gmail.com)
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+*****************************************************************************************/
+
 #include "bookmarks.h"
 #include "threadParms.h"
 #include "commandFactory.h"
@@ -80,11 +102,17 @@ void Bookmarks::updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus)
 
 void Bookmarks::doSave()
 {
-	string curTitle = m_playlist.nowPlayingText();
+	string curTitle = m_playlist.nowPlayingTitle();
 	string formattedTime = m_sb.formattedElapsedTime();
 	int curTime = m_sb.elapsedTime();
 	string curMpdPath;
-	ofstream out((m_curDir+curTitle+"_"+formattedTime+".bkmrk").c_str(), ios::out| ios::trunc);
+	string bfile = m_curDir+curTitle+"_"+formattedTime+".bkmrk";
+	ofstream out(bfile.c_str(), ios::out| ios::trunc);
+   
+	if(out.fail()) {
+		cout << "unable to create bookmark: can't open " << bfile << endl;
+	}
+	
 
 	mpd_sendCurrentSongCommand(m_mpd);
 	mpd_InfoEntity* songEntity = mpd_getNextInfoEntity(m_mpd);
@@ -99,6 +127,7 @@ void Bookmarks::doSave()
 
 void Bookmarks::processCommand(int command)
 {
+	try {
 	if(Scroller::processCommand(command)) {
 		//scroller command...parent class processes
 	} else if(command == CMD_LOAD_BKMRK) {
@@ -139,6 +168,9 @@ void Bookmarks::processCommand(int command)
 		unlink((currentItemPath()+".bkmrk").c_str());
 		ls("");
 	} 
+	} catch (std::exception & e) {
+		cout << e.what() << endl;
+	}
 }
 
 void Bookmarks::draw(bool forceRefresh)

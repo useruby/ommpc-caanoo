@@ -98,7 +98,7 @@ plBrowser.o: /usr/include/SDL/SDL_video.h /usr/include/SDL/SDL_joystick.h
 plBrowser.o: /usr/include/SDL/SDL_quit.h /usr/include/SDL/SDL_loadso.h
 plBrowser.o: /usr/include/SDL/SDL_timer.h /usr/include/SDL/SDL_version.h
 plBrowser.o: /usr/include/SDL/SDL_ttf.h libmpdclient.h scroller.h
-plBrowser.o: threadParms.h commandFactory.h playlist.h config.h
+plBrowser.o: threadParms.h commandFactory.h playlist.h config.h timer.h
 browser.o: browser.h /usr/include/SDL/SDL.h /usr/include/SDL/SDL_main.h
 browser.o: /usr/include/SDL/SDL_stdinc.h /usr/include/SDL/SDL_config.h
 browser.o: /usr/include/SDL/SDL_platform.h /usr/include/SDL/begin_code.h
@@ -128,7 +128,7 @@ playlist.o: /usr/include/SDL/SDL_video.h /usr/include/SDL/SDL_joystick.h
 playlist.o: /usr/include/SDL/SDL_quit.h /usr/include/SDL/SDL_loadso.h
 playlist.o: /usr/include/SDL/SDL_timer.h /usr/include/SDL/SDL_version.h
 playlist.o: /usr/include/SDL/SDL_ttf.h config.h libmpdclient.h scroller.h
-playlist.o: threadParms.h commandFactory.h popup.h timestamp.h
+playlist.o: timer.h threadParms.h commandFactory.h popup.h timestamp.h
 main.o: /usr/include/SDL/SDL.h /usr/include/SDL/SDL_main.h
 main.o: /usr/include/SDL/SDL_stdinc.h /usr/include/SDL/SDL_config.h
 main.o: /usr/include/SDL/SDL_platform.h /usr/include/SDL/begin_code.h
@@ -144,8 +144,9 @@ main.o: /usr/include/SDL/SDL_quit.h /usr/include/SDL/SDL_loadso.h
 main.o: /usr/include/SDL/SDL_timer.h /usr/include/SDL/SDL_version.h
 main.o: /usr/include/SDL/SDL_ttf.h /usr/include/SDL/SDL_image.h config.h
 main.o: browser.h libmpdclient.h scroller.h plBrowser.h bookmarks.h
-main.o: playlist.h albumArt.h threadParms.h nowPlaying.h threadFunctions.h
-main.o: commandFactory.h statsBar.h helpBar.h timer.h popup.h gp2xregs.h
+main.o: playlist.h timer.h albumArt.h threadParms.h nowPlaying.h
+main.o: threadFunctions.h commandFactory.h statsBar.h helpBar.h popup.h
+main.o: gp2xregs.h
 config.o: config.h /usr/include/SDL/SDL.h /usr/include/SDL/SDL_main.h
 config.o: /usr/include/SDL/SDL_stdinc.h /usr/include/SDL/SDL_config.h
 config.o: /usr/include/SDL/SDL_platform.h /usr/include/SDL/begin_code.h
@@ -173,7 +174,7 @@ nowPlaying.o: /usr/include/SDL/SDL_video.h /usr/include/SDL/SDL_joystick.h
 nowPlaying.o: /usr/include/SDL/SDL_quit.h /usr/include/SDL/SDL_loadso.h
 nowPlaying.o: /usr/include/SDL/SDL_timer.h /usr/include/SDL/SDL_version.h
 nowPlaying.o: /usr/include/SDL/SDL_ttf.h libmpdclient.h config.h playlist.h
-nowPlaying.o: scroller.h threadParms.h
+nowPlaying.o: scroller.h timer.h threadParms.h
 statsBar.o: statsBar.h /usr/include/SDL/SDL.h /usr/include/SDL/SDL_main.h
 statsBar.o: /usr/include/SDL/SDL_stdinc.h /usr/include/SDL/SDL_config.h
 statsBar.o: /usr/include/SDL/SDL_platform.h /usr/include/SDL/begin_code.h
@@ -188,8 +189,8 @@ statsBar.o: /usr/include/SDL/SDL_video.h /usr/include/SDL/SDL_joystick.h
 statsBar.o: /usr/include/SDL/SDL_quit.h /usr/include/SDL/SDL_loadso.h
 statsBar.o: /usr/include/SDL/SDL_timer.h /usr/include/SDL/SDL_version.h
 statsBar.o: /usr/include/SDL/SDL_ttf.h libmpdclient.h config.h playlist.h
-statsBar.o: scroller.h threadParms.h
-commandFactory.o: commandFactory.h threadParms.h libmpdclient.h
+statsBar.o: scroller.h timer.h threadParms.h commandFactory.h
+commandFactory.o: commandFactory.h libmpdclient.h threadParms.h
 commandFactory.o: /usr/include/SDL/SDL.h /usr/include/SDL/SDL_main.h
 commandFactory.o: /usr/include/SDL/SDL_stdinc.h /usr/include/SDL/SDL_config.h
 commandFactory.o: /usr/include/SDL/SDL_platform.h
@@ -219,7 +220,7 @@ popup.o: /usr/include/SDL/SDL_video.h /usr/include/SDL/SDL_joystick.h
 popup.o: /usr/include/SDL/SDL_quit.h /usr/include/SDL/SDL_loadso.h
 popup.o: /usr/include/SDL/SDL_timer.h /usr/include/SDL/SDL_version.h
 popup.o: /usr/include/SDL/SDL_ttf.h libmpdclient.h config.h playlist.h
-popup.o: scroller.h threadParms.h commandFactory.h gp2xregs.h
+popup.o: scroller.h timer.h threadParms.h commandFactory.h gp2xregs.h
 scroller.o: scroller.h /usr/include/SDL/SDL.h /usr/include/SDL/SDL_main.h
 scroller.o: /usr/include/SDL/SDL_stdinc.h /usr/include/SDL/SDL_config.h
 scroller.o: /usr/include/SDL/SDL_platform.h /usr/include/SDL/begin_code.h
@@ -233,7 +234,8 @@ scroller.o: /usr/include/SDL/SDL_keysym.h /usr/include/SDL/SDL_mouse.h
 scroller.o: /usr/include/SDL/SDL_video.h /usr/include/SDL/SDL_joystick.h
 scroller.o: /usr/include/SDL/SDL_quit.h /usr/include/SDL/SDL_loadso.h
 scroller.o: /usr/include/SDL/SDL_timer.h /usr/include/SDL/SDL_version.h
-scroller.o: /usr/include/SDL/SDL_ttf.h libmpdclient.h commandFactory.h
+scroller.o: /usr/include/SDL/SDL_ttf.h libmpdclient.h config.h
+scroller.o: commandFactory.h
 timestamp.o: timestamp.h
 helpBar.o: helpBar.h /usr/include/SDL/SDL.h /usr/include/SDL/SDL_main.h
 helpBar.o: /usr/include/SDL/SDL_stdinc.h /usr/include/SDL/SDL_config.h
@@ -300,5 +302,6 @@ bookmarks.o: /usr/include/SDL/SDL_video.h /usr/include/SDL/SDL_joystick.h
 bookmarks.o: /usr/include/SDL/SDL_quit.h /usr/include/SDL/SDL_loadso.h
 bookmarks.o: /usr/include/SDL/SDL_timer.h /usr/include/SDL/SDL_version.h
 bookmarks.o: /usr/include/SDL/SDL_ttf.h libmpdclient.h scroller.h
-bookmarks.o: threadParms.h commandFactory.h playlist.h config.h statsBar.h
+bookmarks.o: threadParms.h commandFactory.h playlist.h config.h timer.h
+bookmarks.o: statsBar.h
 gp2xregs.o: gp2xregs.h

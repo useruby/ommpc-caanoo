@@ -55,13 +55,13 @@ LIBS = -lpthread -lSDLmain -lSDL_ttf -lSDL_gfx -lSDL_image -lSDL  -lfreetype -lp
 #-------------------------------------------------------------------------------
 # Target for creating simple client
 #-------------------------------------------------------------------------------
-ommpc2x.gpe: $(OBJ)
+ommpc2x: $(OBJ)
 	@echo $(OBJ)
 	@echo $(SRC)
 	$(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(LDFLAGS) \
 		$(SYSLIBS) $(LIBS)
 
-	$(STRIP) ommpc2x.gpe
+	$(STRIP) ommpc2x
 	@echo "SUCCESS"
 
 

@@ -1,3 +1,25 @@
+/*****************************************************************************************
+
+ommpc(One More Music Player Client) - A Music Player Daemon client targetted for the gp2x
+
+Copyright (C) 2007 - Tim Temple(codertimt@gmail.com)
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+*****************************************************************************************/
+
 #ifndef __STATSBAR_H__
 #define __STATSBAR_H__
 
@@ -12,7 +34,7 @@
 class StatsBar
 {
 public:
-	StatsBar(mpd_Connection* mpd, SDL_mutex* lock,  SDL_Surface* screen, Config& config, SDL_Rect& rect, bool&);
+	StatsBar(mpd_Connection* mpd, SDL_mutex* lock,  SDL_Surface* screen, Config& config, SDL_Rect& rect, bool&, Playlist& pl);
 
 	std::string formattedElapsedTime();
 	int elapsedTime();
@@ -45,6 +67,10 @@ protected:
 	int m_pos;
 	int m_inc;
 	int m_origY;
+	
+	int m_numCols;
+	int m_itemWidth;
+	int m_itemSpacing;
 
 	int m_curVol;	
 	bool& m_firstPass;
@@ -54,6 +80,8 @@ protected:
 	SDL_Color m_itemColor;
 	SDL_Color m_curItemBackColor;
 	SDL_Color m_curItemColor;
+
+	Playlist& m_playlist;
 };
 
 #endif

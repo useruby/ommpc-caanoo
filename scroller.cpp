@@ -1,3 +1,25 @@
+/*****************************************************************************************
+
+ommpc(One More Music Player Client) - A Music Player Daemon client targetted for the gp2x
+
+Copyright (C) 2007 - Tim Temple(codertimt@gmail.com)
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+*****************************************************************************************/
+
 #include "scroller.h"
 #include "config.h"
 #include "commandFactory.h"
@@ -134,10 +156,10 @@ void Scroller::draw(vector<string>& selectedOptions)
 			SDL_FreeSurface(sText);
 			if(numDisplayed < selectedOptions.size()) {
 				sText = TTF_RenderText_Blended(m_font, selectedOptions[numDisplayed].c_str(), m_itemColor);
-				m_destRect.x += 130;	
+				m_destRect.x += 100;	
 				SDL_BlitSurface(sText,NULL, m_screen, &m_destRect );
 
-				m_destRect.x -= 130;	
+				m_destRect.x -= 100;	
 				SDL_FreeSurface(sText);
 			}
 			m_destRect.y += m_skipVal;
