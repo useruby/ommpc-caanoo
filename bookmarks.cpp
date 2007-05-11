@@ -123,6 +123,7 @@ void Bookmarks::doSave()
 	out << curMpdPath << endl;
 	out << curTime << endl;
 	ls("");
+	m_refresh = true;
 }
 
 void Bookmarks::processCommand(int command)

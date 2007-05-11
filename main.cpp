@@ -66,6 +66,7 @@ bool showMainMenu(SDL_Surface* screen, Popup& popup)
 	int type = Popup::POPUP_MENU;
 	items.push_back(make_pair("Return to player", 0));	
 	items.push_back(make_pair("Save Playlist", 1));	
+	items.push_back(make_pair("Create Bookmark", 10));	
 	items.push_back(make_pair("Launch Program", 2));	
 	items.push_back(make_pair("Detach Client", 3));	
 	items.push_back(make_pair("Update Mpd Database", 9));	
@@ -76,7 +77,7 @@ bool showMainMenu(SDL_Surface* screen, Popup& popup)
 	popup.setItemsText(items, type);
 	SDL_Rect popRect;
 	popRect.w = 180;
-	popRect.h = popup.skipVal()*9+15;
+	popRect.h = popup.skipVal()*10+15;
 	popRect.x = (screen->w - popRect.w) / 2;
 	popRect.y = (screen->h - popRect.h) / 2;
 	popup.setSize(popRect);
@@ -113,6 +114,9 @@ int processMainMenuItem(int action, std::string item)
 			break;
 		case Popup::POPUP_MPD_UPDATE:
 			rCommand = CMD_MPD_UPDATE;
+			break;
+		case Popup::POPUP_BKMRK:
+			rCommand = CMD_SAVE_BKMRK;
 			break;
 	}
 	
@@ -591,6 +595,9 @@ int main ( int argc, char** argv )
 					case CMD_SAVE_PL:
 						popupVisible = playlist.showSaveDialog(popup);
 						break;
+					case CMD_SAVE_BKMRK:
+						bookmarks.doSave();
+						break;
 					case CMD_POP_CANCEL:
 						popupVisible = false;	
 						break;
@@ -682,12 +689,13 @@ int main ( int argc, char** argv )
 				/*	
 					++frame;
 					if(frame == 200)
+					if(timer.check() > 300000000) //5minutes
 					{
 					timer.stop();
 					int elapsed = timer.elapsed()/1000000;
-					int fps = frame/elapsed;
-					cout << "fps " << fps << endl;
-					frame = 0;
+					//int fps = frame/elapsed;
+					timeout << "time " << elapsed << endl;
+					//frame = 0;
 					timer.start();
 					}
 					*/

@@ -43,7 +43,7 @@ HelpBar::HelpBar(mpd_Connection* mpd, SDL_Surface* screen, Config& config, SDL_R
 	m_skipVal = TTF_FontLineSkip( m_font );
 
 	vector<string> tmp;
-#ifdef GP2X	
+//#ifdef GP2X	
 	//browser
 	tmp.push_back("B-Play/Pause");	
 	tmp.push_back("X-Go Back/Stop");	
@@ -70,7 +70,7 @@ HelpBar::HelpBar(mpd_Connection* mpd, SDL_Surface* screen, Config& config, SDL_R
 	tmp.push_back("X-Stop");	
 	tmp.push_back("A-Delete");	
 	m_modeCmdText.push_back(tmp);
-#else
+/*#else
 	tmp.push_back("p-Play/Pause");	
 	tmp.push_back("i-Append");	
 	tmp.push_back("s-Stop");	
@@ -95,7 +95,7 @@ HelpBar::HelpBar(mpd_Connection* mpd, SDL_Surface* screen, Config& config, SDL_R
 	tmp.push_back("Y-Delete");	
 	m_modeCmdText.push_back(tmp);
 #endif
-	
+*/	
 	m_config.getItemAsColor("sk_help_backColor", m_backColor.r, m_backColor.g, m_backColor.b);
 	m_config.getItemAsColor("sk_help_itemColor", m_itemColor.r, m_itemColor.g, m_itemColor.b);
 	m_config.getItemAsColor("sk_help_curItemBackColor", m_curItemBackColor.r, m_curItemBackColor.g, m_curItemBackColor.b);

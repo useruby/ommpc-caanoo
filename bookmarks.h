@@ -48,8 +48,8 @@ public:
 	std::string currentItemName();
 	std::string currentItemPath();
 
-protected:
 	void doSave();
+protected:
 	std::string m_curDir;
 
 	int m_nowPlaying;

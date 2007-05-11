@@ -43,7 +43,7 @@ public:
 	typedef enum {POPUP_LIST, POPUP_CONFIRM, POPUP_MENU, POPUP_OPTIONS}; // popup types
 	typedef enum {POPUP_CANCEL, POPUP_SAVE_PL, POPUP_LAUNCH, POPUP_DETACH, 
 				  POPUP_EXIT, POPUP_DO_SAVE_PL, POPUP_DO_LAUNCH, POPUP_SHOW_OPTIONS, 
-				  POPUP_SAVE_OPTIONS, POPUP_MPD_UPDATE}; //popup action
+				  POPUP_SAVE_OPTIONS, POPUP_MPD_UPDATE, POPUP_BKMRK}; //popup action
 	Popup(mpd_Connection* mpd, SDL_Surface* screen, Config& config, SDL_Rect& rect,
 				int skipVal, int numPerScreen, GP2XRegs& gp2xregs);
 	

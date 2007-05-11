@@ -26,6 +26,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "playlist.h"
 #include "config.h"
 #include <iostream>
+#include <sstream>
 #include <stdexcept>
 
 using namespace std;
@@ -48,6 +49,7 @@ void PLBrowser::ls(std::string dir)
 
 	m_curDir = dir;
 	m_listing.clear();
+	m_listing.push_back(make_pair("Save Playlist", 5));	
 	m_listing.push_back(make_pair("New Playlist", 3));	
 	m_listing.push_back(make_pair("RandomPlaylist", 4));	
 	mpd_InfoEntity* mpdItem = mpd_getNextInfoEntity(m_mpd);
@@ -121,6 +123,16 @@ int PLBrowser::processCommand(int command, int curMode)
 				mpd_finishCommand(m_mpd);
 				m_playlist.initRandomPlaylist();	
 				newMode = 1;
+			} else if(m_curItemType == 5) {
+				int num = m_config.getItemAsNum("nextPlaylistNum");
+				ostringstream numStr;
+				numStr << num;
+				string selText = "playlist_" + numStr.str(); 
+				mpd_sendSaveCommand(m_mpd, selText.c_str());
+				mpd_finishCommand(m_mpd);
+				updateListing();
+				m_playlist.setNextNumOnSave();
+				m_refresh = true;
 			}
 		} else if(command == CMD_PAUSE) {
 			if(m_curState == MPD_STATUS_STATE_PAUSE) {
