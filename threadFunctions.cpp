@@ -76,6 +76,8 @@ int pollMpdStatus(void *data)
 		curUpDb = threadParms->mpdStatus->updatingDb;
 
 		if(prevSongId != curSongId) {
+			cout << "psi " << prevSongId << endl;
+			cout << "csi " << curSongId << endl;
 			threadParms->mpdStatusChanged += SONG_CHG;
 			prevSong = curSong;
 			prevSongId = curSongId;

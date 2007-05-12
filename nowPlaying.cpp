@@ -70,10 +70,22 @@ NowPlaying::NowPlaying(mpd_Connection* mpd, SDL_mutex* lock, SDL_Surface* screen
 	m_format = m_config.getItemAsNum("sk_nP_format");
 }
 
-void NowPlaying::updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus)
+void NowPlaying::updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus,
+								int rtmpdStatusChanged, mpd_Status* rtmpdStatus)
 {
-	if(mpdStatusChanged & SONG_CHG) {
-		m_nowPlaying = mpdStatus->song;
+	mpd_Status * status;
+	int statusChanged;
+
+	if(rtmpdStatusChanged > 0) {
+		status = rtmpdStatus;
+		statusChanged = rtmpdStatusChanged;
+	} else {
+		status = mpdStatus;
+		statusChanged = mpdStatusChanged;
+	}
+
+	if(statusChanged & SONG_CHG) {
+		m_nowPlaying = status->song;
 		m_title = m_playlist.nowPlayingTitle(m_nowPlaying);
 		m_artist = m_playlist.nowPlayingArtist(m_nowPlaying);
 		if(m_format == 0)  {

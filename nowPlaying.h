@@ -36,7 +36,8 @@ class NowPlaying
 public:
 	NowPlaying(mpd_Connection* mpd, SDL_mutex* lock,  SDL_Surface* screen, Config& config, SDL_Rect& rect, Playlist& playlist);
 	
-	void updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus);
+	void updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus,
+					  int rtmpdStatusChanged, mpd_Status* rtmpdStatus);
 	void draw();
 protected:
 	

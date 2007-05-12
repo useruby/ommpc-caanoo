@@ -148,6 +148,7 @@ void StatsBar::updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus,
 			string volText = m_items[0];
 			string format = m_playlist.nowPlayingFormat();
 			if(!format.empty()) {
+				cout << volText << " " << format << endl;
 				volText.replace(volText.size()-4, 4, format); 
 				m_items[0] = volText;
 			}

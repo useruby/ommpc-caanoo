@@ -252,14 +252,15 @@ void Browser::draw(bool forceRefresh)
 		sText = TTF_RenderText_Blended(m_font, m_curDir.c_str(), m_itemColor);
 		SDL_BlitSurface(sText,NULL, m_screen, &m_destRect );
 		SDL_FreeSurface(sText);
-		m_destRect.y += m_skipVal*2;
-		m_curItemClearRect.y += m_skipVal*2;
 
 		if(m_listing.size() == 1) {
 			sText = TTF_RenderText_Blended(m_font, "No songs in database, update from Main Menu", m_itemColor);
 			SDL_BlitSurface(sText,NULL, m_screen, &m_destRect );
 			SDL_FreeSurface(sText);
 		}
+		
+		m_destRect.y += m_skipVal*2;
+		m_curItemClearRect.y += m_skipVal*2;
 
 		Scroller::draw();	
 

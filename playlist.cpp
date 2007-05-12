@@ -284,7 +284,7 @@ std::string Playlist::nowPlayingFormat(int song)
 			ext = " MP3";
 		else if(ext == "ogg")
 			ext = " OGG";
-		else if(ext == "mp4" || ext == "m4p")
+		else if(ext == "mp4" || ext == "m4p" || ext == "m4a")
 			ext = " AAC";
 		else if (ext == "flac")
 			ext = "FLAC";

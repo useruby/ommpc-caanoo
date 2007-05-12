@@ -220,7 +220,7 @@ int processOptionsMenuItem(int action, Popup& popup)
 
 int main ( int argc, char** argv )
 {
-	bool initVolume = false;
+	bool initVolume = true;
 	int pid;
 	int wpid;
 	int status;
@@ -364,7 +364,7 @@ int main ( int argc, char** argv )
 			Bookmarks bookmarks(threadParms.mpd, screen, font, mainRect, skipVal, numPerScreen, playlist, config, statsBar);
 			CommandFactory commandFactory(threadParms.mpd);
 			
-			int curMode = 1;	
+			int curMode = 0;	
 			int volume = 50;
 			try {
 				SDL_mutexP(threadParms.lockConnection);
@@ -621,7 +621,8 @@ int main ( int argc, char** argv )
 				playlist.updateStatus(threadParms.mpdStatusChanged, threadParms.mpdStatus, 
 								rtmpdStatusChanged, rtmpdStatus, repeatDelay);
 				plBrowser.updateStatus(threadParms.mpdStatusChanged, threadParms.mpdStatus);
-				playing.updateStatus(threadParms.mpdStatusChanged, threadParms.mpdStatus);
+				playing.updateStatus(threadParms.mpdStatusChanged, threadParms.mpdStatus, 
+						rtmpdStatusChanged, rtmpdStatus);
 				albumArt.updateStatus(threadParms.mpdStatusChanged, threadParms.mpdStatus,
 						rtmpdStatusChanged, rtmpdStatus);
 				statsBar.updateStatus(threadParms.mpdStatusChanged, threadParms.mpdStatus,
