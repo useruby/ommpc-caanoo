@@ -84,7 +84,7 @@ void NowPlaying::updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus,
 		statusChanged = mpdStatusChanged;
 	}
 
-	if(statusChanged & SONG_CHG) {
+	if(statusChanged & SONG_CHG || statusChanged & PL_CHG) {
 		m_nowPlaying = status->song;
 		m_title = m_playlist.nowPlayingTitle(m_nowPlaying);
 		m_artist = m_playlist.nowPlayingArtist(m_nowPlaying);

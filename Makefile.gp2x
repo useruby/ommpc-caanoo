@@ -5,9 +5,9 @@
 #-------------------------------------------------------------------------------
 # Be sure to use the cxx compiler
 #-------------------------------------------------------------------------------
-CC = open2x-gcc
-CXX = open2x-g++
-STRIP = open2x-strip
+CC = arm-open2x-linux-gcc
+CXX = arm-open2x-linux-g++
+STRIP = arm-open2x-linux-strip
 SDL_BASE = $(OPEN2X)/bin/
 
 #-------------------------------------------------------------------------------
@@ -15,13 +15,13 @@ SDL_BASE = $(OPEN2X)/bin/
 #-------------------------------------------------------------------------------
 O_FLAG = -Wall -Werror
 #O_FLAG = -O1
-OPTIMIZATION_FLAG = -g
+OPTIMIZATION_FLAG = -O2
 
 #-------------------------------------------------------------------------------
 # The directories to look for include files and libraries
 #-------------------------------------------------------------------------------
-INCDIR = -I. -I/usr/local/open2x/include/SDL
-LIB = -L. -L/usr/local/open2x/lib
+INCDIR = -I. -I/opt/open2x/gcc-4.1.1-glibc-2.3.6/include/SDL
+LIB = -L. -L/opt/open2x/gcc-4.1.1-glibc-2.3.6/lib
 
 #-------------------------------------------------------------------------------
 # Compiler flags
@@ -64,7 +64,9 @@ ommpc2x: $(OBJ)
 	$(STRIP) ommpc2x
 	@echo "SUCCESS"
 
-
+watchdog: 
+	$(CXX) $(CXXFLAGS) -c watchdog.cpp
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o watchdog watchdog.o config.o libmpdclient.o
 #-------------------------------------------------------------------------------
 # Target for "make all"
 #-------------------------------------------------------------------------------
@@ -210,3 +212,4 @@ popup.o: /usr/include/SDL/SDL_quit.h /usr/include/SDL/SDL_loadso.h
 popup.o: /usr/include/SDL/SDL_timer.h /usr/include/SDL/SDL_version.h
 popup.o: /usr/include/SDL/SDL_ttf.h libmpdclient.h config.h playlist.h
 popup.o: scroller.h threadParms.h commandFactory.h
+watchdog.o: watchdog.cpp

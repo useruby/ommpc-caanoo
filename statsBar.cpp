@@ -134,7 +134,7 @@ void StatsBar::updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus,
 		out << mpdStatus->crossfade;
 		m_crossfade = out.str();
 */
-		if(statusChanged & SONG_CHG) {
+		if(statusChanged & SONG_CHG || statusChanged & PL_CHG) {
 			int fill = 2;
 			int total = status->totalTime;
 			int mins = total/60;

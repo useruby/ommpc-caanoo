@@ -166,7 +166,7 @@ int PLBrowser::processCommand(int command, int curMode)
 void PLBrowser::draw(bool forceRefresh)
 {
 	if(forceRefresh || m_refresh) {
-		ls("");
+//		ls("");
 		//clear this portion of the screen 
 		SDL_SetClipRect(m_screen, &m_clearRect);
 		SDL_FillRect(m_screen, &m_clearRect, SDL_MapRGB(m_screen->format, m_backColor.r, m_backColor.g, m_backColor.b));

@@ -51,6 +51,7 @@ Bookmarks::Bookmarks(mpd_Connection* mpd, SDL_Surface* screen, TTF_Font* font, S
 
 void Bookmarks::ls(std::string dir)
 {
+cout << "bookmark dir " << m_curDir << endl;
 	m_listing.clear();
 	m_listing.push_back(make_pair("Create Bookmark", 7));	
 
@@ -72,6 +73,7 @@ void Bookmarks::ls(std::string dir)
 	}	
 			
 	m_lastItemNum = m_listing.size()-1;
+	m_refresh = true;
 }
 
 void Bookmarks::updateListing()
@@ -122,62 +124,66 @@ void Bookmarks::doSave()
 
 	out << curMpdPath << endl;
 	out << curTime << endl;
-	ls("");
+	ls(m_curDir);
 	m_refresh = true;
 }
 
 void Bookmarks::processCommand(int command)
 {
-	try {
-	if(Scroller::processCommand(command)) {
-		//scroller command...parent class processes
-	} else if(command == CMD_LOAD_BKMRK) {
-		if(m_curItemName == "Create Bookmark") {
-			doSave();
-		} else {
-			char tmp[256];
-			ifstream in((currentItemPath()+".bkmrk").c_str(), ios::in);
-			if(!in.fail()) {
-				in.getline(tmp, 256);
-				std::string songPath(tmp);
-				in.getline(tmp, 256);
-				int elapsed = atoi(tmp);
+	if(command > 0) {
+		m_refresh = true;
+		try {
+			if(Scroller::processCommand(command)) {
+				//scroller command...parent class processes
+			} else if(command == CMD_LOAD_BKMRK) {
+				if(m_curItemName == "Create Bookmark") {
+					doSave();
+				} else {
+					char tmp[256];
+					ifstream in((currentItemPath()+".bkmrk").c_str(), ios::in);
+					if(!in.fail()) {
+						in.getline(tmp, 256);
+						std::string songPath(tmp);
+						in.getline(tmp, 256);
+						int elapsed = atoi(tmp);
 
-				int id = mpd_sendAddIdCommand(m_mpd, songPath.c_str());
-				mpd_finishCommand(m_mpd);
-				mpd_sendMoveIdCommand(m_mpd, id, m_nowPlaying+1);
-				mpd_finishCommand(m_mpd);
-				mpd_sendPlayCommand(m_mpd, m_nowPlaying+1);
-				mpd_finishCommand(m_mpd);
-				mpd_sendSeekCommand(m_mpd, m_nowPlaying+1, elapsed);	
-				mpd_finishCommand(m_mpd);
-			}
-		}	
-	} else if(command == CMD_PAUSE) {
-		if(m_curState == MPD_STATUS_STATE_PAUSE) {
-			m_curState = MPD_STATUS_STATE_PLAY;	
-			mpd_sendPauseCommand(m_mpd, 0);
-			mpd_finishCommand(m_mpd);
-		} else if(m_curState == MPD_STATUS_STATE_PLAY) {
-			m_curState = MPD_STATUS_STATE_PAUSE;
-			mpd_sendPauseCommand(m_mpd, 1);
-			mpd_finishCommand(m_mpd);
+						int id = mpd_sendAddIdCommand(m_mpd, songPath.c_str());
+						mpd_finishCommand(m_mpd);
+						mpd_sendMoveIdCommand(m_mpd, id, m_nowPlaying+1);
+						mpd_finishCommand(m_mpd);
+						mpd_sendPlayCommand(m_mpd, m_nowPlaying+1);
+						mpd_finishCommand(m_mpd);
+						mpd_sendSeekCommand(m_mpd, m_nowPlaying+1, elapsed);	
+						mpd_finishCommand(m_mpd);
+					}
+				}	
+			} else if(command == CMD_PAUSE) {
+				if(m_curState == MPD_STATUS_STATE_PAUSE) {
+					m_curState = MPD_STATUS_STATE_PLAY;	
+					mpd_sendPauseCommand(m_mpd, 0);
+					mpd_finishCommand(m_mpd);
+				} else if(m_curState == MPD_STATUS_STATE_PLAY) {
+					m_curState = MPD_STATUS_STATE_PAUSE;
+					mpd_sendPauseCommand(m_mpd, 1);
+					mpd_finishCommand(m_mpd);
+				}
+			} else if(command == CMD_SAVE_BKMRK) {
+				doSave();
+			} else if(command == CMD_DEL_BKMRK) {
+				unlink((currentItemPath()+".bkmrk").c_str());
+				ls(m_curDir);
+				m_refresh = true;
+			} 
+		} catch (std::exception & e) {
+			cout << e.what() << endl;
 		}
-	} else if(command == CMD_SAVE_BKMRK) {
-		doSave();
-	} else if(command == CMD_DEL_BKMRK) {
-		unlink((currentItemPath()+".bkmrk").c_str());
-		ls("");
-	} 
-	} catch (std::exception & e) {
-		cout << e.what() << endl;
 	}
 }
 
 void Bookmarks::draw(bool forceRefresh)
 {
 	if(forceRefresh || m_refresh) {
-		ls("");
+		//ls(m_curDir);
 		//clear this portion of the screen 
 		SDL_SetClipRect(m_screen, &m_clearRect);
 		SDL_FillRect(m_screen, &m_clearRect, SDL_MapRGB(m_screen->format, m_backColor.r, m_backColor.g, m_backColor.b));
@@ -190,6 +196,7 @@ void Bookmarks::draw(bool forceRefresh)
 		m_curItemClearRect.y += m_skipVal*2;
 
 		Scroller::draw();		
+		m_refresh = false;
 	}
 }
 

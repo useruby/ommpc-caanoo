@@ -172,8 +172,8 @@ int CommandFactory::getCommand(bool keysHeld[], int curMode, int& repeatDelay, b
 									if(volume != 0)
 										m_volume = volume;
 									m_setVol = true;
-									//mpd_sendSetvolCommand(m_mpd, -100);
-									//mpd_finishCommand(m_mpd);
+									mpd_sendSetvolCommand(m_mpd, 0);
+									mpd_finishCommand(m_mpd);
 									command = CMD_FF;
 									m_next = false;
 								}
@@ -184,8 +184,8 @@ int CommandFactory::getCommand(bool keysHeld[], int curMode, int& repeatDelay, b
 									if(volume != 0)
 										m_volume = volume;
 									m_setVol = true;
-									//mpd_sendSetvolCommand(m_mpd, -100);
-									//mpd_finishCommand(m_mpd);
+									mpd_sendSetvolCommand(m_mpd, 0);
+									mpd_finishCommand(m_mpd);
 									command = CMD_RW;	
 									m_prev = false;
 								}
@@ -225,8 +225,12 @@ int CommandFactory::getCommand(bool keysHeld[], int curMode, int& repeatDelay, b
 										command = CMD_NEXT;
 										m_next = false;
 									} else if(m_setVol){
-									//	mpd_sendSetvolCommand(m_mpd, m_volume);
-									//	mpd_finishCommand(m_mpd);
+										mpd_sendSetvolCommand(m_mpd, m_volume);
+										mpd_finishCommand(m_mpd);
+										mpd_sendPauseCommand(m_mpd, 1);
+										mpd_finishCommand(m_mpd);
+										mpd_sendPauseCommand(m_mpd, 0);
+										mpd_finishCommand(m_mpd);
 										m_setVol = false;
 									}
 								}
@@ -235,8 +239,12 @@ int CommandFactory::getCommand(bool keysHeld[], int curMode, int& repeatDelay, b
 										command = CMD_PREV;
 										m_prev = false;
 									} else if(m_setVol){
-								//		mpd_sendSetvolCommand(m_mpd, m_volume);
-								//		mpd_finishCommand(m_mpd);
+										mpd_sendSetvolCommand(m_mpd, m_volume);
+										mpd_finishCommand(m_mpd);
+										mpd_sendPauseCommand(m_mpd, 1);
+										mpd_finishCommand(m_mpd);
+										mpd_sendPauseCommand(m_mpd, 0);
+										mpd_finishCommand(m_mpd);
 										m_setVol = false;
 									}
 								}

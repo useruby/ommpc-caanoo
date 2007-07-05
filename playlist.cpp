@@ -32,9 +32,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <time.h>
 
 using namespace std;
-#define X2DELAY 5000000
-#define X4DELAY 10000000
-#define X8DELAY 50000000
+#define X2DELAY 3000000
+#define X4DELAY 8000000
+#define X8DELAY 25000000
 #define FFWAIT 500000
 
 Playlist::Playlist(mpd_Connection* mpd, SDL_Surface* screen, TTF_Font* font, Config& config, SDL_Rect& rect, int skipVal, int numPerScreen)
@@ -365,10 +365,9 @@ void Playlist::processCommand(int command, int& rtmpdStatusChanged, mpd_Status* 
 					mpd_sendPauseCommand(m_mpd, 1);
 					mpd_finishCommand(m_mpd);
 				} else {
-					mpd_sendStopCommand(m_mpd);
-					mpd_finishCommand(m_mpd);
 					mpd_sendPlayCommand(m_mpd, m_curItemNum);
 					mpd_finishCommand(m_mpd);
+					SDL_Delay(100);
 					mpd_sendSetvolCommand( m_mpd, volume);
 					mpd_finishCommand(m_mpd);
 				}
@@ -384,17 +383,17 @@ void Playlist::processCommand(int command, int& rtmpdStatusChanged, mpd_Status* 
 				mpd_finishCommand(m_mpd);
 			}
 		} else if(command == CMD_NEXT) {
-			mpd_sendNextCommand(m_mpd);
-			mpd_sendPauseCommand(m_mpd, 0);
-			mpd_sendPauseCommand(m_mpd, 1);
-			mpd_finishCommand(m_mpd);
+					mpd_sendPlayCommand(m_mpd, m_nowPlaying+1);
+					mpd_finishCommand(m_mpd);
+//			mpd_sendNextCommand(m_mpd);
+//			mpd_finishCommand(m_mpd);
 			mpd_sendSetvolCommand( m_mpd, volume);
 			mpd_finishCommand(m_mpd);
 		} else if(command == CMD_PREV) {
-			mpd_sendPrevCommand(m_mpd);
-			mpd_sendPauseCommand(m_mpd, 0);
-			mpd_sendPauseCommand(m_mpd, 1);
-			mpd_finishCommand(m_mpd);
+					mpd_sendPlayCommand(m_mpd, m_nowPlaying-1);
+					mpd_finishCommand(m_mpd);
+//			mpd_sendPrevCommand(m_mpd);
+//			mpd_finishCommand(m_mpd);
 			mpd_sendSetvolCommand( m_mpd, volume);
 			mpd_finishCommand(m_mpd);
 		} else if(command == CMD_FF) {
@@ -413,7 +412,6 @@ void Playlist::processCommand(int command, int& rtmpdStatusChanged, mpd_Status* 
 					jump = 2;
 			
 				if(jump > 0 && (m_timer.check() > FFWAIT)) {	
-					cout << jump << endl;
 					mpd_sendSeekCommand(m_mpd, m_curItemNum, m_curElapsed + jump);
 					mpd_finishCommand(m_mpd);
 					m_curElapsed += jump;

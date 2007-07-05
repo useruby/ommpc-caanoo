@@ -88,7 +88,7 @@ void Popup::setOptionsText()
 {
 	vector<string> curOption;
 	vector<string>::iterator curIter;
-	for(int i=50; i<=220; i+=5) {
+	for(int i=75; i<=280; i+=5) {
 		ostringstream mhz;
 		mhz << i;
 		curOption.push_back(mhz.str());
@@ -197,6 +197,8 @@ void Popup::setSize(SDL_Rect& rect)
 	m_borderRect.y = m_clearRect.y-1;
 	m_borderRect.h = m_clearRect.h+2;
 	m_borderRect.w = m_clearRect.w+2;
+	
+	m_numPerScreen = (rect.h-(2*m_skipVal))/m_skipVal;
 
 }
 

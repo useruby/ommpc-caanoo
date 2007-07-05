@@ -81,7 +81,7 @@ bool showMainMenu(SDL_Surface* screen, Popup& popup)
 	popRect.x = (screen->w - popRect.w) / 2;
 	popRect.y = (screen->h - popRect.h) / 2;
 	popup.setSize(popRect);
-	popup.setTitle("Main Menu      ommpc v0.1.0");
+	popup.setTitle("Main Menu      ommpc v0.1.1");
 	show = true;
 
 	return show;
@@ -149,7 +149,7 @@ bool showLaunchMenu(SDL_Surface* screen, Popup& popup, string dir)
 	popup.setItemsText(items, type);
 	SDL_Rect popRect;
 	popRect.w = 180;
-	popRect.h = popup.skipVal()*7+15;
+	popRect.h = popup.skipVal()*8+15;
 	popRect.x = (screen->w - popRect.w) / 2;
 	popRect.y = (screen->h - popRect.h) / 2;
 	popup.setSize(popRect);
@@ -168,7 +168,7 @@ int processLaunchMenuItem(int action, std::string script)
 			break;
 		case Popup::POPUP_DO_LAUNCH:
 			SDL_Quit();
-			execlp(script.c_str(), script.c_str());
+			execlp(script.c_str(), script.c_str(), NULL);
 			break;
 	}
 	
@@ -354,7 +354,8 @@ int main ( int argc, char** argv )
 			int skipVal = TTF_FontLineSkip( font );
 			int numPerScreen = (mainRect.h-(2*skipVal))/skipVal;
 
-			Popup popup(threadParms.mpd, screen, config, popRect, skipVal, numPerScreen, gp2xRegs);
+			int popPerScreen = (popRect.h-(2*skipVal))/skipVal;
+			Popup popup(threadParms.mpd, screen, config, popRect, skipVal, popPerScreen, gp2xRegs);
 			Browser browser(threadParms.mpd, screen, font, mainRect, config, skipVal, numPerScreen);
 			Playlist playlist(threadParms.mpd, screen, font, config, mainRect, skipVal, numPerScreen);
 			PLBrowser plBrowser(threadParms.mpd, screen, font, mainRect, config, skipVal, numPerScreen, playlist);
@@ -536,6 +537,7 @@ int main ( int argc, char** argv )
 						rtmpdStatusChanged += VOL_CHG;
 						mpd_sendStatusCommand(threadParms.mpd);
 						rtmpdStatus = mpd_getStatus(threadParms.mpd);
+						mpd_finishCommand(threadParms.mpd);
 						volume = rtmpdStatus->volume;
 						break;
 					case CMD_VOL_DOWN:
@@ -544,6 +546,7 @@ int main ( int argc, char** argv )
 						rtmpdStatusChanged += VOL_CHG;
 						mpd_sendStatusCommand(threadParms.mpd);
 						rtmpdStatus = mpd_getStatus(threadParms.mpd);
+						mpd_finishCommand(threadParms.mpd);
 						volume = rtmpdStatus->volume;
 						break;
 					case CMD_MODE_RANDOM:
@@ -552,6 +555,7 @@ int main ( int argc, char** argv )
 						mpd_finishCommand(threadParms.mpd);
 						rtmpdStatusChanged += RND_CHG;
 						mpd_sendStatusCommand(threadParms.mpd);
+						mpd_finishCommand(threadParms.mpd);
 						rtmpdStatus = mpd_getStatus(threadParms.mpd);
 						break;
 					case CMD_MODE_REPEAT:
@@ -561,6 +565,7 @@ int main ( int argc, char** argv )
 						rtmpdStatusChanged += RPT_CHG;
 						mpd_sendStatusCommand(threadParms.mpd);
 						rtmpdStatus = mpd_getStatus(threadParms.mpd);
+						mpd_finishCommand(threadParms.mpd);
 						break;
 					case CMD_RAND_RPT:
 						if(!random && !repeat) {
@@ -586,11 +591,13 @@ int main ( int argc, char** argv )
 						}
 						mpd_sendStatusCommand(threadParms.mpd);
 						rtmpdStatus = mpd_getStatus(threadParms.mpd);
+						mpd_finishCommand(threadParms.mpd);
 						break;
 					case CMD_TOGGLE_MODE:
 						++curMode;
 						if(curMode == 4)
 							curMode = 0;
+						forceRefresh = true;
 						break;
 					case CMD_SAVE_PL:
 						popupVisible = playlist.showSaveDialog(popup);
