@@ -101,7 +101,9 @@ void Config::saveConfigFile()
 			configFile << (*cIter).first << "=" << (*cIter).second << endl;
 		}
 	}
-
+	
+	configFile.close();
+	sync();
 }
 
 

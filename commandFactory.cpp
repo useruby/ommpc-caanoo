@@ -25,8 +25,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <SDL.h>
 #include <iostream>
 
-
-
 #define DELAY 800000
 using namespace std;
 CommandFactory::CommandFactory(mpd_Connection* mpd)
@@ -84,11 +82,11 @@ int CommandFactory::getCommand(bool keysHeld[], int curMode, int& repeatDelay, b
 		}
 		else if (keysHeld[GP2X_VK_START] || keysHeld[SDLK_c]) {
 			if(!m_delayCommand) {
-				if(delayTime >= DELAY*4) {
+				if(delayTime >= DELAY*3) {
 					command	= CMD_TOGGLE_SCREEN;
 					m_start = false;
 					m_delayCommand = true;
-				} else if(delayTime < DELAY*4){
+				} else if(delayTime < DELAY*3){
 					m_start = true;
 				}
 			}
@@ -227,10 +225,6 @@ int CommandFactory::getCommand(bool keysHeld[], int curMode, int& repeatDelay, b
 									} else if(m_setVol){
 										mpd_sendSetvolCommand(m_mpd, m_volume);
 										mpd_finishCommand(m_mpd);
-										mpd_sendPauseCommand(m_mpd, 1);
-										mpd_finishCommand(m_mpd);
-										mpd_sendPauseCommand(m_mpd, 0);
-										mpd_finishCommand(m_mpd);
 										m_setVol = false;
 									}
 								}
@@ -240,10 +234,6 @@ int CommandFactory::getCommand(bool keysHeld[], int curMode, int& repeatDelay, b
 										m_prev = false;
 									} else if(m_setVol){
 										mpd_sendSetvolCommand(m_mpd, m_volume);
-										mpd_finishCommand(m_mpd);
-										mpd_sendPauseCommand(m_mpd, 1);
-										mpd_finishCommand(m_mpd);
-										mpd_sendPauseCommand(m_mpd, 0);
 										mpd_finishCommand(m_mpd);
 										m_setVol = false;
 									}
@@ -368,18 +358,26 @@ int CommandFactory::getCommandWhileLocked(bool keysHeld[], int curMode, int& rep
 	int command = 0;
 	
 	if(repeatDelay == 1 || delayTime > DELAY) {
-		if (keysHeld[GP2X_VK_START] || keysHeld[SDLK_c]) {
+		if (keysHeld[GP2X_VK_VOL_UP] && keysHeld[GP2X_VK_FB])
+			command = CMD_VOL_UP;
+		else if (keysHeld[GP2X_VK_VOL_DOWN] && keysHeld[GP2X_VK_FB])
+			command = CMD_VOL_DOWN;
+		else if (keysHeld[GP2X_VK_FL] && keysHeld[GP2X_VK_FB])
+			command = CMD_PREV;
+		else if (keysHeld[GP2X_VK_FR] && keysHeld[GP2X_VK_FB])
+			command = CMD_NEXT;
+		else if (keysHeld[GP2X_VK_START]) {
 			if(!m_delayCommand) {
-				if(delayTime >= DELAY*4) {
+				if(delayTime >= DELAY*3) {
 					command	= CMD_TOGGLE_SCREEN;
 					m_start = false;
 					m_delayCommand = true;
-				} else if(delayTime < DELAY*4){
+				} else if(delayTime < DELAY*3){
 					m_start = true;
 				}
 			}
 		} else {
-			if (!keysHeld[GP2X_VK_START] && !keysHeld[SDLK_c]) {
+			if (!keysHeld[GP2X_VK_START]) {
 				if(m_start) {
 					m_start = false;
 				}

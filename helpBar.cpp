@@ -45,30 +45,30 @@ HelpBar::HelpBar(mpd_Connection* mpd, SDL_Surface* screen, Config& config, SDL_R
 	vector<string> tmp;
 //#ifdef GP2X	
 	//browser
-	tmp.push_back("B-Play/Pause");	
-	tmp.push_back("X-Go Back/Stop");	
+	tmp.push_back("B-Play|Pause");	
+	tmp.push_back("X-Go Back|Stop");	
 	tmp.push_back("A-Append");	
 	m_modeCmdText.push_back(tmp);
 	tmp.clear();
 	//playlist	
-	tmp.push_back("B-Play_Pause/Pause");	
+	tmp.push_back("B-Play/Pause|Pause");	
 	tmp.push_back("X-Stop");	
-	tmp.push_back("A-Delete");	
+	tmp.push_back("A-Rnd/Rpt|Delete");	
 	tmp.push_back("Y-Move");	
-	tmp.push_back("R-Next/FF");	
-	tmp.push_back("L-Prev/RWD");	
+	tmp.push_back("R-Next|FF");	
+	tmp.push_back("L-Prev|RWD");	
 	m_modeCmdText.push_back(tmp);
 	tmp.clear();
 	//pl browser
-	tmp.push_back("B-Load/Pause");	
+	tmp.push_back("B-Load|Pause");	
 	tmp.push_back("X-Stop");	
 	tmp.push_back("A-Append/Delete");	
 	m_modeCmdText.push_back(tmp);
 	tmp.clear();
 	//bookmarks
-	tmp.push_back("B-Load/Pause");	
+	tmp.push_back("B-Load|Pause");	
 	tmp.push_back("X-Stop");	
-	tmp.push_back("A-Delete");	
+	tmp.push_back("A-None|Delete");	
 	m_modeCmdText.push_back(tmp);
 /*#else
 	tmp.push_back("p-Play/Pause");	

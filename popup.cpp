@@ -206,20 +206,38 @@ int Popup::processCommand(int command)
 {
 	int rCommand = command;
 
-	if(Scroller::processCommand(command)) {
-		rCommand = 0;
-	} else if(m_type == POPUP_OPTIONS) {
-		if(command == CMD_LEFT) {
-			if (m_optionsIters[m_curItemNum] == m_optionsText[m_curItemNum].begin())
-				m_optionsIters[m_curItemNum] = m_optionsText[m_curItemNum].end() - 1;
-			else
-				m_optionsIters[m_curItemNum]--;
-		} else if(command == CMD_RIGHT) {
-			m_optionsIters[m_curItemNum]++;
-			if (m_optionsIters[m_curItemNum] == m_optionsText[m_curItemNum].end())
-				m_optionsIters[m_curItemNum] = m_optionsText[m_curItemNum].begin();
+		if(command == CMD_DOWN) {
+			++Scroller::m_curItemNum;
+			if(Scroller::m_curItemNum > Scroller::m_lastItemNum) {
+				Scroller::m_topItemNum = Scroller::m_curItemNum = 0;
+			} else 	if(Scroller::m_curItemNum >= Scroller::m_numPerScreen+Scroller::m_topItemNum) {
+				++Scroller::m_topItemNum;
+			}
+			rCommand = 0;
+		} else if(command == CMD_UP) {
+			if(m_curItemNum > 0) {
+				--m_curItemNum;
+				if(m_curItemNum <= m_topItemNum && m_topItemNum >0)
+					--m_topItemNum;
+			} else if(m_curItemNum == 0) {
+				m_curItemNum = m_lastItemNum;
+				m_topItemNum = m_curItemNum - m_numPerScreen+1;			
+			}
+			rCommand = 0;
+		} else 	if(m_type == POPUP_OPTIONS) {
+			if(command == CMD_LEFT) {
+				if (m_optionsIters[m_curItemNum] == m_optionsText[m_curItemNum].begin())
+					m_optionsIters[m_curItemNum] = m_optionsText[m_curItemNum].end() - 1;
+				else
+					m_optionsIters[m_curItemNum]--;
+			rCommand = 0;
+			} else if(command == CMD_RIGHT) {
+				m_optionsIters[m_curItemNum]++;
+				if (m_optionsIters[m_curItemNum] == m_optionsText[m_curItemNum].end())
+					m_optionsIters[m_curItemNum] = m_optionsText[m_curItemNum].begin();
+			rCommand = 0;
+			}
 		}
-	}
 
 	return rCommand;
 

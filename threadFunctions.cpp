@@ -57,23 +57,36 @@ int pollMpdStatus(void *data)
 	int prevState = -1;
 	int curUpDb = -1;
 	int prevUpDb = -1;
+
+	// wait for MPD to become available
+	while(!threadParms->mpdReady) {
+		SDL_Delay(200);
+	}
+
+	// begin polling
 	while(!threadParms->pollStatusDone) {
 		SDL_mutexP(threadParms->lockConnection);
 //	std::cout << "polling status" << std::endl;
+		if (threadParms->mpdStatus != NULL) {
+			mpd_freeStatus(threadParms->mpdStatus);
+			threadParms->mpdStatus = NULL;
+		}
 		mpd_sendStatusCommand(threadParms->mpd);
 		threadParms->mpdStatus = mpd_getStatus(threadParms->mpd);
 		mpd_finishCommand(threadParms->mpd);
-		curSong = threadParms->mpdStatus->song;
-		curSongId = threadParms->mpdStatus->songid;
-		curPlaylist = threadParms->mpdStatus->playlist;
-		curRpt = threadParms->mpdStatus->repeat;
-		curRnd = threadParms->mpdStatus->random;
-		curBitRate = threadParms->mpdStatus->bitRate;
-		curElapsed = threadParms->mpdStatus->elapsedTime;
-		curTotal = threadParms->mpdStatus->totalTime;
-		curVol = threadParms->mpdStatus->volume;		
-		curState = threadParms->mpdStatus->state;	
-		curUpDb = threadParms->mpdStatus->updatingDb;
+		if (threadParms->mpdStatus != NULL) {
+			curSong = threadParms->mpdStatus->song;
+			curSongId = threadParms->mpdStatus->songid;
+			curPlaylist = threadParms->mpdStatus->playlist;
+			curRpt = threadParms->mpdStatus->repeat;
+			curRnd = threadParms->mpdStatus->random;
+			curBitRate = threadParms->mpdStatus->bitRate;
+			curElapsed = threadParms->mpdStatus->elapsedTime;
+			curTotal = threadParms->mpdStatus->totalTime;
+			curVol = threadParms->mpdStatus->volume;
+			curState = threadParms->mpdStatus->state;
+			curUpDb = threadParms->mpdStatus->updatingDb;
+		}
 
 		if(prevSongId != curSongId) {
 			threadParms->mpdStatusChanged += SONG_CHG;
@@ -113,23 +126,28 @@ int pollMpdStatus(void *data)
 			prevUpDb = curUpDb;
 		}
 		SDL_mutexV(threadParms->lockConnection);
-		while(threadParms->mpdStatusChanged != 0) {
+		do {
 			SDL_Delay(300);
-		}
-		mpd_freeStatus(threadParms->mpdStatus);
-		SDL_Delay(300);
-	
+		} while((threadParms->mpdStatusChanged != 0)
+				&& !threadParms->pollStatusDone);
 	}
 
-    printf("End status polling thread\n");
-    return(0);
+	SDL_mutexP(threadParms->lockConnection);
+	if (threadParms->mpdStatus != NULL) {
+		mpd_freeStatus(threadParms->mpdStatus);
+		threadParms->mpdStatus = NULL;
+	}
+	SDL_mutexV(threadParms->lockConnection);
+
+	printf("End status polling thread\n");
+	return(0);
 }
 
 int loadAlbumArt(void* data) 
 {
 	artThreadParms_t* artParms = (artThreadParms_t*) data;
 	//while(config.getItem("showAlbumArt") == "true") {
-	while(true) {
+	while(!artParms->done) {
 		if(artParms->doArtLoad) {
 			SDL_FreeSurface(artParms->artSurface);
 			SDL_Surface* tmp;
@@ -222,4 +240,7 @@ int loadAlbumArt(void* data)
 
 		SDL_Delay(300);
 	}
+
+	printf("End art-loading thread\n");
+	return(0);
 }

@@ -64,14 +64,14 @@ bool showMainMenu(SDL_Surface* screen, Popup& popup)
 	
 	Scroller::listing_t items;
 	int type = Popup::POPUP_MENU;
-	items.push_back(make_pair("Return to player", 0));	
-	items.push_back(make_pair("Save Playlist", 1));	
-	items.push_back(make_pair("Create Bookmark", 10));	
-	items.push_back(make_pair("Launch Program", 2));	
-	items.push_back(make_pair("Detach Client", 3));	
-	items.push_back(make_pair("Update Mpd Database", 9));	
-	items.push_back(make_pair("Player Options", 7));	
-	items.push_back(make_pair("Exit", 4));	
+	items.push_back(make_pair("Return to player", (int)Popup::POPUP_CANCEL));
+	items.push_back(make_pair("Save Playlist", (int)Popup::POPUP_SAVE_PL));
+	items.push_back(make_pair("Create Bookmark", (int)Popup::POPUP_BKMRK));
+	items.push_back(make_pair("Launch Program", (int)Popup::POPUP_LAUNCH));
+	items.push_back(make_pair("Detach Client", (int)Popup::POPUP_DETACH));
+	items.push_back(make_pair("Update Mpd Database", (int)Popup::POPUP_MPD_UPDATE));
+	items.push_back(make_pair("Player Options", (int)Popup::POPUP_SHOW_OPTIONS));
+	items.push_back(make_pair("Exit", (int)Popup::POPUP_EXIT));
 //	items.push_back(make_pair("", type));	
 			
 	popup.setItemsText(items, type);
@@ -81,7 +81,7 @@ bool showMainMenu(SDL_Surface* screen, Popup& popup)
 	popRect.x = (screen->w - popRect.w) / 2;
 	popRect.y = (screen->h - popRect.h) / 2;
 	popup.setSize(popRect);
-	popup.setTitle("Main Menu      ommpc v0.1.1");
+	popup.setTitle("Main Menu      ommpc v0.1.2");
 	show = true;
 
 	return show;
@@ -217,7 +217,6 @@ int processOptionsMenuItem(int action, Popup& popup)
 	return rCommand;
 }
 
-
 int main ( int argc, char** argv )
 {
 	bool initVolume = true;
@@ -229,9 +228,11 @@ int main ( int argc, char** argv )
 
 	if(pid ==-1) {
 		cout << "Fork failed" << endl;
+		exit(1);
 	} else if(pid == 0) { //child..attempt to launch mpd
 		execlp("./mpd/mpd", "./mpd/mpd", "mpd.conf",  NULL);
 		cout << errno << " " << strerror(errno) << endl;
+		exit(1);
 	} else {
 
 		//we wait and then assume mpd is now running or was already running
@@ -267,9 +268,6 @@ int main ( int argc, char** argv )
 				//Or:
 				//exit(1);
 			}
-
-			// make sure SDL cleans up before exit
-			atexit(SDL_Quit);
 
 			// create a new window
 			SDL_Surface* screen = SDL_SetVideoMode(320, 240, 32,
@@ -337,19 +335,32 @@ int main ( int argc, char** argv )
 			threadParms.mpd = mpd_newConnection(config.getItem("host").c_str(), 
 					config.getItemAsNum("port"),
 					config.getItemAsNum("timeout"));
-			threadParms.mpdStatus;
+			threadParms.mpdStatus = NULL;
 			threadParms.mpdStatusChanged = 0;
+			threadParms.mpdReady = false;
 			threadParms.pollStatusDone = false;
 			threadParms.lockConnection = SDL_CreateMutex();
-			
+
+			//enable status checking for interactive commands...
+			mpd_Status* rtmpdStatus = NULL;
+			int rtmpdState = MPD_STATUS_STATE_UNKNOWN;
+			int rtmpdStatusChanged = 0;
+
 			GP2XRegs gp2xRegs;
+			mpd_sendStatusCommand(threadParms.mpd);
+			rtmpdStatus = mpd_getStatus(threadParms.mpd);
+			mpd_finishCommand(threadParms.mpd);
+			if(rtmpdStatus != NULL)
+				rtmpdState = rtmpdStatus->state;
+			mpd_freeStatus(rtmpdStatus);
+			rtmpdStatus = NULL;
 #ifdef GP2X
-			mpd_sendPauseCommand(threadParms.mpd, 1);
-			mpd_finishCommand(threadParms.mpd);
+			if (rtmpdState == MPD_STATUS_STATE_PLAY) {
+				mpd_sendPauseCommand(threadParms.mpd, 1);
+				mpd_finishCommand(threadParms.mpd);
+			}
 			gp2xRegs.setClock(config.getItemAsNum("cpuSpeed"));
-			mpd_sendPauseCommand(threadParms.mpd, 0);
-			mpd_finishCommand(threadParms.mpd);
-#endif	
+#endif
 			TTF_Font* font = TTF_OpenFont( "Vera.ttf", 10 );
 			int skipVal = TTF_FontLineSkip( font );
 			int numPerScreen = (mainRect.h-(2*skipVal))/skipVal;
@@ -364,26 +375,21 @@ int main ( int argc, char** argv )
 			HelpBar helpBar(threadParms.mpd, screen, config, helpRect);
 			Bookmarks bookmarks(threadParms.mpd, screen, font, mainRect, skipVal, numPerScreen, playlist, config, statsBar);
 			CommandFactory commandFactory(threadParms.mpd);
-			
+
 			int curMode = 0;	
 			int volume = 50;
+			int isPlaying = 0;
 			try {
-				SDL_mutexP(threadParms.lockConnection);
 				Config stateConfig(".ommcState");
 				curMode = stateConfig.getItemAsNum("mode");
 				volume = stateConfig.getItemAsNum("vol");	
-				mpd_sendSetvolCommand(threadParms.mpd, -100);
-				mpd_finishCommand(threadParms.mpd);
+				isPlaying = stateConfig.getItemAsNum("playing");
+
+				if(volume == 0) volume = 50;
 				mpd_sendSetvolCommand(threadParms.mpd, volume);
 				mpd_finishCommand(threadParms.mpd);
 				initVolume = true;
-#ifdef GP2X
-				if(status == 0)   //only load playlist if mpd isn't already running...
-					playlist.loadState(stateConfig);
-#endif
-				SDL_mutexV(threadParms.lockConnection);
 			} catch(exception& e) {
-				SDL_mutexV(threadParms.lockConnection);
 				//carry on
 			}
 
@@ -399,6 +405,7 @@ int main ( int argc, char** argv )
 			SDL_Thread* artThread;
 			artThreadParms_t artParms;
 			artParms.doArtLoad = false;
+			artParms.done = false;
 			artParms.artSurface = NULL;	
 			artParms.destWidth = artRect.w;
 			artParms.destHeight = artRect.h;
@@ -409,10 +416,6 @@ int main ( int argc, char** argv )
 			}
 
 			AlbumArt albumArt(threadParms.mpd, screen, config, artRect, artParms);
-
-			//enable status checking for interactive commands...
-			mpd_Status* rtmpdStatus = NULL;
-			int rtmpdStatusChanged = 0;
 
 			bool done = false;
 			bool killMpd = false;
@@ -427,7 +430,6 @@ int main ( int argc, char** argv )
 			bool popupVisible = false;
 			SDL_Color backColor;
 			config.getItemAsColor("sk_screen_color", backColor.r, backColor.g, backColor.b);
-
 
 			Timer timer;	
 			Timer delayTimer;
@@ -520,9 +522,11 @@ int main ( int argc, char** argv )
 					case CMD_QUIT:
 						done = true;
 						killMpd = true;
+						popupVisible = false;
 						break;
 					case CMD_DETACH:
 						done = true;
+						popupVisible = false;
 						break;
 					case CMD_STOP:
 						mpd_sendStopCommand(threadParms.mpd);
@@ -555,8 +559,8 @@ int main ( int argc, char** argv )
 						mpd_finishCommand(threadParms.mpd);
 						rtmpdStatusChanged += RND_CHG;
 						mpd_sendStatusCommand(threadParms.mpd);
-						mpd_finishCommand(threadParms.mpd);
 						rtmpdStatus = mpd_getStatus(threadParms.mpd);
+						mpd_finishCommand(threadParms.mpd);
 						break;
 					case CMD_MODE_REPEAT:
 						repeat = !repeat;
@@ -621,7 +625,6 @@ int main ( int argc, char** argv )
 						mpd_sendUpdateCommand(threadParms.mpd, "");
 						mpd_finishCommand(threadParms.mpd);
 						break;	
-
 				}
 
 				browser.updateStatus(threadParms.mpdStatusChanged, threadParms.mpdStatus);
@@ -686,6 +689,26 @@ int main ( int argc, char** argv )
 					rtmpdStatus = NULL;
 				}
 				command = 0;
+
+				if(done) {
+					threadParms.pollStatusDone = true;
+					artParms.done = true;
+				}
+
+#ifdef GP2X
+				// start playing, if it was playing when we last exited,
+				// or if we had just paused an already-playing MPD daemon
+				if((rtmpdState == MPD_STATUS_STATE_PAUSE && isPlaying)
+				   || rtmpdState == MPD_STATUS_STATE_PLAY) {
+					mpd_sendPauseCommand(threadParms.mpd, 0);
+					mpd_finishCommand(threadParms.mpd);
+					// only do this once
+					rtmpdState = MPD_STATUS_STATE_UNKNOWN;
+				}
+#endif
+				// mark status polling as ready
+				threadParms.mpdReady = true;
+
 				SDL_mutexV(threadParms.lockConnection);
 				// DRAWING ENDS HERE
 
@@ -709,21 +732,55 @@ int main ( int argc, char** argv )
 					*/
 			} // end main loop
 
+			// Quit SDL
+			SDL_WaitThread(artThread, NULL);
+			SDL_WaitThread(statusThread, NULL);
+			SDL_Quit();
+
+			// get playing state
+			mpd_sendStatusCommand(threadParms.mpd);
+			rtmpdStatus = mpd_getStatus(threadParms.mpd);
+			mpd_finishCommand(threadParms.mpd);
+			if(rtmpdStatus != NULL) {
+				if (rtmpdStatus->state == MPD_STATUS_STATE_PLAY)
+					isPlaying = 1;
+				else
+					isPlaying = 0;
+				mpd_freeStatus(rtmpdStatus);
+				rtmpdStatus = NULL;
+			} else isPlaying = 0;
+
+			// pause MPD
+			if (isPlaying && killMpd) {
+				mpd_sendPauseCommand(threadParms.mpd, 1);
+				mpd_finishCommand(threadParms.mpd);
+			}
+
 			//save current state
 			ofstream ommcState(".ommcState", ios::out|ios::trunc);
 			ommcState << "mode=" << curMode << endl;
 			ommcState << "vol=" << volume << endl;
-			SDL_mutexP(threadParms.lockConnection);
-			playlist.saveState(ommcState);
-			SDL_mutexV(threadParms.lockConnection);
-			// all is well ;)
+			ommcState << "playing=" << isPlaying << endl;
+			ommcState.close();
+
 #ifdef GP2X
+			// kill MPD
 			if(killMpd) {
-				SDL_Quit();
-			cout << "killit" << endl;
-				execlp("./mpd/mpd", "./mpd/mpd", "--kill", "mpd.conf", NULL);
+				mpd_sendKillCommand(threadParms.mpd);
+				mpd_finishCommand(threadParms.mpd);
+				sync();
+				// Note: This causes at least the playlist file to be
+				// written before syncing, because MPD writes it
+				// before closing the socket.  It is possible that the
+				// PID file is not cleaned up in time for this,
+				// though.
+			} else {
+				sync();
 			}
 #endif
+			// free connection data
+			mpd_closeConnection(threadParms.mpd);
+
 			printf("Exited cleanly\n");
 			return 0;
 			//    }

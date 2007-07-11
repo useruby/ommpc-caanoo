@@ -71,7 +71,24 @@ bool Scroller::processCommand(int command)
 
 		}
 		done = true;
+	} else if(command == CMD_LEFT) {
+		if(m_curItemNum -m_numPerScreen >= 0) {
+			m_curItemNum -= m_numPerScreen;
+			m_topItemNum -= m_numPerScreen;
+		} else {
+			m_curItemNum = m_topItemNum = 0;
+		}
+		done = true;
+	} else if(command == CMD_RIGHT) {
+		if(m_lastItemNum-m_curItemNum >= m_numPerScreen) {
+			m_curItemNum += m_numPerScreen;
+			m_topItemNum += m_numPerScreen;
+		} else {
+			m_curItemNum = m_topItemNum = m_lastItemNum;
+		}
+		done = true;
 	}
+	
 
 	return done;
 }

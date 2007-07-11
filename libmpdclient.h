@@ -227,11 +227,20 @@ typedef struct _mpd_Stats {
 	unsigned long dbPlayTime;
 } mpd_Stats;
 
+typedef struct _mpd_SearchStats {
+	int numberOfSongs;
+	unsigned long playTime;
+} mpd_SearchStats;
+
 void mpd_sendStatsCommand(mpd_Connection * connection);
 
 mpd_Stats * mpd_getStats(mpd_Connection * connection);
 
 void mpd_freeStats(mpd_Stats * stats);
+
+mpd_SearchStats * mpd_getSearchStats(mpd_Connection * connection);
+
+void mpd_freeSearchStats(mpd_SearchStats * stats);
 
 /* SONG STUFF */
 
@@ -462,6 +471,9 @@ void mpd_sendLoadCommand(mpd_Connection * connection, const char * name);
 
 void mpd_sendRmCommand(mpd_Connection * connection, const char * name);
 
+void mpd_sendRenameCommand(mpd_Connection *connection, const char *from,
+                           const char *to);
+
 void mpd_sendShuffleCommand(mpd_Connection * connection);
 
 void mpd_sendClearCommand(mpd_Connection * connection);
@@ -567,6 +579,14 @@ void mpd_sendNotCommandsCommand(mpd_Connection * connection);
  */
 char *mpd_getNextCommand(mpd_Connection *connection);
 
+void mpd_sendUrlHandlersCommand(mpd_Connection * connection);
+
+char *mpd_getNextHandler(mpd_Connection * connection);
+
+void mpd_sendTagTypesCommand(mpd_Connection * connection);
+
+char *mpd_getNextTagType(mpd_Connection * connection);
+
 /**
  * @param connection a MpdConnection
  * @param path	the path to the playlist.
@@ -628,6 +648,25 @@ void mpd_commitSearch(mpd_Connection *connection);
  * mpd_getNextTag to get the results
  */
 void mpd_startFieldSearch(mpd_Connection *connection, int type);
+
+void mpd_startPlaylistSearch(mpd_Connection *connection, int exact);
+
+void mpd_startStatsSearch(mpd_Connection *connection);
+
+void mpd_sendPlaylistClearCommand(mpd_Connection *connection, char *path);
+
+void mpd_sendPlaylistAddCommand(mpd_Connection *connection,
+                                char *playlist, char *path);
+
+void mpd_sendPlaylistMoveCommand(mpd_Connection *connection,
+                                 char *playlist, int from, int to);
+
+void mpd_sendPlaylistDeleteCommand(mpd_Connection *connection,
+                                   char *playlist, int pos);
+
+/* Custom command for ommpc2x */
+void mpd_sendKillCommand(mpd_Connection *connection);
+
 #ifdef __cplusplus
 }
 #endif

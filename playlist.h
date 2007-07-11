@@ -49,9 +49,6 @@ public:
 	std::string currentItemName();
 	std::string currentItemPath();
 
-
-	void saveState(std::ofstream& ommcState);
-	void loadState(Config& stateConfig);
 	void makeNowPlayingVisible();
 	bool showSaveDialog(Popup& popup);
 	void setNextNumOnSave();
@@ -80,6 +77,7 @@ protected:
 	int m_moveFrom;
 	int m_moveTo;
 
+	std::vector<int> m_used;
 	bool m_refresh;
 	Timer m_timer;
 	typedef struct { 

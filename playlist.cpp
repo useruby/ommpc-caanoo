@@ -59,31 +59,11 @@ Playlist::Playlist(mpd_Connection* mpd, SDL_Surface* screen, TTF_Font* font, Con
 	m_timer.stop();
 }
 
-void Playlist::saveState(ofstream& ommcState)
-{
-	ommcState << "plview=" << m_view << endl;
-
-	mpd_sendRmCommand(m_mpd, ".ommcPL");
-	mpd_finishCommand(m_mpd);
-	mpd_sendSaveCommand(m_mpd, ".ommcPL");
-	mpd_finishCommand(m_mpd);
-}
-
-void Playlist::loadState(Config& stateConfig)
-{
-	m_view = stateConfig.getItemAsNum("plview");
-	mpd_sendClearCommand(m_mpd);
-	mpd_finishCommand(m_mpd);
-	mpd_sendLoadCommand(m_mpd, ".ommcPL");	
-	mpd_finishCommand(m_mpd);
-}
-
 void Playlist::load(std::string dir)
 {
 	if(!dir.empty()) { //load playlist from disk
 	}
 	mpd_sendPlaylistInfoCommand(m_mpd, -1);
-cout <<"here" <<endl;
 	//m_path = dir;
 	m_listing.clear();	
 	m_songsInfo.clear();
@@ -205,10 +185,21 @@ void Playlist::initRandomPlaylist()
 		mpdItem = mpd_getNextInfoEntity(m_mpd);
 	}
 
+	m_used.clear();
 	int size = m_all.size();
-	for(int i=0; i<65; ++i) {
-		mpd_sendAddCommand(m_mpd, m_all[getRand(size)].c_str());	
-		mpd_finishCommand(m_mpd);
+	bool makeDistinct = false;
+	if(size > 65)
+		makeDistinct = true;	
+	int numAdded = 0;
+	while(numAdded < 65) {
+		int next = getRand(size);
+		if(!makeDistinct || 
+				(makeDistinct && find(m_used.begin(), m_used.end(), next) == m_used.end())) {
+			mpd_sendAddCommand(m_mpd, m_all[next].c_str());	
+			mpd_finishCommand(m_mpd);
+			++numAdded;
+			m_used.push_back(next);
+		}
 	}
 	m_otg = true;
 	load("");
@@ -330,17 +321,23 @@ void Playlist::updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus,
 		makeNowPlayingVisible();
 		m_refresh = true;
 /*
-		if(m_random && m_safe) {
+		if(m_random) {
 			//append new random song
 			mpd_sendDeleteCommand(m_mpd, 0);
 			mpd_finishCommand(m_mpd);
-			mpd_sendAddCommand(m_mpd, m_all[getRand(m_all.size())].c_str());	
+			int size = m_all.size();
+			int next= getRand(size);
+			if(m_used.size() >= size)
+				m_used.clear();
+			while(find(m_used.begin(), m_used.end(), next) != m_used.end()) {
+				next= getRand(size);
+			}
+			mpd_sendAddCommand(m_mpd, m_all[next].c_str());	
+			m_used.push_back(next);
 			mpd_finishCommand(m_mpd);
-			m_safe = false;
-		} else {
-			m_safe = true;
 		}
 */
+
 	}
 
 }
@@ -349,7 +346,7 @@ void Playlist::processCommand(int command, int& rtmpdStatusChanged, mpd_Status* 
 {
 	if(command > 0) {
 		m_refresh = true;
-		if(m_moveFrom >= 0 && command != 0 && command != CMD_UP && command != CMD_DOWN && command != CMD_MOVE_IN_PL) {
+		if(m_moveFrom >= 0 && command != 0 && command != CMD_UP && command != CMD_DOWN && command != CMD_MOVE_IN_PL && command != CMD_RIGHT && command != CMD_LEFT) {
 			m_moveFrom = -1;
 		}	
 		if(Scroller::processCommand(command)) {
@@ -367,9 +364,9 @@ void Playlist::processCommand(int command, int& rtmpdStatusChanged, mpd_Status* 
 				} else {
 					mpd_sendPlayCommand(m_mpd, m_curItemNum);
 					mpd_finishCommand(m_mpd);
-					SDL_Delay(100);
-					mpd_sendSetvolCommand( m_mpd, volume);
-					mpd_finishCommand(m_mpd);
+		//			SDL_Delay(100);
+		//			mpd_sendSetvolCommand( m_mpd, volume);
+		//			mpd_finishCommand(m_mpd);
 				}
 			}
 		} else if(command == CMD_PAUSE) {
@@ -383,18 +380,10 @@ void Playlist::processCommand(int command, int& rtmpdStatusChanged, mpd_Status* 
 				mpd_finishCommand(m_mpd);
 			}
 		} else if(command == CMD_NEXT) {
-					mpd_sendPlayCommand(m_mpd, m_nowPlaying+1);
-					mpd_finishCommand(m_mpd);
-//			mpd_sendNextCommand(m_mpd);
-//			mpd_finishCommand(m_mpd);
-			mpd_sendSetvolCommand( m_mpd, volume);
+			mpd_sendNextCommand(m_mpd);
 			mpd_finishCommand(m_mpd);
 		} else if(command == CMD_PREV) {
-					mpd_sendPlayCommand(m_mpd, m_nowPlaying-1);
-					mpd_finishCommand(m_mpd);
-//			mpd_sendPrevCommand(m_mpd);
-//			mpd_finishCommand(m_mpd);
-			mpd_sendSetvolCommand( m_mpd, volume);
+			mpd_sendPrevCommand(m_mpd);
 			mpd_finishCommand(m_mpd);
 		} else if(command == CMD_FF) {
 			if(repeatDelay > 0) {

@@ -51,12 +51,14 @@ typedef struct {
 	mpd_Connection* mpd;
 	mpd_Status * mpdStatus;
 	int mpdStatusChanged;
+	bool mpdReady;
 	bool pollStatusDone;
 	SDL_mutex* lockConnection;
 } threadParms_t;
 
 typedef struct {
 	bool doArtLoad;
+	bool done;
 	std::string songFile;
 	SDL_Surface* artSurface;
 	int destWidth;

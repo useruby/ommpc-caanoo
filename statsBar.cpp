@@ -95,8 +95,20 @@ void StatsBar::updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus,
 		ostringstream out;
 		if(statusChanged & VOL_CHG) { 
 			if(doVol || m_firstPass) {
-				out << "Vol: " << status->volume/5 << "   ";
+				string ws;	
 				string format = m_playlist.nowPlayingFormat();
+				if(status->volume < 10) {
+					if(format.length() == 3)
+						ws = "     ";
+					else
+						ws = "    ";
+				} else {
+					if(format.length() == 3)
+						ws = "  ";
+					else
+						ws = " ";
+				}	
+				out << "Vol: " << status->volume/5 << ws;
 				if(!format.empty()) {
 					out << format;	
 				} else {
