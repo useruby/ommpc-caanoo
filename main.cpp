@@ -86,7 +86,7 @@ bool showMainMenu(SDL_Surface* screen, Popup& popup)
 	popRect.x = (screen->w - popRect.w) / 2;
 	popRect.y = (screen->h - popRect.h) / 2;
 	popup.setSize(popRect);
-	popup.setTitle("  Main Menu      ommpc v0.2.0");
+	popup.setTitle("  Main Menu      ommpc v0.2.1");
 	show = true;
 
 	return show;
