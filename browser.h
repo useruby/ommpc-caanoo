@@ -31,11 +31,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "scroller.h"
 
 class Config;
+class GuiPos;
 
 class Browser : public Scroller
 {
 public:
-    Browser(mpd_Connection* mpd, SDL_Surface* screen, TTF_Font* font, SDL_Rect& rect, 
+    Browser(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* screen, TTF_Font* font, SDL_Rect& rect, 
 				Config& config, int skipVal, int numPerScreen);
     void ls(std::string dir="");
 	
@@ -43,7 +44,7 @@ public:
 	void browseArtists();	
 	void browseAlbumsByArtist(std::string artist);	
 	void updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus);
-	void processCommand(int command);
+	int processCommand(int command, GuiPos& guiPos);
 	void draw(bool forceRefresh);
 	std::string currentItemName();
 	std::string currentItemPath();
@@ -58,6 +59,7 @@ protected:
 	int m_nowPlaying;
 	bool m_updatingDb;
 	bool m_refresh;
+	SDL_Surface* m_dbMsg;
 };
 
 #endif

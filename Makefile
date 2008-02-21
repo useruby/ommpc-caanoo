@@ -35,15 +35,15 @@ CXXFLAGS      = $(OPTIMIZATION_FLAG) $(INCDIR) $(LIB)
 .c.o:
 	$(CC) $(CXXFLAGS) -c $<
 .c:
-	$(CC) $(CXXFLAGS) $< -o $@
+	$(CC) $(CXXFLAGS) $< -o pc/$@
 	
 .cpp.o:
 	$(CXX) $(CXXFLAGS) -c $<
 
 .cpp:
-	$(CXX) $(CXXFLAGS) $< -o $@
+	$(CXX) $(CXXFLAGS) $< -o pc/$@
 
-SRC     = plBrowser.cpp browser.cpp playlist.cpp main.cpp config.cpp nowPlaying.cpp statsBar.cpp commandFactory.cpp popup.cpp scroller.cpp timestamp.cpp helpBar.cpp albumArt.cpp threadFunctions.cpp bookmarks.cpp gp2xregs.cpp
+SRC     = plBrowser.cpp browser.cpp playlist.cpp main.cpp config.cpp nowPlaying.cpp statsBar.cpp commandFactory.cpp popup.cpp scroller.cpp timestamp.cpp helpBar.cpp albumArt.cpp threadFunctions.cpp bookmarks.cpp gp2xregs.cpp overlay.cpp
 
 OBJ = $(SRC:.cpp=.o) libmpdclient.o
 #-------------------------------------------------------------------------------

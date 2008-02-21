@@ -30,7 +30,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 using namespace std;
 
-AlbumArt::AlbumArt(mpd_Connection* mpd, SDL_Surface* screen, Config& config, SDL_Rect& rect,
+AlbumArt::AlbumArt(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* bg, Config& config, SDL_Rect& rect,
 					artThreadParms_t& artParms)
 : m_mpd(mpd)
 , m_screen(screen)
@@ -39,6 +39,7 @@ AlbumArt::AlbumArt(mpd_Connection* mpd, SDL_Surface* screen, Config& config, SDL
 , m_pos(0)
 , m_update(false)
 , m_artParms(artParms)
+, m_bg(bg)
 {
 	m_destRect.x = rect.x;
 	m_destRect.y = rect.y;
@@ -81,10 +82,11 @@ void AlbumArt::draw(bool forceUpdate)
 	if((m_update || forceUpdate) && !m_artParms.doArtLoad) {
 		//clear this portion of the screen 
 		SDL_SetClipRect(m_screen, &m_clearRect);
-		SDL_FillRect(m_screen, &m_clearRect, SDL_MapRGB(m_screen->format, m_backColor.r, m_backColor.g, m_backColor.b));
+		SDL_BlitSurface(m_bg, &m_clearRect, m_screen, &m_clearRect );
 
 		SDL_BlitSurface(m_artParms.artSurface, NULL, m_screen, &m_destRect );
 		m_artParms.doArtLoad = false;
+		m_update = false;
 	}
 
 }

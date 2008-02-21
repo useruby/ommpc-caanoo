@@ -25,23 +25,26 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "commandFactory.h"
 #include "playlist.h"
 #include "config.h"
+#include "guiPos.h"
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
+#include <SDL_image.h>
 
 using namespace std;
 
-PLBrowser::PLBrowser(mpd_Connection* mpd, SDL_Surface* screen, TTF_Font* font, SDL_Rect& rect, 
-						Config& config, int skipVal, int numPerScreen, Playlist& pl)
-: Scroller(mpd, screen, font, rect, config, skipVal, numPerScreen)
+PLBrowser::PLBrowser(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface * bg, TTF_Font* font,
+				SDL_Rect& rect, Config& config, int skipVal, int numPerScreen, Playlist& pl)
+: Scroller(mpd, screen, bg, font, rect, config, skipVal, numPerScreen)
 , m_playlist(pl)
 {
-	m_config.getItemAsColor("sk_main_backColor", m_backColor.r, m_backColor.g, m_backColor.b);
 	m_config.getItemAsColor("sk_main_itemColor", m_itemColor.r, m_itemColor.g, m_itemColor.b);
-	m_config.getItemAsColor("sk_main_curItemBackColor", m_curItemBackColor.r, m_curItemBackColor.g, m_curItemBackColor.b);
 	m_config.getItemAsColor("sk_main_curItemColor", m_curItemColor.r, m_curItemColor.g, m_curItemColor.b);
+
+	initItemIndexLookup();	
     ls("");
 }
+
 
 void PLBrowser::ls(std::string dir)
 {
@@ -95,76 +98,99 @@ void PLBrowser::updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus)
 	}
 }
 
-int PLBrowser::processCommand(int command, int curMode)
+int PLBrowser::processCommand(int command, int curMode, GuiPos& guiPos)
 {
 	int newMode = curMode;
 	if(command > 0) {
+		if(command == CMD_CLICK) {
+			if(guiPos.curY > m_clearRect.y && (guiPos.curY < m_clearRect.y + m_clearRect.h))	 {
+				if(guiPos.curX < (m_clearRect.w-40)) {
+					m_curItemNum = m_topItemNum + m_itemIndexLookup[guiPos.curY];	
+					m_curItemType = m_listing[m_curItemNum].second;
+					command = CMD_LOAD_PL;
+				} else if(guiPos.curX > (m_clearRect.w-40)) {
+					if(guiPos.curY < m_clearRect.y+40) {
+						command = CMD_LEFT;
+					} else if(guiPos.curY > m_clearRect.y + m_clearRect.h -40) {
+						command = CMD_RIGHT;
+
+					} 
+				}
+			}
+		}
 		m_refresh = true;
 		if(Scroller::processCommand(command)) {
 			//scroller command...parent class processes
-		} else if(command == CMD_LOAD_PL) {
-			if(m_curItemType == 2) {
-				std::string pl = "";
-				if(!m_curDir.empty())
-					pl = m_curDir+"/";
-				pl += m_curItemName;
-				mpd_sendClearCommand(m_mpd);
-				mpd_finishCommand(m_mpd);
-				mpd_sendLoadCommand(m_mpd, pl.c_str());
-				mpd_finishCommand(m_mpd);
-				mpd_sendPlayCommand(m_mpd, 0);
-				mpd_finishCommand(m_mpd);
-				m_playlist.initName(pl);
-				newMode = 1;
-			} else if(m_curItemType == 3) {
-				mpd_sendClearCommand(m_mpd);
-				mpd_finishCommand(m_mpd);
-			} else if(m_curItemType == 4) {
-				mpd_sendClearCommand(m_mpd);
-				mpd_finishCommand(m_mpd);
-				m_playlist.initRandomPlaylist();	
-				newMode = 1;
-			} else if(m_curItemType == 5) {
-				int num = m_config.getItemAsNum("nextPlaylistNum");
-				ostringstream numStr;
-				numStr << num;
-				string selText = "playlist_" + numStr.str(); 
-				mpd_sendSaveCommand(m_mpd, selText.c_str());
-				mpd_finishCommand(m_mpd);
-				updateListing();
-				m_playlist.setNextNumOnSave();
-				m_refresh = true;
-			} else if(m_curItemType == 6) {
-				mpd_sendClearCommand(m_mpd);
-				mpd_finishCommand(m_mpd);
-				mpd_sendAddCommand(m_mpd, "/");
-				mpd_finishCommand(m_mpd);
-				newMode = 1;
+		} else {
+			switch(command) {
+				case CMD_LOAD_PL:
+					if(m_curItemType == 2) {
+						std::string pl = "";
+						if(!m_curDir.empty())
+							pl = m_curDir+"/";
+						pl += m_curItemName;
+						mpd_sendClearCommand(m_mpd);
+						mpd_finishCommand(m_mpd);
+						mpd_sendLoadCommand(m_mpd, pl.c_str());
+						mpd_finishCommand(m_mpd);
+						mpd_sendPlayCommand(m_mpd, 0);
+						mpd_finishCommand(m_mpd);
+						m_playlist.initName(pl);
+						newMode = 1;
+					} else if(m_curItemType == 3) {
+						mpd_sendClearCommand(m_mpd);
+						mpd_finishCommand(m_mpd);
+					} else if(m_curItemType == 4) {
+						mpd_sendClearCommand(m_mpd);
+						mpd_finishCommand(m_mpd);
+						m_playlist.initRandomPlaylist();	
+						newMode = 1;
+					} else if(m_curItemType == 5) {
+						int num = m_config.getItemAsNum("nextPlaylistNum");
+						ostringstream numStr;
+						numStr << num;
+						string selText = "playlist_" + numStr.str(); 
+						mpd_sendSaveCommand(m_mpd, selText.c_str());
+						mpd_finishCommand(m_mpd);
+						updateListing();
+						m_playlist.setNextNumOnSave();
+						m_refresh = true;
+					} else if(m_curItemType == 6) {
+						mpd_sendClearCommand(m_mpd);
+						mpd_finishCommand(m_mpd);
+						mpd_sendAddCommand(m_mpd, "/");
+						mpd_finishCommand(m_mpd);
+						newMode = 1;
+					}
+					break;
+				case CMD_PAUSE:
+					if(m_curState == MPD_STATUS_STATE_PAUSE) {
+						m_curState = MPD_STATUS_STATE_PLAY;	
+						mpd_sendPauseCommand(m_mpd, 0);
+						mpd_finishCommand(m_mpd);
+					} else if(m_curState == MPD_STATUS_STATE_PLAY) {
+						m_curState = MPD_STATUS_STATE_PAUSE;
+						mpd_sendPauseCommand(m_mpd, 1);
+						mpd_finishCommand(m_mpd);
+					}
+					break;
+				case CMD_APPEND_PL:
+					if(m_curItemType == 2) {
+						std::string pl = "";
+						if(!m_curDir.empty())
+							pl = m_curDir+"/";
+						pl += m_curItemName;
+						mpd_sendLoadCommand(m_mpd, pl.c_str());
+						mpd_finishCommand(m_mpd);
+						newMode = 1;
+					}
+					break;
+				case CMD_DEL_PL:
+					mpd_sendRmCommand(m_mpd, m_curItemName.c_str());
+					mpd_finishCommand(m_mpd);
+					ls("");
+					break;
 			}
-		} else if(command == CMD_PAUSE) {
-			if(m_curState == MPD_STATUS_STATE_PAUSE) {
-				m_curState = MPD_STATUS_STATE_PLAY;	
-				mpd_sendPauseCommand(m_mpd, 0);
-				mpd_finishCommand(m_mpd);
-			} else if(m_curState == MPD_STATUS_STATE_PLAY) {
-				m_curState = MPD_STATUS_STATE_PAUSE;
-				mpd_sendPauseCommand(m_mpd, 1);
-				mpd_finishCommand(m_mpd);
-			}
-		} else if(command == CMD_APPEND_PL) {
-			if(m_curItemType == 2) {
-				std::string pl = "";
-				if(!m_curDir.empty())
-					pl = m_curDir+"/";
-				pl += m_curItemName;
-				mpd_sendLoadCommand(m_mpd, pl.c_str());
-				mpd_finishCommand(m_mpd);
-				newMode = 1;
-			}
-		} else if(command == CMD_DEL_PL) {
-			mpd_sendRmCommand(m_mpd, m_curItemName.c_str());
-			mpd_finishCommand(m_mpd);
-			ls("");
 		}
 	}
 	return newMode; 
@@ -176,7 +202,7 @@ void PLBrowser::draw(bool forceRefresh)
 //		ls("");
 		//clear this portion of the screen 
 		SDL_SetClipRect(m_screen, &m_clearRect);
-		SDL_FillRect(m_screen, &m_clearRect, SDL_MapRGB(m_screen->format, m_backColor.r, m_backColor.g, m_backColor.b));
+		SDL_BlitSurface(m_bg, &m_clearRect, m_screen, &m_clearRect );
 
 		SDL_Surface *sText;
 		sText = TTF_RenderText_Solid(m_font, "Playlists", m_itemColor);
@@ -186,6 +212,7 @@ void PLBrowser::draw(bool forceRefresh)
 		m_curItemClearRect.y += m_skipVal*2;
 
 		Scroller::draw();	
+		m_refresh = false;
 	}
 }
 

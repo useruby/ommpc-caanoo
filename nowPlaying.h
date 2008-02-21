@@ -31,14 +31,17 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "config.h"
 #include "playlist.h"
 
+class GuiPos;
+
 class NowPlaying
 {
 public:
-	NowPlaying(mpd_Connection* mpd, SDL_mutex* lock,  SDL_Surface* screen, Config& config, SDL_Rect& rect, Playlist& playlist);
+	NowPlaying(mpd_Connection* mpd, SDL_mutex* lock,  SDL_Surface* screen, SDL_Surface* bg, Config& config, SDL_Rect& rect, Playlist& playlist);
 	
 	void updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus,
 					  int rtmpdStatusChanged, mpd_Status* rtmpdStatus);
-	void draw();
+	int processCommand(int command, GuiPos& guiPos);
+	void draw(bool forceRefresh);
 protected:
 	
 	mpd_Connection* m_mpd;
@@ -49,6 +52,7 @@ protected:
 	SDL_Rect& m_clearRect;
 	SDL_Rect m_scrollClearRect;
 	SDL_Rect m_artistClearRect;
+	SDL_Rect m_clickRect;
 	Config& m_config;
 	TTF_Font* m_font;
 	TTF_Font* m_fontSmall;
@@ -70,12 +74,14 @@ protected:
 	bool m_artistNoScroll;
 	bool m_noScroll;
 	int m_nowPlaying;
+	bool m_refresh;
 	
 	//colors
 	SDL_Color m_backColor;
 	SDL_Color m_itemColor;
 	SDL_Color m_curItemBackColor;
 	SDL_Color m_curItemColor;
+	SDL_Surface * m_bg;
 };
 
 #endif

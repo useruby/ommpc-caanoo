@@ -233,11 +233,10 @@ int loadAlbumArt(void* data)
 			if(tmp->h > artParms->destHeight)
 				zoomy = (double)artParms->destHeight/(double)tmp->h;
 			
-			artParms->artSurface = zoomSurface(tmp, zoomx,zoomy,1);
+			artParms->artSurface = SDL_DisplayFormat(zoomSurface(tmp, zoomx,zoomy,1));
 			SDL_FreeSurface(tmp);
 			artParms->doArtLoad = false;
 		}
-
 		SDL_Delay(300);
 	}
 

@@ -34,21 +34,25 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 class StatsBar
 {
 public:
-	StatsBar(mpd_Connection* mpd, SDL_mutex* lock,  SDL_Surface* screen, Config& config, SDL_Rect& rect, bool&, Playlist& pl);
+	StatsBar(mpd_Connection* mpd, SDL_mutex* lock,  SDL_Surface* screen, SDL_Surface* bg, Config& config, SDL_Rect& rect, bool&, Playlist& pl, bool f200, std::vector<int>& volScale);
 
 	std::string formattedElapsedTime();
 	int elapsedTime();
 	
 	void updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus,
 							int rtmpdStatusChanged, mpd_Status* rtmpdStatus, bool forceRefresh);
-	void draw(bool forceRefresh);
+	void draw(bool forceRefresh, int fps);
 protected:
 	
 	mpd_Connection* m_mpd;
 	SDL_mutex* m_lock;
 	SDL_Surface* m_screen;
+	SDL_Surface* m_bg;
 	SDL_Rect m_destRect;
 	SDL_Rect& m_clearRect;
+	SDL_Rect& m_backRect;
+	SDL_Rect m_curItemClearRect;
+	SDL_Rect m_curItemRect;
 	Config& m_config;
 	TTF_Font* m_font;
 	
@@ -82,6 +86,9 @@ protected:
 	SDL_Color m_curItemColor;
 
 	Playlist& m_playlist;
+	bool m_f200;
+	int m_volLookup[101];
+	bool m_softVol;
 };
 
 #endif

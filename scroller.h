@@ -35,24 +35,29 @@ class Scroller
 {
 public:
 	typedef std::vector<std::pair<std::string, int> >listing_t;
-	Scroller(mpd_Connection* mpd, SDL_Surface* screen, TTF_Font* font, 
+	typedef std::vector<int> pos2index_t;
+	Scroller(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* bg, TTF_Font* font, 
 				SDL_Rect& rect, Config& config, int skipVal, int numPerScreen);
 
-	bool processCommand(int command);
+	bool processCommand(int& command);
 	void draw();
 	void draw(std::vector<std::string>& selectedOptions);
 
 	int skipVal();
+	virtual void initItemIndexLookup();
 protected:
 	mpd_Connection* m_mpd;
 
 	listing_t m_listing;
+	pos2index_t m_itemIndexLookup;
 	
 	SDL_Surface* m_screen;
 	TTF_Font* m_font;
 	SDL_Rect m_destRect;
 	SDL_Rect& m_clearRect;
 	SDL_Rect m_curItemClearRect;
+	SDL_Rect m_upClearRect;
+	SDL_Rect m_downClearRect;
 	Config& m_config;
 	
 	int m_origY;
@@ -67,14 +72,20 @@ protected:
 	int m_numPerScreen;
 
 	//colors
-	SDL_Color m_backColor;
 	SDL_Color m_itemColor;
-	SDL_Color m_curItemBackColor;
 	SDL_Color m_curItemColor;
 	
 	SDL_Color m_pauseColor;
 	SDL_Color m_pauseItemColor;
-	
+	SDL_Surface * m_bg;
+	SDL_Surface * m_bgCurItem;
+	SDL_Surface * m_pauseBtn;
+	SDL_Surface * m_downBtn;
+	SDL_Surface * m_upBtn;
+
+	int m_prevX;
+	int m_prevY;
+	int m_skipFirstMouse;	
 };
 
 #endif

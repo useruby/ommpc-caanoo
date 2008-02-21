@@ -28,14 +28,18 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <stdexcept>
 #include <sstream>
 #include <iomanip>
+
+//#define _SHOWFPS
+
 using namespace std;
 
-StatsBar::StatsBar(mpd_Connection* mpd, SDL_mutex* lock, SDL_Surface* screen, Config& config, SDL_Rect& rect, bool& initVolume, Playlist& pl)
+StatsBar::StatsBar(mpd_Connection* mpd, SDL_mutex* lock, SDL_Surface* screen, SDL_Surface* bg, Config& config, SDL_Rect& rect, bool& initVolume, Playlist& pl, bool f200, vector<int>& volScale)
 : m_mpd(mpd)
 , m_lock(lock)
 , m_screen(screen)
 , m_config(config)
 , m_clearRect(rect)
+, m_backRect(rect)
 , m_volume("")
 , m_playType("")
 , m_crossfade("")
@@ -45,20 +49,38 @@ StatsBar::StatsBar(mpd_Connection* mpd, SDL_mutex* lock, SDL_Surface* screen, Co
 , m_cols(config.getItemAsNum("sk_stats_numCols"))
 , m_firstPass(initVolume)
 , m_playlist(pl)
+, m_bg(bg)
+, m_f200(f200)
 {
+	m_backRect = rect;
 	m_destRect.x = rect.x;
 	m_destRect.y = rect.y;
 	m_origY = m_destRect.y;
-	m_font = TTF_OpenFont( "Vera.ttf", 8 );
+	m_font = TTF_OpenFont(config.getItem("sk_font_stats").c_str(),
+						  config.getItemAsNum("sk_font_stats_size"));
 	m_itemH = TTF_FontLineSkip( m_font );
 
 	m_itemWidth = m_config.getItemAsNum("sk_stats_itemWidth");
 	m_itemSpacing = m_config.getItemAsNum("sk_stats_itemSpacing");
 
-	m_config.getItemAsColor("sk_stats_backColor", m_backColor.r, m_backColor.g, m_backColor.b);
 	m_config.getItemAsColor("sk_stats_itemColor", m_itemColor.r, m_itemColor.g, m_itemColor.b);
-	m_config.getItemAsColor("sk_stats_curItemBackColor", m_curItemBackColor.r, m_curItemBackColor.g, m_curItemBackColor.b);
 	m_config.getItemAsColor("sk_stats_curItemColor", m_curItemColor.r, m_curItemColor.g, m_curItemColor.b);
+
+	int from = 0;
+	for(int i=0; i<=20; ++i) {
+		int j;
+		for(j=from; j <= volScale[i]; ++j)
+			m_volLookup[j] = i;
+
+		from = j;
+	}
+	if(m_config.getItem("softwareVolume") == "on")
+		m_softVol = true;
+	else
+		m_softVol = false;
+
+	//for(int i=0; i<=100; ++i)
+	//	cout << "vol " << i << "  " << m_f200VolLookup[i] << endl;	
 }
 
 string StatsBar::formattedElapsedTime()
@@ -107,25 +129,25 @@ void StatsBar::updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus,
 						ws = "  ";
 					else
 						ws = " ";
+				}
+				int scaledVol;
+				if(m_f200) {
+					if(status->volume > 75 && !m_softVol)
+						scaledVol = 20;
+					else
+						scaledVol = m_volLookup[status->volume];
+				} else {
+					scaledVol = m_volLookup[status->volume];
 				}	
-				out << "Vol: " << status->volume/5 << ws;
+				out << "Vol: " << scaledVol << ws;
 				if(!format.empty()) {
 					out << format;	
 				} else {
 					out << "    ";
 				}
 				m_items[0] = out.str();
-				m_curVol = status->volume;
 				m_firstPass = false;
-
-			} /*else {
-				cout << "resetting" << endl;
-				mpd_sendSetvolCommand(m_mpd, -100);
-				mpd_finishCommand(m_mpd);
-				mpd_sendSetvolCommand(m_mpd, m_curVol);
-				mpd_finishCommand(m_mpd);
-
-			} */
+			} 
 		}
 
 		if(statusChanged & RPT_CHG || statusChanged & RND_CHG) { 
@@ -188,37 +210,44 @@ void StatsBar::updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus,
 	}
 }
 
-void StatsBar::draw(bool forceRefresh)
+void StatsBar::draw(bool forceRefresh, int fps)
 {
 	//clear this portion of the screen 
 	SDL_SetClipRect(m_screen, &m_clearRect);
-	SDL_FillRect(m_screen, &m_clearRect, SDL_MapRGB(m_screen->format, m_backColor.r, m_backColor.g, m_backColor.b));
+	SDL_BlitSurface(m_bg, &m_clearRect, m_screen, &m_clearRect );
 	
 	int x = m_destRect.x;
 	int y = m_destRect.y;
 	int curCol = 0;	
-	SDL_Rect clearRect = {x+m_itemSpacing, y+m_itemSpacing, m_itemWidth, m_itemH}; 
-	SDL_Rect curItemRect = {x+m_itemSpacing, y+m_itemSpacing, m_itemWidth, m_itemH}; 
+	m_curItemRect.x = x+m_itemSpacing;
+	m_curItemRect.y = y+m_itemSpacing;
+	m_curItemRect.w = m_itemWidth;
+	m_curItemRect.h = m_itemH; 
 
-	
 	for(int i=0; i<4; ++i) {
 		if(!m_items[0].empty()) {
-			SDL_FillRect(m_screen, &clearRect, SDL_MapRGB(m_screen->format, m_curItemBackColor.r, m_curItemBackColor.g, m_curItemBackColor.b));
 			SDL_Surface *sText;
+#ifdef _SHOWFPS
+			char num[4];
+			sprintf(num, "%d", fps);
+			if(i == 2)
+				sText = TTF_RenderText_Blended(m_font, num, m_itemColor);
+			else	
+#endif
 			sText = TTF_RenderText_Blended(m_font, m_items[i].c_str(), m_itemColor);
-			SDL_BlitSurface(sText, NULL, m_screen, &curItemRect );
+			SDL_BlitSurface(sText, NULL, m_screen, &m_curItemRect );
 			SDL_FreeSurface(sText);
 		}
 		++curCol;
 		if(curCol == m_cols) {
-			curItemRect.y += m_itemH+m_itemSpacing;
-			clearRect.y += m_itemH+m_itemSpacing;
-			curItemRect.x = x+m_itemSpacing;
-			clearRect.x = x+m_itemSpacing;
+			m_curItemRect.y += m_itemH+m_itemSpacing;
+	//		clearRect.y += m_itemH+m_itemSpacing;
+			m_curItemRect.x = x+m_itemSpacing;
+	//		clearRect.x = x+m_itemSpacing;
 			curCol = 0;
 		} else  {
-			curItemRect.x += m_itemWidth+(m_itemSpacing*2);
-			clearRect.x += m_itemWidth+(m_itemSpacing*2);
+			m_curItemRect.x += m_itemWidth+(m_itemSpacing*2);
+	//		clearRect.x += m_itemWidth+(m_itemSpacing*2);
 		}
 	}
 

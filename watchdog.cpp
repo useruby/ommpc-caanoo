@@ -26,31 +26,36 @@ int main(int argc, char** argv)
 	mpd_Connection* mpd = mpd_newConnection(config.getItem("host").c_str(), 
 					config.getItemAsNum("port"),
 					config.getItemAsNum("timeout"));
-	mpd_sendStatusCommand(mpd);
-	mpd_Status* rtmpdStatus = mpd_getStatus(mpd);
-	mpd_finishCommand(mpd);
-	int oldVolume = rtmpdStatus->volume;
-	int newVolume = oldVolume;
-	cout << "init vol " << oldVolume << endl;
-
-	sleep(1);
-	while(!done) {
+	if(mpd->error == 0) {
 		mpd_sendStatusCommand(mpd);
 		mpd_Status* rtmpdStatus = mpd_getStatus(mpd);
 		mpd_finishCommand(mpd);
-		newVolume = rtmpdStatus->volume;
-		if(!pollOnly) {
-			if(oldVolume != newVolume && (oldVolume > newVolume+5 || oldVolume < newVolume -5)) {
-				mpd_sendSetvolCommand(mpd, oldVolume);
-				mpd_finishCommand(mpd);
+		int oldVolume = rtmpdStatus->volume;
+		int newVolume = oldVolume;
+		cout << "init vol " << oldVolume << endl;
 
-				cout << "*******WATCHDOG****** Volume adjust" << endl;
-				cout << "old vol " << oldVolume << " new vol " << newVolume << endl;
-				newVolume = oldVolume;
-			} else {
-				oldVolume = newVolume;
-			} 	
-		}
 		sleep(1);
+		while(!done) {
+			mpd_sendStatusCommand(mpd);
+			mpd_Status* rtmpdStatus = mpd_getStatus(mpd);
+			mpd_finishCommand(mpd);
+			newVolume = rtmpdStatus->volume;
+			if(!pollOnly) {
+				if(oldVolume != newVolume && (oldVolume > newVolume+5 || oldVolume < newVolume -5)) {
+					mpd_sendSetvolCommand(mpd, oldVolume);
+					mpd_finishCommand(mpd);
+
+					cout << "*******WATCHDOG****** Volume adjust" << endl;
+					cout << "old vol " << oldVolume << " new vol " << newVolume << endl;
+					newVolume = oldVolume;
+				} else {
+					oldVolume = newVolume;
+				} 	
+			}
+			sleep(1);
+		}
+	} else {
+		cout << "problem connecting to mpd daemon" << endl;
 	}
+ 
 }

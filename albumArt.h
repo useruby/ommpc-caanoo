@@ -35,7 +35,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 class AlbumArt
 {
 public:
-	AlbumArt(mpd_Connection* mpd, SDL_Surface* screen, Config& config, SDL_Rect& rect,
+	AlbumArt(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* bg, Config& config, SDL_Rect& rect,
 					artThreadParms_t& m_artParms);
 	void updateStatus(int mpdStatusChanged, mpd_Status * mpdStatus,
 						int rtmpdStatusChanged, mpd_Status* rtmpdStatus);
@@ -44,6 +44,7 @@ protected:
 	
 	mpd_Connection* m_mpd;
 	SDL_Surface* m_screen;
+	SDL_Surface* m_bg;
 	SDL_Rect m_destRect;
 	SDL_Rect& m_clearRect;
 	Config& m_config;

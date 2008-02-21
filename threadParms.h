@@ -45,6 +45,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #endif
 
 
+
 typedef enum { SONG_CHG=1, PL_CHG=2, RPT_CHG=4, RND_CHG=8, RATE_CHG=16, ELAPSED_CHG=32, VOL_CHG=64, STATE_CHG=128, UPDB_CHG=256};
 
 typedef struct {

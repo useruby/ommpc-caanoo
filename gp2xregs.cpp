@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "gp2xregs.h"
 #include <iostream>
+#include <sys/stat.h>
 
 using namespace std;
 
@@ -32,6 +33,12 @@ GP2XRegs::GP2XRegs()
 	m_memfd = open("/dev/mem",O_RDWR);
 	m_memregs32 = (unsigned long*)mmap(0, 0x10000, PROT_READ|PROT_WRITE, MAP_SHARED, m_memfd, 0xc0000000);
 	m_memregs16 = (unsigned short*)m_memregs32;
+
+	struct stat stFileInfo;
+	if(stat("/dev/touchscreen/wm97xx",&stFileInfo) == 0)
+		m_f200 = true;
+	else 
+		m_f200 = false;
 #endif
 }
 
@@ -68,18 +75,39 @@ cout << "setting clock to " << MHZ << endl;
 void GP2XRegs::toggleScreen()
 {
 #ifdef GP2X
-	unsigned short tftState;
 	if(m_screenIsOff) {
-		tftState = m_memregs16[OFF_GPIOH] | (1<<PWR_TFT_BIT);
-		m_memregs16[OFF_GPIOH] = tftState;
+		//backlight
+		if(m_f200)
+	        m_memregs16[OFF_GPIOL >> 1] |= 0x0800;
+		else
+        	m_memregs16[OFF_GPIOH >> 1] |= 0x0004;
+		//power to screen
+        m_memregs16[OFF_GPIOH >> 1] |= 0x0002;
 		m_screenIsOff = false;
-	} else {
-		tftState = m_memregs16[OFF_GPIOH] | (1<<PWR_TFT_BIT);
-		tftState = tftState & (~(1<<PWR_TFT_BIT));
-
-		m_memregs16[OFF_GPIOH] = tftState;
+	}
+    else {
+		if(m_f200)
+			m_memregs16[OFF_GPIOL >> 1] &= ~0x0800;
+		else
+			m_memregs16[OFF_GPIOH >> 1] |= 0x0004;
+        
+		m_memregs16[OFF_GPIOH >> 1] &= ~0x0002;
 		m_screenIsOff = true;
 	}
+/*
+	unsigned short tftState;
+	if(m_screenIsOff) {
+		tftState = m_memregs16[OFF_GPIOL] | (1<<PWR_TFT_BIT);
+		m_memregs16[OFF_GPIOL] = tftState;
+		m_screenIsOff = false;
+	} else {
+		tftState = m_memregs16[OFF_GPIOL] | (1<<PWR_TFT_BIT);
+		tftState = tftState & (~(1<<PWR_TFT_BIT));
+
+		m_memregs16[OFF_GPIOL] = tftState;
+		m_screenIsOff = true;
+	}
+*/
 #else
 	cout << "We would be toggleing the screen now" << endl;	
 	m_screenIsOff = !m_screenIsOff;

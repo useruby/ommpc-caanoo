@@ -24,14 +24,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "threadParms.h"
 #include "commandFactory.h"
 #include "config.h"
+#include "guiPos.h"
 #include <iostream>
 #include <stdexcept>
+#include <SDL_image.h>
 
 using namespace std;
 
-Browser::Browser(mpd_Connection* mpd, SDL_Surface* screen, TTF_Font* font, SDL_Rect& rect,	
-					Config& config, int skipVal, int numPerScreen)
-: Scroller(mpd, screen, font, rect, config, skipVal, numPerScreen-1)
+Browser::Browser(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* bg, TTF_Font* font, 
+				SDL_Rect& rect,	Config& config, int skipVal, int numPerScreen)
+: Scroller(mpd, screen, bg, font, rect, config, skipVal, numPerScreen-1)
 , m_nowPlaying(0)
 , m_view(0)
 , m_curTitle("")
@@ -39,11 +41,19 @@ Browser::Browser(mpd_Connection* mpd, SDL_Surface* screen, TTF_Font* font, SDL_R
 , m_updatingDb(false)
 , m_refresh(true)
 {
-	m_config.getItemAsColor("sk_main_backColor", m_backColor.r, m_backColor.g, m_backColor.b);
 	m_config.getItemAsColor("sk_main_itemColor", m_itemColor.r, m_itemColor.g, m_itemColor.b);
-	m_config.getItemAsColor("sk_main_curItemBackColor", m_curItemBackColor.r, m_curItemBackColor.g, m_curItemBackColor.b);
 	m_config.getItemAsColor("sk_main_curItemColor", m_curItemColor.r, m_curItemColor.g, m_curItemColor.b);
-    ls("");
+    
+	string skinName = m_config.getItem("skin");
+	m_dbMsg= IMG_Load(string("skins/"+skinName+"/updatingdb.png").c_str());
+	if (!m_pauseBtn)
+		printf("Unable to load image: %s\n", SDL_GetError());
+	else 
+		m_dbMsg = SDL_DisplayFormatAlpha(m_dbMsg);
+
+	m_numPerScreen--;
+	initItemIndexLookup();	
+	ls("");
     //ls("tim");
 }
 
@@ -158,95 +168,124 @@ void Browser::updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus)
 	}
 }
 
-void Browser::processCommand(int command) {
-
+int Browser::processCommand(int command, GuiPos& guiPos)
+{
+	int newMode = 0;
 	if(command > 0) {
 		m_refresh = true;
+		if(command == CMD_CLICK) {
+			if(guiPos.curY > m_clearRect.y && (guiPos.curY < m_clearRect.y + m_clearRect.h))	 {
+				if(guiPos.curX < (m_clearRect.w-40)) {
+					m_curItemNum = m_topItemNum + m_itemIndexLookup[guiPos.curY];	
+					m_curItemType = m_listing[m_curItemNum].second;
+					m_curItemName = m_listing[m_curItemNum].first;
+					command = CMD_IMMEDIATE_PLAY;
+				} else if(guiPos.curX > (m_clearRect.w-40)) {
+					if(guiPos.curY < m_clearRect.y+40) {
+						command = CMD_LEFT;
+					} else if(guiPos.curY > m_clearRect.y + m_clearRect.h -40) {
+						command = CMD_RIGHT;
+					}
+				}
+			}
+		}
 		if(Scroller::processCommand(command)) {
 			//scroller command...parent class processes
-		} else if(command == CMD_IMMEDIATE_PLAY) {
+		} else {
+
 			std::string dir;
-			if(m_curItemName == "..") {
-				int pos = m_curDir.rfind("/");;
-				if(pos == string::npos || pos == 0) 
-					dir = "";
-				else
-					dir = m_curDir.substr(0, pos);
-			} else  {
-				dir = m_curDir;
-				if(!dir.empty())
-					dir += "/";
-				dir += m_curItemName;
+			int pos;
+			switch (command) {
+				case CMD_IMMEDIATE_PLAY:
+					if(m_curItemName == "..") {
+						pos = m_curDir.rfind("/");;
+						if(pos == string::npos || pos == 0) 
+							dir = "";
+						else
+							dir = m_curDir.substr(0, pos);
+					} else  {
+						dir = m_curDir;
+						if(!dir.empty())
+							dir += "/";
+						dir += m_curItemName;
+					}
+					if(m_curItemType == 0) { //directory
+						ls(dir);
+						m_curItemNum = 0;
+						m_topItemNum = 0;
+						m_curItemName = "";
+					} else if(m_curItemType == 1) {
+						std::string song = "";
+						if(!m_curDir.empty())
+							song = m_curDir+"/";
+						song += m_curItemName;
+						int id = mpd_sendAddIdCommand(m_mpd, song.c_str());
+						mpd_finishCommand(m_mpd);
+						mpd_sendMoveIdCommand(m_mpd, id, m_nowPlaying+1);
+						mpd_finishCommand(m_mpd);
+						mpd_sendPlayCommand(m_mpd, m_nowPlaying+1);
+						mpd_finishCommand(m_mpd);
+						newMode = 1;
+					} else if(m_curItemType == 6) {
+						ls(m_curItemName);	
+					}
+					break;
+				case CMD_PREV_DIR:
+					pos = m_curDir.rfind("/");;
+					if(pos == string::npos || pos == 0) 
+						dir = "";
+					else
+						dir = m_curDir.substr(0, pos);
+					ls(dir);
+					m_curItemNum = 0;
+					m_topItemNum = 0;
+					m_curItemName = "";
+					break;
+				case CMD_ADD_TO_PL: 
+					if(m_curItemType == 1) {
+						std::string song = "";
+						if(!m_curDir.empty())
+							song = m_curDir+"/";
+						song += m_curItemName;
+						mpd_sendAddCommand(m_mpd, song.c_str());
+						mpd_finishCommand(m_mpd);
+					}
+					break;
+				case CMD_PAUSE:
+					if(m_curState == MPD_STATUS_STATE_PAUSE) {
+						m_curState = MPD_STATUS_STATE_PLAY;	
+						mpd_sendPauseCommand(m_mpd, 0);
+						mpd_finishCommand(m_mpd);
+					} else if(m_curState == MPD_STATUS_STATE_PLAY) {
+						m_curState = MPD_STATUS_STATE_PAUSE;
+						mpd_sendPauseCommand(m_mpd, 1);
+						mpd_finishCommand(m_mpd);
+					}
+					break;
+				case CMD_TOGGLE_VIEW:
+					/*
+					   if(m_view == 1)
+					   m_view = 0;
+					   else
+					   ++m_view;
+					   if(m_view == 0)
+					   ls(m_curDir);
+					   else 
+					   ls("");
+					   */
+					break;
 			}
-			if(m_curItemType == 0) { //direcotry
-				ls(dir);
-				m_curItemNum = 0;
-				m_topItemNum = 0;
-				m_curItemName = "";
-			} else if(m_curItemType == 1) {
-				std::string song = "";
-				if(!m_curDir.empty())
-					song = m_curDir+"/";
-				song += m_curItemName;
-				int id = mpd_sendAddIdCommand(m_mpd, song.c_str());
-				mpd_finishCommand(m_mpd);
-				mpd_sendMoveIdCommand(m_mpd, id, m_nowPlaying+1);
-				mpd_finishCommand(m_mpd);
-				mpd_sendPlayCommand(m_mpd, m_nowPlaying+1);
-				mpd_finishCommand(m_mpd);
-			} else if(m_curItemType == 6) {
-				ls(m_curItemName);	
-			}
-		} else if(command == CMD_PREV_DIR) {
-			std::string dir;
-			int pos = m_curDir.rfind("/");;
-			if(pos == string::npos || pos == 0) 
-				dir = "";
-			else
-				dir = m_curDir.substr(0, pos);
-			ls(dir);
-			m_curItemNum = 0;
-			m_topItemNum = 0;
-			m_curItemName = "";
-		} else if(command  == CMD_ADD_TO_PL) {
-			if(m_curItemType == 1) {
-				std::string song = "";
-				if(!m_curDir.empty())
-					song = m_curDir+"/";
-				song += m_curItemName;
-				mpd_sendAddCommand(m_mpd, song.c_str());
-				mpd_finishCommand(m_mpd);
-			}
-		} else if(command == CMD_PAUSE) {
-			if(m_curState == MPD_STATUS_STATE_PAUSE) {
-				m_curState = MPD_STATUS_STATE_PLAY;	
-				mpd_sendPauseCommand(m_mpd, 0);
-				mpd_finishCommand(m_mpd);
-			} else if(m_curState == MPD_STATUS_STATE_PLAY) {
-				m_curState = MPD_STATUS_STATE_PAUSE;
-				mpd_sendPauseCommand(m_mpd, 1);
-				mpd_finishCommand(m_mpd);
-			}
-		} else if(command == CMD_TOGGLE_VIEW) {
-			/*
-			   if(m_view == 1)
-			   m_view = 0;
-			   else
-			   ++m_view;
-			   if(m_view == 0)
-			   ls(m_curDir);
-			   else 
-			   ls("");
-			   */
 		}
 	}
+	return newMode;
 }
+
 void Browser::draw(bool forceRefresh)
 {
 	if(forceRefresh || m_refresh) {
 		//clear this portion of the screen 
 		SDL_SetClipRect(m_screen, &m_clearRect);
-		SDL_FillRect(m_screen, &m_clearRect, SDL_MapRGB(m_screen->format, m_backColor.r, m_backColor.g, m_backColor.b));
+		SDL_BlitSurface(m_bg, &m_clearRect, m_screen, &m_clearRect );
 
 		SDL_Surface *sText;
 		sText = TTF_RenderText_Blended(m_font, m_curDir.c_str(), m_itemColor);
@@ -265,19 +304,14 @@ void Browser::draw(bool forceRefresh)
 		Scroller::draw();	
 
 		if(m_updatingDb) {
-
 			SDL_Rect dstrect;
-			dstrect.x = (m_screen->w - 80) / 2;
-			dstrect.y = (m_screen->h - m_skipVal) / 2;
-			dstrect.w = 80;
-			dstrect.h = m_skipVal;
+			dstrect.x = (m_screen->w - m_dbMsg->w) / 2;
+			dstrect.y = (m_screen->h - m_dbMsg->h) / 2;
+			dstrect.w = m_dbMsg->w;
+			dstrect.h = m_dbMsg->h;
 
-			SDL_FillRect(m_screen, &dstrect, SDL_MapRGB(m_screen->format, m_pauseColor.r, m_pauseColor.g, m_pauseColor.b));
-			sText = TTF_RenderText_Blended(m_font, "Updating Db...", m_pauseItemColor);
-			SDL_BlitSurface(sText,NULL, m_screen, &dstrect );
-			SDL_FreeSurface(sText);
-
-
+			SDL_SetClipRect(m_screen, &dstrect);
+			SDL_BlitSurface(m_dbMsg, NULL, m_screen, &dstrect );
 		}
 		m_refresh = false;
 	}

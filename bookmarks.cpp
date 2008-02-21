@@ -26,32 +26,35 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "playlist.h"
 #include "config.h"
 #include "statsBar.h"
+#include "guiPos.h"
 #include <iostream>
 #include <fstream>
 #include <stdexcept>
-
+#include <SDL_image.h>
 #include <dirent.h>
 using namespace std;
 
-Bookmarks::Bookmarks(mpd_Connection* mpd, SDL_Surface* screen, TTF_Font* font, SDL_Rect& rect, int skipVal, int numPerScreen, Playlist& pl, Config& config, StatsBar& sb)
-: Scroller(mpd, screen, font, rect, config, skipVal, numPerScreen)
+Bookmarks::Bookmarks(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* bg, TTF_Font* font, SDL_Rect& rect, int skipVal, int numPerScreen, Playlist& pl, Config& config, StatsBar& sb)
+: Scroller(mpd, screen, bg, font, rect, config, skipVal, numPerScreen)
 , m_playlist(pl)
 , m_sb(sb)
 , m_refresh(true)
 {
-	m_curDir = config.getItem("programRoot") + "bookmarks/";
+	char pwd[129];
+	getcwd(pwd, 128);
+	m_curDir = pwd;
+	m_curDir += "/bookmarks/";
 	
-	m_config.getItemAsColor("sk_main_backColor", m_backColor.r, m_backColor.g, m_backColor.b);
 	m_config.getItemAsColor("sk_main_itemColor", m_itemColor.r, m_itemColor.g, m_itemColor.b);
-	m_config.getItemAsColor("sk_main_curItemBackColor", m_curItemBackColor.r, m_curItemBackColor.g, m_curItemBackColor.b);
 	m_config.getItemAsColor("sk_main_curItemColor", m_curItemColor.r, m_curItemColor.g, m_curItemColor.b);
-	 
+	
+	initItemIndexLookup();	
 	ls(m_curDir);
+	m_numPerScreen--;
 }
 
 void Bookmarks::ls(std::string dir)
 {
-cout << "bookmark dir " << m_curDir << endl;
 	m_listing.clear();
 	m_listing.push_back(make_pair("Create Bookmark", 7));	
 
@@ -69,7 +72,6 @@ cout << "bookmark dir " << m_curDir << endl;
 			}
 			dirent = readdir(udir);
 		}
-
 	}	
 			
 	m_lastItemNum = m_listing.size()-1;
@@ -128,56 +130,82 @@ void Bookmarks::doSave()
 	m_refresh = true;
 }
 
-void Bookmarks::processCommand(int command)
+int Bookmarks::processCommand(int command, GuiPos& guiPos)
 {
+	int newMode = 3;
 	if(command > 0) {
 		m_refresh = true;
+		if(command == CMD_CLICK) {
+			if(guiPos.curY > m_clearRect.y && (guiPos.curY < m_clearRect.y + m_clearRect.h))	 {
+				if(guiPos.curX < (m_clearRect.w-40)) {
+					m_curItemNum = m_topItemNum + m_itemIndexLookup[guiPos.curY];	
+					m_curItemType = m_listing[m_curItemNum].second;
+					m_curItemName = m_listing[m_curItemNum].first;
+					command = CMD_LOAD_BKMRK;
+				} else if(guiPos.curX > (m_clearRect.w-40)) {
+					if(guiPos.curY < m_clearRect.y+40) {
+						command = CMD_LEFT;
+					} else if(guiPos.curY > m_clearRect.y + m_clearRect.h -40) {
+						command = CMD_RIGHT;
+					}
+				}
+			}
+		}
 		try {
 			if(Scroller::processCommand(command)) {
 				//scroller command...parent class processes
-			} else if(command == CMD_LOAD_BKMRK) {
-				if(m_curItemName == "Create Bookmark") {
-					doSave();
-				} else {
-					char tmp[256];
-					ifstream in((currentItemPath()+".bkmrk").c_str(), ios::in);
-					if(!in.fail()) {
-						in.getline(tmp, 256);
-						std::string songPath(tmp);
-						in.getline(tmp, 256);
-						int elapsed = atoi(tmp);
+			} else {
+				switch(command) {
+					case CMD_LOAD_BKMRK:
+						if(m_curItemName == "Create Bookmark") {
+							doSave();
+						} else {
+							char tmp[256];
+							ifstream in((currentItemPath()+".bkmrk").c_str(), ios::in);
+							if(!in.fail()) {
+								in.getline(tmp, 256);
+								std::string songPath(tmp);
+								in.getline(tmp, 256);
+								int elapsed = atoi(tmp);
 
-						int id = mpd_sendAddIdCommand(m_mpd, songPath.c_str());
-						mpd_finishCommand(m_mpd);
-						mpd_sendMoveIdCommand(m_mpd, id, m_nowPlaying+1);
-						mpd_finishCommand(m_mpd);
-						mpd_sendPlayCommand(m_mpd, m_nowPlaying+1);
-						mpd_finishCommand(m_mpd);
-						mpd_sendSeekCommand(m_mpd, m_nowPlaying+1, elapsed);	
-						mpd_finishCommand(m_mpd);
-					}
-				}	
-			} else if(command == CMD_PAUSE) {
-				if(m_curState == MPD_STATUS_STATE_PAUSE) {
-					m_curState = MPD_STATUS_STATE_PLAY;	
-					mpd_sendPauseCommand(m_mpd, 0);
-					mpd_finishCommand(m_mpd);
-				} else if(m_curState == MPD_STATUS_STATE_PLAY) {
-					m_curState = MPD_STATUS_STATE_PAUSE;
-					mpd_sendPauseCommand(m_mpd, 1);
-					mpd_finishCommand(m_mpd);
-				}
-			} else if(command == CMD_SAVE_BKMRK) {
-				doSave();
-			} else if(command == CMD_DEL_BKMRK) {
-				unlink((currentItemPath()+".bkmrk").c_str());
-				ls(m_curDir);
-				m_refresh = true;
-			} 
+								int id = mpd_sendAddIdCommand(m_mpd, songPath.c_str());
+								mpd_finishCommand(m_mpd);
+								mpd_sendMoveIdCommand(m_mpd, id, m_nowPlaying+1);
+								mpd_finishCommand(m_mpd);
+								mpd_sendPlayCommand(m_mpd, m_nowPlaying+1);
+								mpd_finishCommand(m_mpd);
+								mpd_sendSeekCommand(m_mpd, m_nowPlaying+1, elapsed);	
+								mpd_finishCommand(m_mpd);
+								newMode = 1;
+							}
+						}
+						break;
+					case CMD_PAUSE:	
+						if(m_curState == MPD_STATUS_STATE_PAUSE) {
+							m_curState = MPD_STATUS_STATE_PLAY;	
+							mpd_sendPauseCommand(m_mpd, 0);
+							mpd_finishCommand(m_mpd);
+						} else if(m_curState == MPD_STATUS_STATE_PLAY) {
+							m_curState = MPD_STATUS_STATE_PAUSE;
+							mpd_sendPauseCommand(m_mpd, 1);
+							mpd_finishCommand(m_mpd);
+						}
+						break;
+					case CMD_SAVE_BKMRK:
+						doSave();
+						break;
+					case CMD_DEL_BKMRK:
+						unlink((currentItemPath()+".bkmrk").c_str());
+						ls(m_curDir);
+						m_refresh = true;
+						break;
+				} 
+			}
 		} catch (std::exception & e) {
 			cout << e.what() << endl;
 		}
 	}
+	return newMode;
 }
 
 void Bookmarks::draw(bool forceRefresh)
@@ -186,12 +214,13 @@ void Bookmarks::draw(bool forceRefresh)
 		//ls(m_curDir);
 		//clear this portion of the screen 
 		SDL_SetClipRect(m_screen, &m_clearRect);
-		SDL_FillRect(m_screen, &m_clearRect, SDL_MapRGB(m_screen->format, m_backColor.r, m_backColor.g, m_backColor.b));
+		SDL_BlitSurface(m_bg, &m_clearRect, m_screen, &m_clearRect );
 
 		SDL_Surface *sText;
 		sText = TTF_RenderText_Blended(m_font, "Bookmarks", m_itemColor);
 		SDL_BlitSurface(sText,NULL, m_screen, &m_destRect );
 		SDL_FreeSurface(sText);
+		
 		m_destRect.y += m_skipVal*2;
 		m_curItemClearRect.y += m_skipVal*2;
 

@@ -24,6 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define __COMMANDS_H__
 
 #include "libmpdclient.h"
+#include <vector>
 
 
 	typedef enum {	CMD_PLAY_PAUSE=1, CMD_PAUSE, CMD_STOP, CMD_PREV, CMD_NEXT, CMD_FF, CMD_RW,
@@ -36,14 +37,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 					CMD_LOAD_BKMRK, CMD_SAVE_BKMRK, CMD_DEL_BKMRK,
 					CMD_SHOW_OPTIONS, CMD_SAVE_OPTIONS, CMD_LEFT, CMD_RIGHT,
 			   		CMD_MODE_RANDOM, CMD_MODE_REPEAT, CMD_RAND_RPT, CMD_QUIT,
-					CMD_MPD_ADD_ALL } cmdTypes_t;
+					CMD_MPD_ADD_ALL, CMD_SHOW_OVERLAY, CMD_CLICK, CMD_LAUNCH_PROCESS} cmdTypes_t;
 
 class CommandFactory
 {
 public:
 					
-	CommandFactory(mpd_Connection* mpd);
-	int getCommand(bool keysHeld[], int curMode, int& timer, bool popupVisible, int vol, long delayTime);
+	CommandFactory(mpd_Connection* mpd, std::vector<int>& volScale);
+	int getCommand(bool keysHeld[], int curMode, int& timer, bool popupVisible, bool overlayVisible, int vol, long delayTime);
 	int getCommandWhileLocked(bool keysHeld[], int curMode, int& timer, bool popupVisible, long delayTime);
 
 protected:
@@ -61,6 +62,7 @@ protected:
 	int m_volume;
 	bool m_setVol;
 	bool m_delayCommand;
+	std::vector<int> m_volScale;
 };
 
 #endif

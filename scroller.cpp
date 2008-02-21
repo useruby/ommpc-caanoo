@@ -23,11 +23,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "scroller.h"
 #include "config.h"
 #include "commandFactory.h"
-
+#include <SDL_image.h>
 #include <iostream>
 using namespace std;
 
-Scroller::Scroller(mpd_Connection* mpd, SDL_Surface* screen, TTF_Font* font, 
+Scroller::Scroller(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* bg, TTF_Font* font, 
 		SDL_Rect& rect, Config& config, int skipVal, int numPerScreen)
 	: m_mpd(mpd)
 	, m_screen(screen)
@@ -40,56 +40,116 @@ Scroller::Scroller(mpd_Connection* mpd, SDL_Surface* screen, TTF_Font* font,
 	, m_clearRect(rect)
 	, m_lastItemNum(0)
 	, m_curState(0)
+	, m_bg(bg)
+	, m_prevX(0)
+	, m_prevY(0)
+	, m_skipFirstMouse(true)
 {
 	m_destRect.x = rect.x;
 	m_destRect.y = rect.y;
 	m_origY = m_destRect.y;
 	m_curItemClearRect = m_destRect;
-	m_config.getItemAsColor("sk_popup_backColor", m_pauseColor.r, m_pauseColor.g, m_pauseColor.b);
+	m_upClearRect.x = rect.x + rect.w - 25;
+	m_upClearRect.w = 25;
+	m_upClearRect.y = rect.y;
+	m_upClearRect.h = 25;
+	m_downClearRect.x = rect.x + rect.w - 25;
+	m_downClearRect.w = 25;
+	m_downClearRect.y = rect.y+rect.h-25;
+	m_downClearRect.h = 25;
+
 	m_config.getItemAsColor("sk_popup_itemColor", m_pauseItemColor.r, m_pauseItemColor.g, m_pauseItemColor.b);
+	
+	string skinName = m_config.getItem("skin");
+	m_pauseBtn= IMG_Load(string("skins/"+skinName+"/pause.png").c_str());
+	if (!m_pauseBtn)
+		printf("Unable to load image: %s\n", SDL_GetError());
+	else 
+		m_pauseBtn = SDL_DisplayFormatAlpha(m_pauseBtn);
+	m_bgCurItem = IMG_Load(string("skins/"+skinName+"/bg_curItem.png").c_str());
+	if (!m_bgCurItem)
+		printf("Unable to load image: %s\n", SDL_GetError());
+	else 
+		m_bgCurItem = SDL_DisplayFormatAlpha(m_bgCurItem);
+	m_downBtn = IMG_Load(string("skins/"+skinName+"/down.png").c_str());
+	if (!m_downBtn)
+		printf("Unable to load image: %s\n", SDL_GetError());
+	else 
+		m_downBtn = SDL_DisplayFormatAlpha(m_downBtn);
+	m_upBtn = IMG_Load(string("skins/"+skinName+"/up.png").c_str());
+	if (!m_downBtn)
+		printf("Unable to load image: %s\n", SDL_GetError());
+	else 
+		m_upBtn = SDL_DisplayFormatAlpha(m_upBtn);
+
+
 }
 
-bool Scroller::processCommand(int command)
+void Scroller::initItemIndexLookup() {
+	int startPos = m_clearRect.y+m_skipVal*2;
+	int skipCount = 0;
+	int index = 0;	
+//cout <<  "skipval " << m_skipVal << "  startPos  " << startPos << endl;
+	for(int i=0; i<startPos; ++i) {
+		m_itemIndexLookup.push_back(0);
+	}
+	for(int i=startPos; i<(m_clearRect.h+m_clearRect.y); ++i) {
+		m_itemIndexLookup.push_back(index);
+		if(skipCount >= m_skipVal) {
+			++index;
+			skipCount = 0;
+//		cout << "i " << i << "   index  " << index << endl;
+		}
+		++skipCount;
+	}
+
+}
+
+bool Scroller::processCommand(int& command)
 {
 	bool done = false;
-	if(command == CMD_DOWN) {
-		++m_curItemNum;
-		if(m_curItemNum > m_lastItemNum) {
-			m_topItemNum = m_curItemNum = 0;
-		} else 	if(m_curItemNum >= m_numPerScreen+m_topItemNum) {
-			++m_topItemNum;
-		}
-		done = true;
-	} else if(command == CMD_UP) {
-		if(m_curItemNum > 0) {
-			--m_curItemNum;
-			if(m_curItemNum <= m_topItemNum && m_topItemNum >0)
-				--m_topItemNum;
-		} else if(m_curItemNum == 0) {
-			m_curItemNum = m_lastItemNum;
-			m_topItemNum = m_curItemNum - m_numPerScreen+1;			
 
-		}
-		done = true;
-	} else if(command == CMD_LEFT) {
-		if(m_curItemNum -m_numPerScreen >= 0) {
-			m_curItemNum -= m_numPerScreen;
-			m_topItemNum -= m_numPerScreen;
-		} else {
-			m_curItemNum = m_topItemNum = 0;
-		}
-		done = true;
-	} else if(command == CMD_RIGHT) {
-		if(m_lastItemNum-m_curItemNum >= m_numPerScreen) {
-			m_curItemNum += m_numPerScreen;
-			m_topItemNum += m_numPerScreen;
-		} else {
-			m_curItemNum = m_topItemNum = m_lastItemNum;
-		}
-		done = true;
-	}
-	
+	switch(command) {
+		case CMD_DOWN:
+			++m_curItemNum;
+			if(m_curItemNum > m_lastItemNum) {
+				m_topItemNum = m_curItemNum = 0;
+			} else 	if(m_curItemNum >= m_numPerScreen+m_topItemNum) {
+				++m_topItemNum;
+			}
+			done = true;
+			break;
+		case CMD_UP:
+			if(m_curItemNum > 0) {
+				--m_curItemNum;
+				if(m_curItemNum <= m_topItemNum && m_topItemNum >0)
+					--m_topItemNum;
+			} else if(m_curItemNum == 0) {
+				m_curItemNum = m_lastItemNum;
+				m_topItemNum = m_curItemNum - m_numPerScreen+1;			
 
+			}
+			done = true;
+			break;
+		case CMD_LEFT:
+			if(m_curItemNum -m_numPerScreen >= 0) {
+				m_curItemNum -= m_numPerScreen;
+				m_topItemNum -= m_numPerScreen;
+			} else {
+				m_curItemNum = m_topItemNum = 0;
+			}
+			done = true;
+			break;
+		case CMD_RIGHT:
+			if(m_lastItemNum-m_curItemNum >= m_numPerScreen) {
+				m_curItemNum += m_numPerScreen;
+				m_topItemNum += m_numPerScreen;
+			} else {
+				m_curItemNum = m_topItemNum = m_lastItemNum;
+			}
+			done = true;
+			break;
+	}	
 	return done;
 }
 
@@ -103,46 +163,58 @@ void Scroller::draw()
 	SDL_Surface *sText;
 	int numProcessed = 0;
 	int numDisplayed = 0;
+	string str;
 	for(listing_t::iterator vIter = m_listing.begin();
 		vIter != m_listing.end() && (numDisplayed <= m_numPerScreen);
 		++vIter) {
 		if(numProcessed >= m_topItemNum) {
-			string str = (*vIter).first;
+			str = (*vIter).first;
 			if(numProcessed == m_curItemNum) {
 				sText = TTF_RenderText_Blended(m_font, str.c_str(), m_curItemColor);
-				m_curItemClearRect.w = sText->w;
+				m_curItemClearRect.w = m_clearRect.w;
 				m_curItemClearRect.h = sText->h;
-				SDL_FillRect(m_screen, &m_curItemClearRect, SDL_MapRGB(m_screen->format, m_curItemBackColor.r, m_curItemBackColor.g, m_curItemBackColor.b));
+				SDL_SetClipRect(m_screen, &m_curItemClearRect);
+				SDL_BlitSurface(m_bgCurItem, NULL, m_screen, &m_curItemClearRect );
 				m_curItemName = (*vIter).first;
 				m_curItemType = (*vIter).second;
 			} else {
-				//sText = TTF_RenderText_Solid(m_font, (*vIter).first.c_str(), color);
 				sText = TTF_RenderText_Blended(m_font, str.c_str(), m_itemColor);
-				//sText = TTF_RenderText_Shaded(m_font, (*vIter).first.c_str(), color, bgcolor);
+				
+				m_curItemClearRect.w = m_clearRect.w;
+				m_curItemClearRect.h = sText->h;
 			}
 
+			SDL_SetClipRect(m_screen, &m_curItemClearRect);
 			SDL_BlitSurface(sText,NULL, m_screen, &m_destRect );
 			SDL_FreeSurface(sText);
 			m_destRect.y += m_skipVal;
 			m_curItemClearRect.y += m_skipVal;
 			++numDisplayed;
 		}
-			++numProcessed;
+		++numProcessed;
 	}
 	m_destRect.y = m_origY;
 	m_curItemClearRect.y = m_origY;
 
+	if(numDisplayed < m_listing.size()) {	
+		if(m_topItemNum != 0) {
+			SDL_SetClipRect(m_screen, &m_upClearRect);
+			SDL_BlitSurface(m_upBtn, NULL, m_screen, &m_upClearRect );
+		}
+		if(m_topItemNum <= m_lastItemNum - numDisplayed) {
+			SDL_SetClipRect(m_screen, &m_downClearRect);
+			SDL_BlitSurface(m_downBtn, NULL, m_screen, &m_downClearRect );	
+		}
+	}	
 	if(m_curState == MPD_STATUS_STATE_PAUSE) {
 		SDL_Rect dstrect;
-		dstrect.x = (m_screen->w - 50) / 2;
-		dstrect.y = (m_screen->h - m_skipVal) / 2;
-		dstrect.w = 50;
-		dstrect.h = m_skipVal;
+		dstrect.x = (m_screen->w - m_pauseBtn->w) / 2;
+		dstrect.y = (m_screen->h - m_pauseBtn->h) / 2;
+		dstrect.w = m_pauseBtn->w;
+		dstrect.h = m_pauseBtn->h;
 
-		SDL_FillRect(m_screen, &dstrect, SDL_MapRGB(m_screen->format, m_pauseColor.r, m_pauseColor.g, m_pauseColor.b));
-		sText = TTF_RenderText_Blended(m_font, "PAUSED", m_pauseItemColor);
-		SDL_BlitSurface(sText,NULL, m_screen, &dstrect );
-		SDL_FreeSurface(sText);
+		SDL_SetClipRect(m_screen, &dstrect);
+		SDL_BlitSurface(m_pauseBtn, NULL, m_screen, &dstrect );
 	}
 }
 
@@ -151,6 +223,7 @@ void Scroller::draw(vector<string>& selectedOptions)
 	SDL_Surface *sText;
 	int numProcessed = 0;
 	int numDisplayed = 0;
+	int amount = 120;
 	for(listing_t::iterator vIter = m_listing.begin();
 		vIter != m_listing.end() && (numDisplayed <= m_numPerScreen);
 		++vIter) {
@@ -158,25 +231,34 @@ void Scroller::draw(vector<string>& selectedOptions)
 			string str = (*vIter).first;
 			if(numProcessed == m_curItemNum) {
 				sText = TTF_RenderText_Blended(m_font, str.c_str(), m_curItemColor);
-				m_curItemClearRect.w = sText->w;
+				m_curItemClearRect.w = m_clearRect.w;
 				m_curItemClearRect.h = sText->h;
-				SDL_FillRect(m_screen, &m_curItemClearRect, SDL_MapRGB(m_screen->format, m_curItemBackColor.r, m_curItemBackColor.g, m_curItemBackColor.b));
+				SDL_SetClipRect(m_screen, &m_curItemClearRect);
+				SDL_BlitSurface(m_bgCurItem, NULL, m_screen, &m_curItemClearRect );
 				m_curItemName = (*vIter).first;
 				m_curItemType = (*vIter).second;
 			} else {
-				//sText = TTF_RenderText_Solid(m_font, (*vIter).first.c_str(), color);
 				sText = TTF_RenderText_Blended(m_font, str.c_str(), m_itemColor);
-				//sText = TTF_RenderText_Shaded(m_font, (*vIter).first.c_str(), color, bgcolor);
+				m_curItemClearRect.w = sText->w;
+				m_curItemClearRect.h = sText->h;
 			}
 
-			SDL_BlitSurface(sText,NULL, m_screen, &m_destRect );
+			SDL_SetClipRect(m_screen, &m_curItemClearRect);
+			SDL_BlitSurface(sText,NULL, m_screen, &m_curItemClearRect );
+
 			SDL_FreeSurface(sText);
 			if(numDisplayed < selectedOptions.size()) {
+			if(numProcessed == m_curItemNum)
+				sText = TTF_RenderText_Blended(m_font, selectedOptions[numDisplayed].c_str(), m_curItemColor);
+			else
 				sText = TTF_RenderText_Blended(m_font, selectedOptions[numDisplayed].c_str(), m_itemColor);
-				m_destRect.x += 100;	
+				m_destRect.x += amount;	
+				m_destRect.w = sText->w;
+				m_destRect.h = sText->h;
+				SDL_SetClipRect(m_screen, &m_destRect);
 				SDL_BlitSurface(sText,NULL, m_screen, &m_destRect );
 
-				m_destRect.x -= 100;	
+				m_destRect.x -= amount;	
 				SDL_FreeSurface(sText);
 			}
 			m_destRect.y += m_skipVal;

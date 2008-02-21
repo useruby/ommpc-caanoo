@@ -138,6 +138,21 @@ int Config::getItemAsNum(std::string itemName)
 	return atoi(value.c_str());
 }
 
+float Config::getItemAsFloat(std::string itemName)
+{
+	std::string value;
+    std::map<std::string, std::string>::iterator mIter = m_configItems.find(itemName);
+
+    if(mIter != m_configItems.end()) {
+        value = (*mIter).second;
+    } else {
+        value = "";
+    }
+
+	return atof(value.c_str());
+}
+
+
 void Config::trimStr(std::string & inStr)
 {
     while(inStr[0] == ' ' || inStr[0] == '\t' || inStr[0] == '\n')

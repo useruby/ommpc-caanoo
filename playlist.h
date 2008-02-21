@@ -34,17 +34,18 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "timer.h"
 
 class Popup;
+class GuiPos;
 
 class Playlist : public Scroller
 {
 public:
 	typedef std::vector<std::pair<std::string, int> >listing_t;
 
-	Playlist(mpd_Connection* mpd, SDL_Surface* screen, TTF_Font* font, Config& config, SDL_Rect& rect, int skipVal, int numPerScreen);
+	Playlist(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* bg,  TTF_Font* font, Config& config, SDL_Rect& rect, int skipVal, int numPerScreen);
 	void load(std::string dir);
 	void updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus, 
 							int rtmpdStatusChanged, mpd_Status* rtmpdStatus, int repeatDelay);
-    void processCommand(int event, int& rtmpdStatusChanged, mpd_Status* rtmpdStatus, int repeatDelay, int volume, long delayTime);
+    void processCommand(int event, int& rtmpdStatusChanged, mpd_Status* rtmpdStatus, int repeatDelay, int volume, long delayTime, GuiPos& guiPos);
     void draw(bool force);
 	std::string currentItemName();
 	std::string currentItemPath();
@@ -55,6 +56,7 @@ public:
 	int getRand(int max);
 	void initRandomPlaylist();
 	void initNewPlaylist();
+	virtual void initItemIndexLookup();
 	void initName(std::string name);
 	void save();
 	std::string nowPlayingTitle(int song=-1);
@@ -62,6 +64,8 @@ public:
 	std::string nowPlayingFile(int song=-1);
 	std::string nowPlayingFormat(int song=-1);
 	void nowPlaying(int song);
+
+	int getPlayingState() {return m_curState;}
 protected:
 	std::string m_curDir;
 
@@ -87,7 +91,6 @@ protected:
 	} songInfo_t;
 
 	std::vector<songInfo_t> m_songsInfo;
-
 };
 
 #endif

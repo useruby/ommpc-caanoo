@@ -33,17 +33,18 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 class Playlist;
 class Config;
 class StatsBar;
+class GuiPos;
 
 class Bookmarks : public Scroller
 {
 public:
 	typedef std::vector<std::pair<std::string, int> >listing_t;
-    Bookmarks(mpd_Connection* mpd, SDL_Surface* screen, TTF_Font* font, SDL_Rect& rect, int skipVal, int numPerScreen, Playlist& pl, Config& config, StatsBar& sb);
+    Bookmarks(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* bg, TTF_Font* font, SDL_Rect& rect, int skipVal, int numPerScreen, Playlist& pl, Config& config, StatsBar& sb);
     void ls(std::string dir="");
 
 	void updateListing();
 	void updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus);
-	void processCommand(int command);
+	int processCommand(int command, GuiPos& guiPos);
 	void draw(bool forceRefresh);
 	std::string currentItemName();
 	std::string currentItemPath();

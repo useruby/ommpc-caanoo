@@ -24,31 +24,63 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "threadParms.h"
 #include "commandFactory.h"
 #include "gp2xregs.h"
+#include "guiPos.h"
 
 #include <iostream>
 #include <sstream>
+#include <fstream>
 #include <stdexcept>
 #include <algorithm>
 #include <dirent.h>
+#include <SDL_image.h>
+
 using namespace std;
 
-Popup::Popup(mpd_Connection* mpd, SDL_Surface* screen, Config& config, SDL_Rect& rect,
-				int skipVal, int numPerScreen, GP2XRegs& gp2xRegs)
-: Scroller(mpd, screen, TTF_OpenFont("Vera.ttf", 10), rect, config, skipVal, numPerScreen)
+Popup::Popup(mpd_Connection* mpd, SDL_Surface* screen, Config& config, SDL_Rect& rect, int skipVal, int numPerScreen, GP2XRegs& gp2xRegs)
+: Scroller(mpd, 
+	screen, 
+	NULL, 
+	TTF_OpenFont(config.getItem("sk_font_popup").c_str(), config.getItemAsNum("sk_font_popup_size")),
+	rect, 
+	config, 
+	TTF_FontLineSkip(TTF_OpenFont(config.getItem("sk_font_popup").c_str(), config.getItemAsNum("sk_font_popup_size"))) * config.getItemAsFloat("sk_font_popup_extra_spacing"),
+	numPerScreen)
 , m_pos(0)
 , m_type(0)
+, m_bgRect(rect)
+, m_borderRect(rect)
 , m_gp2xRegs(gp2xRegs)
 {
 	m_borderRect.x = m_clearRect.x-1;
 	m_borderRect.y = m_clearRect.y-1;
 	m_borderRect.h = m_clearRect.h+2;
 	m_borderRect.w = m_clearRect.w+2;
-
+	
 	m_config.getItemAsColor("sk_popup_backColor", m_backColor.r, m_backColor.g, m_backColor.b);
 	m_config.getItemAsColor("sk_popup_itemColor", m_itemColor.r, m_itemColor.g, m_itemColor.b);
-	m_config.getItemAsColor("sk_popup_curItemBackColor", m_curItemBackColor.r, m_curItemBackColor.g, m_curItemBackColor.b);
 	m_config.getItemAsColor("sk_popup_curItemColor", m_curItemColor.r, m_curItemColor.g, m_curItemColor.b);
 	m_config.getItemAsColor("sk_popup_borderColor", m_borderColor.r, m_borderColor.g, m_borderColor.b);
+	
+	initItemIndexLookup();	
+}
+
+void Popup::initItemIndexLookup() {
+	int startPos = m_clearRect.y+5+ m_skipVal*2;
+	int skipCount = 0;
+	int index = 0;	
+	m_itemIndexLookup.clear();
+	
+	for(int i=0; i<startPos; ++i) {
+		m_itemIndexLookup.push_back(0);
+	}
+	for(int i=startPos; i<(m_clearRect.h+m_clearRect.y-5); ++i) {
+		m_itemIndexLookup.push_back(index);
+		if(skipCount >= m_skipVal) {
+			++index;
+			skipCount = 0;
+		}
+		++skipCount;
+	}
 }
 
 int Popup::selectedAction()
@@ -58,7 +90,6 @@ int Popup::selectedAction()
 		action= m_listing[m_curItemNum].second;
 	else 
 		action = -1;
-
 	return action;
 }
 
@@ -88,12 +119,11 @@ void Popup::setOptionsText()
 {
 	vector<string> curOption;
 	vector<string>::iterator curIter;
-	for(int i=75; i<=280; i+=5) {
+	for(int i=65; i<=280; i+=5) {
 		ostringstream mhz;
 		mhz << i;
 		curOption.push_back(mhz.str());
 	}
-	
 	m_optionsText.push_back(curOption);
 	curOption.clear();
 	curOption.push_back("true");
@@ -119,21 +149,35 @@ void Popup::setOptionsText()
 					throw runtime_error(msg.c_str());
 				}
 
-				if (S_ISDIR(s.st_mode)) 
+				if (S_ISDIR(s.st_mode) && strncmp(dirent->d_name, "overlay", 7)) 
 					curOption.push_back(dirent->d_name);
 			}
 			dirent = readdir(udir);
 		}
 	}
 	m_optionsText.push_back(curOption);
+	
 	curOption.clear();
+	curOption.push_back("off");
+	curOption.push_back("on");
+	m_optionsText.push_back(curOption);
 
 	m_optionsIters.clear();	
 	curIter = find(m_optionsText[0].begin(), m_optionsText[0].end(), m_config.getItem("cpuSpeed"));
+	if(curIter == m_optionsText[0].end())
+		curIter = m_optionsText[0].begin();
 	m_optionsIters.push_back(curIter);
 	curIter = find(m_optionsText[1].begin(), m_optionsText[1].end(), m_config.getItem("showAlbumArt"));
+	if(curIter == m_optionsText[1].end())
+		curIter = m_optionsText[1].begin();
 	m_optionsIters.push_back(curIter);
 	curIter = find(m_optionsText[2].begin(), m_optionsText[2].end(), m_config.getItem("skin"));
+	if(curIter == m_optionsText[2].end())
+		curIter = m_optionsText[2].begin();
+	m_optionsIters.push_back(curIter);
+	curIter = find(m_optionsText[3].begin(), m_optionsText[3].end(), m_config.getItem("softwareVolume"));
+	if(curIter == m_optionsText[3].end())
+		curIter = m_optionsText[3].begin();
 	m_optionsIters.push_back(curIter);
 }
 
@@ -142,7 +186,8 @@ void Popup::saveOptions()
 	string oldSkin = m_config.getItem("skin");
 	string oldSpeed = m_config.getItem("cpuSpeed");
 	string oldSaa = m_config.getItem("showAlbumArt");
-	
+	string oldSoftwareVol = m_config.getItem("softwareVolume");
+		
 	int itemNum = 0;
 	for(listing_t::iterator vIter = m_listing.begin();
 		vIter != m_listing.end(); 
@@ -155,6 +200,8 @@ void Popup::saveOptions()
 				name = "showAlbumArt";
 			else if(itemNum == 2)
 				name = "skin";
+			else if(itemNum == 3)
+				name = "softwareVolume";
 			m_config.setItem(name, (*m_optionsIters[itemNum]));
 		}
 		++itemNum;
@@ -171,12 +218,37 @@ void Popup::saveOptions()
 	mpd_sendPauseCommand(m_mpd, 0);
 	mpd_finishCommand(m_mpd);
 	}
-	
+
+	if(oldSoftwareVol != m_config.getItem("softwareVolume")) {
+		updateMpdConf(m_config.getItem("softwareVolume"));
+	}
 	m_config.init();
 	//reload skin file to pick up on any skin changes/album art flage changes.
 	if(oldSkin == m_config.getItem("skin") || (oldSaa == m_config.getItem("showAlbumArt")))
 		; //
 		
+}
+
+void Popup::updateMpdConf(string softVolume)
+{
+	char pwd[129];
+	getcwd(pwd, 128);
+	string pwdStr(pwd);
+	ifstream in((pwdStr + "/mpd.conf").c_str(), ios::in);
+	ofstream out((pwdStr + "/newmpd.conf").c_str(), ios::out);
+
+	string line;
+	while(!in.eof()) {
+		getline(in, line);
+	
+		if(line.substr(0, 10) != "mixer_type" && line.length() > 0)
+			out << line << endl;
+	}
+	if(softVolume == "on")
+		out << "mixer_type		\"software\"" << endl;
+
+	rename((pwdStr + "/newmpd.conf").c_str(), (pwdStr + "/mpd.conf").c_str());
+
 }
 
 void Popup::setTitle(std::string name)
@@ -186,9 +258,8 @@ void Popup::setTitle(std::string name)
 
 void Popup::setSize(SDL_Rect& rect)
 {
-
 	m_clearRect = rect;
-	m_destRect.x = rect.x+5;
+	m_destRect.x = rect.x;
 	m_destRect.y = rect.y+5;
 	m_origY = m_destRect.y;
 	
@@ -200,13 +271,62 @@ void Popup::setSize(SDL_Rect& rect)
 	
 	m_numPerScreen = (rect.h-(2*m_skipVal))/m_skipVal;
 
+	initItemIndexLookup();	
+
 }
 
-int Popup::processCommand(int command) 
+int Popup::processCommand(int command, GuiPos& guiPos) 
 {
 	int rCommand = command;
 
-		if(command == CMD_DOWN) {
+	if(command == CMD_CLICK) {
+			rCommand = 0;
+/*
+		cout << m_clearRect.x << endl;
+		cout << m_clearRect.y << endl;
+		cout << m_clearRect.w << endl;
+		cout << m_clearRect.h << endl;
+
+		cout << "curx " << guiPos.curX << endl;
+		cout << "cury " << guiPos.curY << endl;
+*/
+		int lrOffset = 40;
+		int hwOffset = 40;
+		if(m_type == POPUP_OPTIONS) {
+			lrOffset = 100;
+			hwOffset = m_skipVal;
+		}
+
+		if(guiPos.curY > m_clearRect.y && (guiPos.curY < m_clearRect.y + m_clearRect.h))	 {
+			if(guiPos.curX < (m_clearRect.w+m_clearRect.x-lrOffset)) {
+				m_curItemNum = m_topItemNum + m_itemIndexLookup[guiPos.curY];		
+				if(m_curItemNum > m_listing.size())
+					m_curItemNum = m_listing.size() -1;
+				if(m_type == POPUP_OPTIONS && m_curItemNum < 4)
+					rCommand = 0;
+				else 
+					rCommand = CMD_POP_SELECT;
+			} else if(guiPos.curX > (m_clearRect.w+m_clearRect.x-lrOffset)) {
+				if(m_type == POPUP_OPTIONS) {
+					if(m_curItemNum == m_topItemNum + m_itemIndexLookup[guiPos.curY]) {	
+						if(guiPos.curX < m_clearRect.x+150)
+							command = CMD_LEFT;
+						else
+							command = CMD_RIGHT;
+					}
+				} else {
+					if(guiPos.curY < m_clearRect.y+hwOffset) {
+						command = CMD_LEFT;
+					} else if(guiPos.curY > m_clearRect.y + m_clearRect.h - hwOffset) {
+						command = CMD_RIGHT;
+					}
+				}
+			}
+		} 
+	}
+
+	switch (command) {
+		case CMD_DOWN:
 			++Scroller::m_curItemNum;
 			if(Scroller::m_curItemNum > Scroller::m_lastItemNum) {
 				Scroller::m_topItemNum = Scroller::m_curItemNum = 0;
@@ -214,7 +334,8 @@ int Popup::processCommand(int command)
 				++Scroller::m_topItemNum;
 			}
 			rCommand = 0;
-		} else if(command == CMD_UP) {
+			break;
+		case CMD_UP:
 			if(m_curItemNum > 0) {
 				--m_curItemNum;
 				if(m_curItemNum <= m_topItemNum && m_topItemNum >0)
@@ -224,20 +345,25 @@ int Popup::processCommand(int command)
 				m_topItemNum = m_curItemNum - m_numPerScreen+1;			
 			}
 			rCommand = 0;
-		} else 	if(m_type == POPUP_OPTIONS) {
-			if(command == CMD_LEFT) {
+			break;
+		case CMD_LEFT:
+			if(m_type == POPUP_OPTIONS) {
 				if (m_optionsIters[m_curItemNum] == m_optionsText[m_curItemNum].begin())
 					m_optionsIters[m_curItemNum] = m_optionsText[m_curItemNum].end() - 1;
 				else
 					m_optionsIters[m_curItemNum]--;
-			rCommand = 0;
-			} else if(command == CMD_RIGHT) {
+				rCommand = 0;
+			}
+			break;
+		case CMD_RIGHT:
+			if(m_type == POPUP_OPTIONS) {
 				m_optionsIters[m_curItemNum]++;
 				if (m_optionsIters[m_curItemNum] == m_optionsText[m_curItemNum].end())
 					m_optionsIters[m_curItemNum] = m_optionsText[m_curItemNum].begin();
-			rCommand = 0;
+				rCommand = 0;
 			}
-		}
+			break;
+	}
 
 	return rCommand;
 
@@ -274,15 +400,14 @@ void Popup::drawSelectList()
 	SDL_FreeSurface(sText);
 	m_destRect.y += m_skipVal*2;
 	m_curItemClearRect.y += m_skipVal*2;
-
 	if(m_type == POPUP_OPTIONS) {
 		m_selectedOptions.clear();
 		m_selectedOptions.push_back((*m_optionsIters[0]));
 		m_selectedOptions.push_back((*m_optionsIters[1]));
 		m_selectedOptions.push_back((*m_optionsIters[2]));
+		m_selectedOptions.push_back((*m_optionsIters[3]));
 		Scroller::draw(m_selectedOptions);
 	}
 	else 
 		Scroller::draw();
-
 }

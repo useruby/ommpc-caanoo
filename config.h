@@ -37,6 +37,7 @@ public:
 	void init();
     std::string getItem(std::string item);
     int getItemAsNum(std::string item);
+    float getItemAsFloat(std::string item);
 	void setItem(std::string itemName, std::string value);
 	void getItemAsColor(std::string name, Uint8& red, Uint8& green, Uint8& blue);
 	void saveConfigFile();

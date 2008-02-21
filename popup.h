@@ -34,6 +34,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "scroller.h"
 
 class GP2XRegs;
+class GuiPos;
 
 class Popup : public Scroller
 {
@@ -54,9 +55,11 @@ public:
 	void setOptionsText();
 	void saveOptions();
 	int selectedAction();
-	int processCommand(int command);	
+	int processCommand(int command, GuiPos& guiPos);	
 	void draw();
 	void drawSelectList();
+	virtual void initItemIndexLookup();
+	void updateMpdConf(std::string softVolume);
 protected:
 	
 	GP2XRegs& m_gp2xRegs;
@@ -65,7 +68,10 @@ protected:
 	int m_delayCnt;
 
 	SDL_Rect m_borderRect;
+	SDL_Rect m_bgRect;
+	SDL_Rect m_borderBgRect;
 	SDL_Color m_borderColor;
+	SDL_Color m_backColor;
 	int m_type;
 
 	//for options menu

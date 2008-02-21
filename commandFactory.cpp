@@ -27,7 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #define DELAY 800000
 using namespace std;
-CommandFactory::CommandFactory(mpd_Connection* mpd)
+CommandFactory::CommandFactory(mpd_Connection* mpd, vector<int>& volScale)
 : m_timer(0)
 , m_next(false)
 , m_prev(false)
@@ -40,8 +40,8 @@ CommandFactory::CommandFactory(mpd_Connection* mpd)
 , m_mpd(mpd)
 , m_setVol(false)
 , m_delayCommand(false)
+, m_volScale(volScale)
 {
-
 }
 
 /*CMD_PLAY_PAUSE=1, CMD_STOP, CMD_PREV, CMD_NEXT, CMD_FF, CMD_RW,
@@ -49,14 +49,19 @@ CommandFactory::CommandFactory(mpd_Connection* mpd)
   CMD_ADD_TO_PL, CMD_APPEND_PL, CMD_NEW_PL, CMD_LOAD_PL, CMD_DEL_FROM_PL, CMD_IMMEDIATE_PLAY, 
   CMD_SELECT_MODE, CMD_TOGGLE_VIEW, CMD_SHOW_MENU
   CMD_MODE_RANDOM, CMD_MODE_REPEAT, CMD_QUIT */
-int CommandFactory::getCommand(bool keysHeld[], int curMode, int& repeatDelay, bool popupVisible, int volume, long delayTime)
+int CommandFactory::getCommand(bool keysHeld[], int curMode, int& repeatDelay, bool popupVisible, bool overlayVisible, int volume, long delayTime)
 {
 	int command = 0;
-	
 	if(repeatDelay == 1 || delayTime > DELAY) {
 		//common commands
+		if (keysHeld[400]) {
+			if(repeatDelay == 1 || delayTime > DELAY*2)
+				command = CMD_CLICK;
+		}
 		if (keysHeld[SDLK_ESCAPE])
-			command = CMD_DETACH;	
+			command = CMD_DETACH;
+		else if(keysHeld[SDLK_o])
+			command = CMD_SHOW_OVERLAY;	
 		else if (keysHeld[GP2X_VK_UP] || keysHeld[SDLK_UP]||keysHeld[SDLK_k])
 			command = CMD_UP;	
 		else if (keysHeld[GP2X_VK_DOWN] || keysHeld[SDLK_DOWN]||keysHeld[SDLK_j])
@@ -161,8 +166,9 @@ int CommandFactory::getCommand(bool keysHeld[], int curMode, int& repeatDelay, b
 						break;
 					case 1:
 						{ //playlist
-							if (keysHeld[GP2X_VK_FY])
+							if (keysHeld[GP2X_VK_FY] || keysHeld[SDLK_y]) {
 								command	= CMD_MOVE_IN_PL;
+							}
 							else if (keysHeld[GP2X_VK_FX])
 								command = CMD_STOP;
 							else if (keysHeld[GP2X_VK_FR] || keysHeld[SDLK_n]) {
@@ -223,7 +229,7 @@ int CommandFactory::getCommand(bool keysHeld[], int curMode, int& repeatDelay, b
 										command = CMD_NEXT;
 										m_next = false;
 									} else if(m_setVol){
-										mpd_sendSetvolCommand(m_mpd, m_volume);
+										mpd_sendSetvolCommand(m_mpd, m_volScale[m_volume]);
 										mpd_finishCommand(m_mpd);
 										m_setVol = false;
 									}
@@ -233,7 +239,7 @@ int CommandFactory::getCommand(bool keysHeld[], int curMode, int& repeatDelay, b
 										command = CMD_PREV;
 										m_prev = false;
 									} else if(m_setVol){
-										mpd_sendSetvolCommand(m_mpd, m_volume);
+										mpd_sendSetvolCommand(m_mpd, m_volScale[m_volume]);
 										mpd_finishCommand(m_mpd);
 										m_setVol = false;
 									}
