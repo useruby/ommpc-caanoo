@@ -89,7 +89,7 @@ void GP2XRegs::toggleScreen()
 		if(m_f200)
 			m_memregs16[OFF_GPIOL >> 1] &= ~0x0800;
 		else
-			m_memregs16[OFF_GPIOH >> 1] |= 0x0004;
+			m_memregs16[OFF_GPIOH >> 1] &= ~0x0004;
         
 		m_memregs16[OFF_GPIOH >> 1] &= ~0x0002;
 		m_screenIsOff = true;
