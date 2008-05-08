@@ -86,43 +86,43 @@ Overlay::Overlay(mpd_Connection* mpd, SDL_Surface* screen, Config& config, SDL_R
 	m_clickRect2.h = config.getItemAsNum("sk_overlay_click_2_h");
 	
 	SDL_Surface* tmpSurface = NULL;	
-	string skinName = m_config.getItem("skin");
-	tmpSurface = IMG_Load(string("skins/"+skinName+"/overlay/play.png").c_str());
+	string overlayName = m_config.getItem("skin");
+	tmpSurface = IMG_Load(string("overlays/"+overlayName+"/play.png").c_str());
 	if (!tmpSurface)
-		tmpSurface = IMG_Load(string("skins/overlay_default/play.png").c_str());
+		tmpSurface = IMG_Load(string("overlays/default/play.png").c_str());
 	m_play = SDL_DisplayFormatAlpha(tmpSurface);
 	
-	tmpSurface = IMG_Load(string("skins/"+skinName+"/overlay/pause.png").c_str());
+	tmpSurface = IMG_Load(string("overlays/"+overlayName+"/pause.png").c_str());
 	if (!tmpSurface)
-		tmpSurface = IMG_Load(string("skins/overlay_default/pause.png").c_str());
+		tmpSurface = IMG_Load(string("overlays/default/pause.png").c_str());
 	m_pause = SDL_DisplayFormatAlpha(tmpSurface);
-	tmpSurface = IMG_Load(string("skins/"+skinName+"/overlay/ff.png").c_str());
+	tmpSurface = IMG_Load(string("overlays/"+overlayName+"/ff.png").c_str());
 	if (!tmpSurface)
-		tmpSurface = IMG_Load(string("skins/overlay_default/ff.png").c_str());
+		tmpSurface = IMG_Load(string("overlays/default/ff.png").c_str());
 	m_ff = SDL_DisplayFormatAlpha(tmpSurface);
-	tmpSurface = IMG_Load(string("skins/"+skinName+"/overlay/rw.png").c_str());
+	tmpSurface = IMG_Load(string("overlays/"+overlayName+"/rw.png").c_str());
 	if (!tmpSurface)
-		tmpSurface = IMG_Load(string("skins/overlay_default/rw.png").c_str());
+		tmpSurface = IMG_Load(string("overlays/default/rw.png").c_str());
 	m_rw = SDL_DisplayFormatAlpha(tmpSurface);
-	tmpSurface = IMG_Load(string("skins/"+skinName+"/overlay/prev.png").c_str());
+	tmpSurface = IMG_Load(string("overlays/"+overlayName+"/prev.png").c_str());
 	if (!tmpSurface)
-		tmpSurface = IMG_Load(string("skins/overlay_default/prev.png").c_str());
+		tmpSurface = IMG_Load(string("overlays/default/prev.png").c_str());
 	m_prev = SDL_DisplayFormatAlpha(tmpSurface);
-	tmpSurface = IMG_Load(string("skins/"+skinName+"/overlay/next.png").c_str());
+	tmpSurface = IMG_Load(string("overlays/"+overlayName+"/next.png").c_str());
 	if (!tmpSurface)
-		tmpSurface = IMG_Load(string("skins/overlay_default/next.png").c_str());
+		tmpSurface = IMG_Load(string("overlays/default/next.png").c_str());
 	m_next = SDL_DisplayFormatAlpha(tmpSurface);
-	tmpSurface = IMG_Load(string("skins/"+skinName+"/overlay/menu.png").c_str());
+	tmpSurface = IMG_Load(string("overlays/"+overlayName+"/menu.png").c_str());
 	if (!tmpSurface)
-		tmpSurface = IMG_Load(string("skins/overlay_default/menu.png").c_str());
+		tmpSurface = IMG_Load(string("overlays/default/menu.png").c_str());
 	m_menu = SDL_DisplayFormatAlpha(tmpSurface);
-	tmpSurface = IMG_Load(string("skins/"+skinName+"/overlay/exit.png").c_str());
+	tmpSurface = IMG_Load(string("overlays/"+overlayName+"/exit.png").c_str());
 	if (!tmpSurface)
-		tmpSurface = IMG_Load(string("skins/overlay_default/exit.png").c_str());
+		tmpSurface = IMG_Load(string("overlays/default/exit.png").c_str());
 	m_exit = SDL_DisplayFormatAlpha(tmpSurface);
-	tmpSurface = IMG_Load(string("skins/"+skinName+"/overlay/stop.png").c_str());
+	tmpSurface = IMG_Load(string("overlays/"+overlayName+"/stop.png").c_str());
 	if (!tmpSurface)
-		tmpSurface = IMG_Load(string("skins/overlay_default/stop.png").c_str());
+		tmpSurface = IMG_Load(string("overlays/default/stop.png").c_str());
 	m_stop = SDL_DisplayFormatAlpha(tmpSurface);
 }
 

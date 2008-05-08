@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "config.h"
 #include <iostream>
 #include <stdexcept>
-
+#include <sys/stat.h>
 using namespace std;
 
 Config::Config()
@@ -177,4 +177,24 @@ void Config::getItemAsColor(std::string name, Uint8& red, Uint8& green, Uint8& b
 		int commaPos3 = (*mIter).second.find(',', commaPos2+1);
 		blue = atoi(((*mIter).second.substr(commaPos2+1, commaPos3-commaPos2)).c_str());
 	}
+}
+
+bool Config::verifyMpdPaths()
+{
+	bool good = true;
+	struct stat stFileInfo;
+	if(stat(m_configItems["musicRoot"].c_str(),&stFileInfo) != 0)
+		good &= false;
+	if(stat(m_configItems["playlistRoot"].c_str(),&stFileInfo) != 0)
+		good &= false;
+	if(stat(m_configItems["programRoot"].c_str(),&stFileInfo) != 0)
+		good &= false;
+
+	return good;	
+}
+
+bool Config::verifyClientPaths()
+{
+
+	return false;
 }

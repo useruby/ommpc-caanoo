@@ -24,6 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "threadParms.h"
 #include "commandFactory.h"
 #include "playlist.h"
+#include "keyboard.h"
 #include "config.h"
 #include "guiPos.h"
 #include <iostream>
@@ -33,10 +34,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 using namespace std;
 
-PLBrowser::PLBrowser(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface * bg, TTF_Font* font,
-				SDL_Rect& rect, Config& config, int skipVal, int numPerScreen, Playlist& pl)
+PLBrowser::PLBrowser(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface * bg, TTF_Font* font, SDL_Rect& rect, Config& config, int skipVal, int numPerScreen, Playlist& pl, Keyboard& keyboard)
 : Scroller(mpd, screen, bg, font, rect, config, skipVal, numPerScreen)
 , m_playlist(pl)
+, m_keyboard(keyboard)
 {
 	m_config.getItemAsColor("sk_main_itemColor", m_itemColor.r, m_itemColor.g, m_itemColor.b);
 	m_config.getItemAsColor("sk_main_curItemColor", m_curItemColor.r, m_curItemColor.g, m_curItemColor.b);
@@ -47,30 +48,32 @@ PLBrowser::PLBrowser(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface * bg,
 
 
 void PLBrowser::ls(std::string dir)
-{
-	mpd_sendLsInfoCommand(m_mpd, dir.c_str());
+{ 
+	if(m_mpd != NULL) {
+		mpd_sendLsInfoCommand(m_mpd, dir.c_str());
 
-	m_curDir = dir;
-	m_listing.clear();
-	m_listing.push_back(make_pair("Save Playlist", 5));	
-	m_listing.push_back(make_pair("New Playlist", 3));	
-	m_listing.push_back(make_pair("Random Playlist", 4));	
-	m_listing.push_back(make_pair("Add All Songs", 6));	
-	mpd_InfoEntity* mpdItem = mpd_getNextInfoEntity(m_mpd);
-	while(mpdItem != NULL) {
-		std::string item = "";
-		int type = mpdItem->type;
-		if(type == 2) { 
-			item = mpdItem->info.playlistFile->path;
-			int pos = item.rfind("/");;
-			if(pos != string::npos) {
-				item = item.substr(pos+1);
+		m_curDir = dir;
+		m_listing.clear();
+		m_listing.push_back(make_pair("Save Playlist", 5));	
+		m_listing.push_back(make_pair("New Playlist", 3));	
+		m_listing.push_back(make_pair("Random Playlist", 4));	
+		m_listing.push_back(make_pair("Add All Songs", 6));	
+		mpd_InfoEntity* mpdItem = mpd_getNextInfoEntity(m_mpd);
+		while(mpdItem != NULL) {
+			std::string item = "";
+			int type = mpdItem->type;
+			if(type == 2) { 
+				item = mpdItem->info.playlistFile->path;
+				int pos = item.rfind("/");;
+				if(pos != string::npos) {
+					item = item.substr(pos+1);
+				}
+
+				m_listing.push_back(make_pair(item, type));
 			}
-
-			m_listing.push_back(make_pair(item, type));
+			mpd_freeInfoEntity(mpdItem);
+			mpdItem = mpd_getNextInfoEntity(m_mpd);
 		}
-		mpd_freeInfoEntity(mpdItem);
-		mpdItem = mpd_getNextInfoEntity(m_mpd);
 	}
 	m_lastItemNum = m_listing.size()-1;
 }
@@ -123,6 +126,20 @@ int PLBrowser::processCommand(int command, int curMode, GuiPos& guiPos)
 			//scroller command...parent class processes
 		} else {
 			switch(command) {
+				case CMD_SAVE_PL_FROM_BROWSER:
+					{
+						int num = m_config.getItemAsNum("nextPlaylistNum");
+						ostringstream numStr;
+						numStr << num;
+						string selText = "playlist_" + numStr.str(); 
+						mpd_sendSaveCommand(m_mpd, m_keyboard.getText().c_str());
+						mpd_finishCommand(m_mpd);
+						updateListing();
+						m_playlist.setNextNumOnSave(selText);
+						m_refresh = true;
+						newMode = CMD_HIDE_KEYBOARD;	
+					}
+					break;
 				case CMD_LOAD_PL:
 					if(m_curItemType == 2) {
 						std::string pl = "";
@@ -150,11 +167,8 @@ int PLBrowser::processCommand(int command, int curMode, GuiPos& guiPos)
 						ostringstream numStr;
 						numStr << num;
 						string selText = "playlist_" + numStr.str(); 
-						mpd_sendSaveCommand(m_mpd, selText.c_str());
-						mpd_finishCommand(m_mpd);
-						updateListing();
-						m_playlist.setNextNumOnSave();
-						m_refresh = true;
+						m_keyboard.init(CMD_SAVE_PL_FROM_BROWSER, selText);
+						newMode = CMD_SHOW_KEYBOARD;	
 					} else if(m_curItemType == 6) {
 						mpd_sendClearCommand(m_mpd);
 						mpd_finishCommand(m_mpd);

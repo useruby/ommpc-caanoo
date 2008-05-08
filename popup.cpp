@@ -25,6 +25,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "commandFactory.h"
 #include "gp2xregs.h"
 #include "guiPos.h"
+#include "keyboard.h"
 
 #include <iostream>
 #include <sstream>
@@ -36,20 +37,21 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 using namespace std;
 
-Popup::Popup(mpd_Connection* mpd, SDL_Surface* screen, Config& config, SDL_Rect& rect, int skipVal, int numPerScreen, GP2XRegs& gp2xRegs)
+Popup::Popup(mpd_Connection* mpd, SDL_Surface* screen, Config& config, SDL_Rect& rect, int skipVal, int numPerScreen, GP2XRegs& gp2xRegs, Keyboard& kb)
 : Scroller(mpd, 
 	screen, 
 	NULL, 
 	TTF_OpenFont(config.getItem("sk_font_popup").c_str(), config.getItemAsNum("sk_font_popup_size")),
 	rect, 
 	config, 
-	TTF_FontLineSkip(TTF_OpenFont(config.getItem("sk_font_popup").c_str(), config.getItemAsNum("sk_font_popup_size"))) * config.getItemAsFloat("sk_font_popup_extra_spacing"),
+	(int)(TTF_FontLineSkip(TTF_OpenFont(config.getItem("sk_font_popup").c_str(), config.getItemAsNum("sk_font_popup_size"))) * config.getItemAsFloat("sk_font_popup_extra_spacing")),
 	numPerScreen)
 , m_pos(0)
 , m_type(0)
 , m_bgRect(rect)
 , m_borderRect(rect)
 , m_gp2xRegs(gp2xRegs)
+, m_keyboard(kb)
 {
 	m_borderRect.x = m_clearRect.x-1;
 	m_borderRect.y = m_clearRect.y-1;
@@ -126,6 +128,13 @@ void Popup::setOptionsText()
 	}
 	m_optionsText.push_back(curOption);
 	curOption.clear();
+	for(int i=65; i<=280; i+=5) {
+		ostringstream mhz;
+		mhz << i;
+		curOption.push_back(mhz.str());
+	}
+	m_optionsText.push_back(curOption);
+	curOption.clear();
 	curOption.push_back("true");
 	curOption.push_back("false");
 	m_optionsText.push_back(curOption);
@@ -161,23 +170,60 @@ void Popup::setOptionsText()
 	curOption.push_back("off");
 	curOption.push_back("on");
 	m_optionsText.push_back(curOption);
+	curOption.clear();
+	string tmpStr = m_config.getItem("programRoot");
+	if(tmpStr.empty())
+		tmpStr = "Undefined";
+	curOption.push_back(tmpStr);
+	m_optionsText.push_back(curOption);
+	curOption.clear();
+	tmpStr = m_config.getItem("musicRoot");
+	if(tmpStr.empty())
+		tmpStr = "Undefined";
+	curOption.push_back(tmpStr);
+	m_optionsText.push_back(curOption);
+	curOption.clear();
+	tmpStr = m_config.getItem("playlistRoot");
+	if(tmpStr.empty())
+		tmpStr = "Undefined";
+	curOption.push_back(tmpStr);
+	m_optionsText.push_back(curOption);
+	curOption.clear();
+	tmpStr = m_config.getItem("albumArtRoot");
+	if(tmpStr.empty())
+		tmpStr = "Undefined";
+	curOption.push_back(tmpStr);
+	m_optionsText.push_back(curOption);
 
 	m_optionsIters.clear();	
 	curIter = find(m_optionsText[0].begin(), m_optionsText[0].end(), m_config.getItem("cpuSpeed"));
 	if(curIter == m_optionsText[0].end())
 		curIter = m_optionsText[0].begin();
 	m_optionsIters.push_back(curIter);
-	curIter = find(m_optionsText[1].begin(), m_optionsText[1].end(), m_config.getItem("showAlbumArt"));
+	curIter = find(m_optionsText[1].begin(), m_optionsText[1].end(), m_config.getItem("cpuSpeedLocked"));
 	if(curIter == m_optionsText[1].end())
 		curIter = m_optionsText[1].begin();
 	m_optionsIters.push_back(curIter);
-	curIter = find(m_optionsText[2].begin(), m_optionsText[2].end(), m_config.getItem("skin"));
+
+	curIter = find(m_optionsText[2].begin(), m_optionsText[2].end(), m_config.getItem("showAlbumArt"));
 	if(curIter == m_optionsText[2].end())
 		curIter = m_optionsText[2].begin();
 	m_optionsIters.push_back(curIter);
-	curIter = find(m_optionsText[3].begin(), m_optionsText[3].end(), m_config.getItem("softwareVolume"));
+	curIter = find(m_optionsText[3].begin(), m_optionsText[3].end(), m_config.getItem("skin"));
 	if(curIter == m_optionsText[3].end())
 		curIter = m_optionsText[3].begin();
+	m_optionsIters.push_back(curIter);
+	curIter = find(m_optionsText[4].begin(), m_optionsText[4].end(), m_config.getItem("softwareVolume"));
+	if(curIter == m_optionsText[4].end())
+		curIter = m_optionsText[4].begin();
+	m_optionsIters.push_back(curIter);
+	curIter = m_optionsText[5].begin();
+	m_optionsIters.push_back(curIter);
+	curIter = m_optionsText[6].begin();
+	m_optionsIters.push_back(curIter);
+	curIter = m_optionsText[7].begin();
+	m_optionsIters.push_back(curIter);
+	curIter = m_optionsText[8].begin();
 	m_optionsIters.push_back(curIter);
 }
 
@@ -185,8 +231,13 @@ void Popup::saveOptions()
 {
 	string oldSkin = m_config.getItem("skin");
 	string oldSpeed = m_config.getItem("cpuSpeed");
+	string oldSpeedLocked = m_config.getItem("cpuSpeedLocked");
 	string oldSaa = m_config.getItem("showAlbumArt");
 	string oldSoftwareVol = m_config.getItem("softwareVolume");
+	string oldAAR = m_config.getItem("albumArtRoot");
+	string oldMR = m_config.getItem("musicRoot");
+	string oldPR = m_config.getItem("playlistRoot");
+	string oldProgR = m_config.getItem("programRoot");
 		
 	int itemNum = 0;
 	for(listing_t::iterator vIter = m_listing.begin();
@@ -197,11 +248,21 @@ void Popup::saveOptions()
 			if(itemNum == 0)
 				name = "cpuSpeed";
 			else if(itemNum == 1)
-				name = "showAlbumArt";
+				name = "cpuSpeedLocked";
 			else if(itemNum == 2)
-				name = "skin";
+				name = "showAlbumArt";
 			else if(itemNum == 3)
+				name = "skin";
+			else if(itemNum == 4)
 				name = "softwareVolume";
+			else if(itemNum == 5)
+				name = "programRoot";
+			else if(itemNum == 6)
+				name = "musicRoot";
+			else if(itemNum == 7)
+				name = "playlistRoot";
+			else if(itemNum == 8)
+				name = "albumArtRoot";
 			m_config.setItem(name, (*m_optionsIters[itemNum]));
 		}
 		++itemNum;
@@ -211,16 +272,19 @@ void Popup::saveOptions()
 	m_config.saveConfigFile();
 
 	if(oldSpeed != m_config.getItem("cpuSpeed")) {
-	//set cpu clock
-	mpd_sendPauseCommand(m_mpd, 1);
-	mpd_finishCommand(m_mpd);
-	m_gp2xRegs.setClock(m_config.getItemAsNum("cpuSpeed"));
-	mpd_sendPauseCommand(m_mpd, 0);
-	mpd_finishCommand(m_mpd);
+		//set cpu clock
+		mpd_sendPauseCommand(m_mpd, 1);
+		mpd_finishCommand(m_mpd);
+		m_gp2xRegs.setClock(m_config.getItemAsNum("cpuSpeed"));
+		mpd_sendPauseCommand(m_mpd, 0);
+		mpd_finishCommand(m_mpd);
 	}
 
-	if(oldSoftwareVol != m_config.getItem("softwareVolume")) {
-		updateMpdConf(m_config.getItem("softwareVolume"));
+	if(oldSoftwareVol != m_config.getItem("softwareVolume")
+		|| oldMR != m_config.getItem("musicRoot")	
+		|| oldPR != m_config.getItem("playlistRoot")	
+		|| oldProgR != m_config.getItem("programRoot")) {
+		updateMpdConf();
 	}
 	m_config.init();
 	//reload skin file to pick up on any skin changes/album art flage changes.
@@ -229,8 +293,14 @@ void Popup::saveOptions()
 		
 }
 
-void Popup::updateMpdConf(string softVolume)
+void Popup::updateMpdConf()
 {
+	string softwareVol = m_config.getItem("softwareVolume");
+	string aAR = m_config.getItem("albumArtRoot");
+	string mR = m_config.getItem("musicRoot");
+	string pR = m_config.getItem("playlistRoot");
+	string progR = m_config.getItem("programRoot");
+		
 	char pwd[129];
 	getcwd(pwd, 128);
 	string pwdStr(pwd);
@@ -241,11 +311,23 @@ void Popup::updateMpdConf(string softVolume)
 	while(!in.eof()) {
 		getline(in, line);
 	
-		if(line.substr(0, 10) != "mixer_type" && line.length() > 0)
-			out << line << endl;
+		if(line.substr(0, 10) != "mixer_type" 
+			&& line.find("_directory") == string::npos
+			&& line.find("_file") == string::npos
+			&& line.length() != 0) {
+			out << line << endl; 
+		}
 	}
-	if(softVolume == "on")
+	if(softwareVol == "on")
 		out << "mixer_type		\"software\"" << endl;
+
+	out << "music_directory     \"" <<  mR << "\"" << endl;
+	out << "playlist_directory     \"" << pR << "\"" << endl;
+	out << "log_file     \"" << progR << ".mpdlog\"" << endl;
+	out << "error_file     \"" << progR << ".mpderror\"" << endl;
+	out << "db_file     \"" << progR << "db\"" << endl;
+	out << "pid_file     \"" << progR << ".pid\"" << endl;
+	out << "state_file     \"" << progR << ".mpdstate\"" << endl;
 
 	rename((pwdStr + "/newmpd.conf").c_str(), (pwdStr + "/mpd.conf").c_str());
 
@@ -293,7 +375,7 @@ int Popup::processCommand(int command, GuiPos& guiPos)
 		int lrOffset = 40;
 		int hwOffset = 40;
 		if(m_type == POPUP_OPTIONS) {
-			lrOffset = 100;
+			lrOffset = 150;
 			hwOffset = m_skipVal;
 		}
 
@@ -302,14 +384,16 @@ int Popup::processCommand(int command, GuiPos& guiPos)
 				m_curItemNum = m_topItemNum + m_itemIndexLookup[guiPos.curY];		
 				if(m_curItemNum > m_listing.size())
 					m_curItemNum = m_listing.size() -1;
-				if(m_type == POPUP_OPTIONS && m_curItemNum < 4)
+				if(m_type == POPUP_OPTIONS && m_curItemNum < 5)
 					rCommand = 0;
+				else if(m_type == POPUP_OPTIONS && m_curItemNum < 9)
+					rCommand = CMD_POP_KEYBOARD;
 				else 
 					rCommand = CMD_POP_SELECT;
 			} else if(guiPos.curX > (m_clearRect.w+m_clearRect.x-lrOffset)) {
 				if(m_type == POPUP_OPTIONS) {
 					if(m_curItemNum == m_topItemNum + m_itemIndexLookup[guiPos.curY]) {	
-						if(guiPos.curX < m_clearRect.x+150)
+						if(guiPos.curX < (m_clearRect.w+m_clearRect.x-(lrOffset-40 ))) 
 							command = CMD_LEFT;
 						else
 							command = CMD_RIGHT;
@@ -326,6 +410,17 @@ int Popup::processCommand(int command, GuiPos& guiPos)
 	}
 
 	switch (command) {
+		case CMD_POP_SELECT:
+			if(m_type == POPUP_OPTIONS)	 {
+				cout << m_curItemNum << endl;
+				if(m_curItemNum >4 && m_curItemNum <9) {
+					rCommand = CMD_POP_KEYBOARD;
+				} 
+			}
+			break;
+		case CMD_POP_CHG_OPTION:
+			(*m_optionsIters[m_curItemNum]) = m_keyboard.getText();
+			break;
 		case CMD_DOWN:
 			++Scroller::m_curItemNum;
 			if(Scroller::m_curItemNum > Scroller::m_lastItemNum) {
@@ -369,6 +464,14 @@ int Popup::processCommand(int command, GuiPos& guiPos)
 
 }
 
+string Popup::getSelOptionText()
+{
+
+	return *m_optionsIters[m_curItemNum];
+
+}
+
+
 void Popup::draw()
 {
 	switch(m_type) {
@@ -402,10 +505,17 @@ void Popup::drawSelectList()
 	m_curItemClearRect.y += m_skipVal*2;
 	if(m_type == POPUP_OPTIONS) {
 		m_selectedOptions.clear();
+
 		m_selectedOptions.push_back((*m_optionsIters[0]));
 		m_selectedOptions.push_back((*m_optionsIters[1]));
 		m_selectedOptions.push_back((*m_optionsIters[2]));
 		m_selectedOptions.push_back((*m_optionsIters[3]));
+		m_selectedOptions.push_back((*m_optionsIters[4]));
+		m_selectedOptions.push_back((*m_optionsIters[5]));
+		m_selectedOptions.push_back((*m_optionsIters[6]));
+		m_selectedOptions.push_back((*m_optionsIters[7]));
+		m_selectedOptions.push_back((*m_optionsIters[8]));
+			
 		Scroller::draw(m_selectedOptions);
 	}
 	else 

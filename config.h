@@ -42,7 +42,8 @@ public:
 	void getItemAsColor(std::string name, Uint8& red, Uint8& green, Uint8& blue);
 	void saveConfigFile();
 
-
+	bool verifyMpdPaths();
+	bool verifyClientPaths();
 protected:
 	void readConfigFile(std::ifstream& file);
     void trimStr(std::string & inStr);

@@ -121,6 +121,8 @@ int CommandFactory::getCommand(bool keysHeld[], int curMode, int& repeatDelay, b
 						{ //song browser
 							if (keysHeld[GP2X_VK_FA] || keysHeld[SDLK_i])
 								command = CMD_ADD_TO_PL;
+							else if (keysHeld[GP2X_VK_FY] || keysHeld[SDLK_y])
+								command = CMD_ADD_AS_PL;
 							else if (keysHeld[GP2X_VK_FX] || keysHeld[SDLK_s]) {
 								if(!m_delayCommand) {
 									if(delayTime >= DELAY) {

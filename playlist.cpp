@@ -82,45 +82,47 @@ void Playlist::initItemIndexLookup() {
 
 void Playlist::load(std::string dir)
 {
-	if(!dir.empty()) { //load playlist from disk
-	}
-	mpd_sendPlaylistInfoCommand(m_mpd, -1);
-	//m_path = dir;
-	m_listing.clear();	
-	m_songsInfo.clear();
-	mpd_InfoEntity* mpdItem = mpd_getNextInfoEntity(m_mpd);
-	while(mpdItem != NULL) {
-		std::string item = "";
-		int type = mpdItem->type;
-		if(type == 1) {
-			if(m_view == 0 && mpdItem->info.song->title != NULL
-						   && mpdItem->info.song->artist != NULL) { //Artist - Title
-				item = mpdItem->info.song->title;
-				item = " - " + item;
-				item = mpdItem->info.song->artist + item;
-			} else if(m_view ==1 && mpdItem->info.song->title != NULL) { //Title
-				item = mpdItem->info.song->title;
+	if(m_mpd != NULL) {
+		if(!dir.empty()) { //load playlist from disk
+		}
+		mpd_sendPlaylistInfoCommand(m_mpd, -1);
+		//m_path = dir;
+		m_listing.clear();	
+		m_songsInfo.clear();
+		mpd_InfoEntity* mpdItem = mpd_getNextInfoEntity(m_mpd);
+		while(mpdItem != NULL) {
+			std::string item = "";
+			int type = mpdItem->type;
+			if(type == 1) {
+				if(m_view == 0 && mpdItem->info.song->title != NULL
+						&& mpdItem->info.song->artist != NULL) { //Artist - Title
+					item = mpdItem->info.song->title;
+					item = " - " + item;
+					item = mpdItem->info.song->artist + item;
+				} else if(m_view ==1 && mpdItem->info.song->title != NULL) { //Title
+					item = mpdItem->info.song->title;
+				} else {
+					item = mpdItem->info.song->file;
+				}
+				int pos = item.rfind("/");;
+				if(pos != string::npos) {
+					item = item.substr(pos+1);
+				}
+				m_listing.push_back(make_pair(item, type));
+				songInfo_t song;
+				if(mpdItem->info.song->title != NULL)
+					song.title  = mpdItem->info.song->title;
+				else 
+					song.title  = mpdItem->info.song->file;
+				if(mpdItem->info.song->artist != NULL)
+					song.artist  = mpdItem->info.song->artist;
+				song.file  = mpdItem->info.song->file;
+				m_songsInfo.push_back(song);
+				mpd_freeInfoEntity(mpdItem);
+				mpdItem = mpd_getNextInfoEntity(m_mpd);
 			} else {
-				item = mpdItem->info.song->file;
+				throw runtime_error("Unknown mpd entity for playlist");
 			}
-			int pos = item.rfind("/");;
-			if(pos != string::npos) {
-				item = item.substr(pos+1);
-			}
-			m_listing.push_back(make_pair(item, type));
-			songInfo_t song;
-			if(mpdItem->info.song->title != NULL)
-				song.title  = mpdItem->info.song->title;
-			else 
-				song.title  = mpdItem->info.song->file;
-			if(mpdItem->info.song->artist != NULL)
-				song.artist  = mpdItem->info.song->artist;
-			song.file  = mpdItem->info.song->file;
-			m_songsInfo.push_back(song);
-			mpd_freeInfoEntity(mpdItem);
-			mpdItem = mpd_getNextInfoEntity(m_mpd);
-		} else {
-			throw runtime_error("Unknown mpd entity for playlist");
 		}
 	}
 //	mpd_finishCommand(m_mpd);
@@ -138,7 +140,8 @@ void Playlist::makeNowPlayingVisible()
 
 }
 
-bool Playlist::showSaveDialog(Popup& popup)
+
+bool Playlist::showSaveDialog(Popup& popup, string name)
 {
 	bool show = false;	
 	
@@ -147,11 +150,8 @@ bool Playlist::showSaveDialog(Popup& popup)
 	if(!m_name.empty())
 		items.push_back(make_pair(m_name, type));	
 			
-	int num = m_config.getItemAsNum("nextPlaylistNum");
-	ostringstream numStr;
-	numStr << num;
-	items.push_back(make_pair("       playlist_" + numStr.str(), (int)Popup::POPUP_DO_SAVE_PL)); 
-	items.push_back(make_pair("       Cancel", (int)Popup::POPUP_CANCEL)); 
+	items.push_back(make_pair("  "+name, (int)Popup::POPUP_DO_SAVE_PL)); 
+	items.push_back(make_pair("  Cancel", (int)Popup::POPUP_CANCEL)); 
 	popup.setItemsText(items, type);
 	SDL_Rect popRect;
 	popRect.w = 180;
@@ -159,22 +159,23 @@ bool Playlist::showSaveDialog(Popup& popup)
 	popRect.x = (m_screen->w - popRect.w) / 2;
 	popRect.y = (m_screen->h - popRect.h) / 2;
 	popup.setSize(popRect);
-	popup.setTitle("       Save Playlist As...");
+	popup.setTitle("  Save Playlist As...");
 	show = true;
 
 	return show;
 }
 
-void Playlist::setNextNumOnSave()
+void Playlist::setNextNumOnSave(string name)
 {
 	int num = m_config.getItemAsNum("nextPlaylistNum");
 	
 	++num;
 	ostringstream numStr;
 	numStr << num;
-	m_config.setItem("nextPlaylistNum", numStr.str().c_str());
-	m_config.saveConfigFile();
-//	m_config.readConfigFile();
+	if(name == "playlist_"+numStr.str()) {
+		m_config.setItem("nextPlaylistNum", numStr.str().c_str());
+		m_config.saveConfigFile();
+	}
 }
 
 int Playlist::getRand(int max)
@@ -303,6 +304,8 @@ std::string Playlist::nowPlayingFormat(int song)
 			ext = "  " + ext;
 		else if (ext.length() == 3)
 			ext = " " + ext;
+		else
+			ext = "";
 
 		return ext;
 	}

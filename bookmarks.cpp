@@ -24,6 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "threadParms.h"
 #include "commandFactory.h"
 #include "playlist.h"
+#include "keyboard.h"
 #include "config.h"
 #include "statsBar.h"
 #include "guiPos.h"
@@ -32,19 +33,28 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <stdexcept>
 #include <SDL_image.h>
 #include <dirent.h>
+#include <sys/stat.h>
 using namespace std;
 
-Bookmarks::Bookmarks(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* bg, TTF_Font* font, SDL_Rect& rect, int skipVal, int numPerScreen, Playlist& pl, Config& config, StatsBar& sb)
+Bookmarks::Bookmarks(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* bg, TTF_Font* font, SDL_Rect& rect, int skipVal, int numPerScreen, Playlist& pl, Config& config, StatsBar& sb, Keyboard& kb)
 : Scroller(mpd, screen, bg, font, rect, config, skipVal, numPerScreen)
 , m_playlist(pl)
 , m_sb(sb)
 , m_refresh(true)
+, m_keyboard(kb)
 {
 	char pwd[129];
 	getcwd(pwd, 128);
 	m_curDir = pwd;
 	m_curDir += "/bookmarks/";
+
+	struct stat stFileInfo;
+	if(stat(m_curDir.c_str(),&stFileInfo) != 0) {
+		cout << "bookmark directory does not exist, creating" << endl;
+		mkdir(m_curDir.c_str(), 0755);
+	} 
 	
+		
 	m_config.getItemAsColor("sk_main_itemColor", m_itemColor.r, m_itemColor.g, m_itemColor.b);
 	m_config.getItemAsColor("sk_main_curItemColor", m_curItemColor.r, m_curItemColor.g, m_curItemColor.b);
 	
@@ -97,6 +107,7 @@ void Bookmarks::updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus)
 {
 	if(mpdStatusChanged & SONG_CHG) {
 		m_nowPlaying = mpdStatus->song;	
+			cout << "np " << m_nowPlaying << endl;
 	}
 	if(mpdStatusChanged & STATE_CHG) { 
 		m_curState = mpdStatus->state;
@@ -106,11 +117,9 @@ void Bookmarks::updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus)
 
 void Bookmarks::doSave()
 {
-	string curTitle = m_playlist.nowPlayingTitle();
-	string formattedTime = m_sb.formattedElapsedTime();
-	int curTime = m_sb.elapsedTime();
 	string curMpdPath;
-	string bfile = m_curDir+curTitle+"_"+formattedTime+".bkmrk";
+	int curTime = m_sb.elapsedTime();
+	string bfile = m_curDir+m_keyboard.getText()+".bkmrk";
 	ofstream out(bfile.c_str(), ios::out| ios::trunc);
    
 	if(out.fail()) {
@@ -158,7 +167,12 @@ int Bookmarks::processCommand(int command, GuiPos& guiPos)
 				switch(command) {
 					case CMD_LOAD_BKMRK:
 						if(m_curItemName == "Create Bookmark") {
-							doSave();
+							string curTitle = m_playlist.nowPlayingTitle();
+							string formattedTime = m_sb.formattedElapsedTime();
+							int curTime = m_sb.elapsedTime();
+							string bfile = curTitle+"_"+formattedTime;
+							m_keyboard.init(CMD_SAVE_BKMRK, bfile);
+							newMode = CMD_SHOW_KEYBOARD;	
 						} else {
 							char tmp[256];
 							ifstream in((currentItemPath()+".bkmrk").c_str(), ios::in);
@@ -168,7 +182,10 @@ int Bookmarks::processCommand(int command, GuiPos& guiPos)
 								in.getline(tmp, 256);
 								int elapsed = atoi(tmp);
 
+			cout <<  songPath <<   "    " << elapsed << endl;
 								int id = mpd_sendAddIdCommand(m_mpd, songPath.c_str());
+			cout << "id " << id << endl;
+			cout << "np " << m_nowPlaying << endl;
 								mpd_finishCommand(m_mpd);
 								mpd_sendMoveIdCommand(m_mpd, id, m_nowPlaying+1);
 								mpd_finishCommand(m_mpd);

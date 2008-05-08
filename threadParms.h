@@ -26,6 +26,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "libmpdclient.h"
 #include <SDL.h>
 #include <string>
+#include "songDb.h"
 
 #ifndef GP2X
 #define GP2X_VK_FY  SDLK_d
@@ -65,4 +66,9 @@ typedef struct {
 	int destWidth;
 	int destHeight;
 } artThreadParms_t; 
+
+typedef struct {
+	SongDb* songDb;
+	bool updating;	
+} songDbThreadParms_t;
 #endif

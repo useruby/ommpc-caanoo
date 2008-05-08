@@ -237,9 +237,21 @@ int loadAlbumArt(void* data)
 			SDL_FreeSurface(tmp);
 			artParms->doArtLoad = false;
 		}
-		SDL_Delay(300);
+		SDL_Delay(500);
 	}
 
 	printf("End art-loading thread\n");
 	return(0);
+}
+
+int updateSongDb(void* data) 
+{
+	songDbThreadParms_t* songDbParms = (songDbThreadParms_t*) data;
+	songDbParms->updating = true;
+	//while(!artParms->done) {
+		songDbParms->songDb->update();
+	//	SDL_Delay(1000);
+	//}
+	songDbParms->updating = false;
+	return 0;
 }

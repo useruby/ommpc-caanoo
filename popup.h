@@ -35,6 +35,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 class GP2XRegs;
 class GuiPos;
+class Keyboard;
 
 class Popup : public Scroller
 {
@@ -46,7 +47,7 @@ public:
 				  POPUP_EXIT, POPUP_DO_SAVE_PL, POPUP_DO_LAUNCH, POPUP_SHOW_OPTIONS, 
 				  POPUP_SAVE_OPTIONS, POPUP_MPD_UPDATE, POPUP_BKMRK, POPUP_MPD_ADD_ALL}; //popup action
 	Popup(mpd_Connection* mpd, SDL_Surface* screen, Config& config, SDL_Rect& rect,
-				int skipVal, int numPerScreen, GP2XRegs& gp2xregs);
+				int skipVal, int numPerScreen, GP2XRegs& gp2xregs, Keyboard& kb);
 	
 	void setItemsText(Scroller::listing_t& items, int type);
 	void setSize(SDL_Rect& rect);
@@ -59,7 +60,8 @@ public:
 	void draw();
 	void drawSelectList();
 	virtual void initItemIndexLookup();
-	void updateMpdConf(std::string softVolume);
+	void updateMpdConf();
+	std::string getSelOptionText();
 protected:
 	
 	GP2XRegs& m_gp2xRegs;
@@ -79,6 +81,7 @@ protected:
 	optionsTextIters_t m_optionsIters;
 	std::vector<int> m_selectedIndexes;
 	std::vector<std::string> m_selectedOptions;
+	Keyboard& m_keyboard;
 };
 
 #endif

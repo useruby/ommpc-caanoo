@@ -51,8 +51,8 @@ public:
 	std::string currentItemPath();
 
 	void makeNowPlayingVisible();
-	bool showSaveDialog(Popup& popup);
-	void setNextNumOnSave();
+	bool showSaveDialog(Popup& popup, std::string name);
+	void setNextNumOnSave(std::string name);
 	int getRand(int max);
 	void initRandomPlaylist();
 	void initNewPlaylist();

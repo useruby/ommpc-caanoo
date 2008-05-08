@@ -25,5 +25,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 int pollMpdStatus(void *data);
 int loadAlbumArt(void* data); 
+int updateSongDb(void* data) ;
 
 #endif

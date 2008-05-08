@@ -136,6 +136,8 @@ int NowPlaying::processCommand(int command, GuiPos& guiPos)
 
 void NowPlaying::draw(bool forceRefresh)
 {
+	if(m_mpd == NULL) 
+		m_scrollingText = "MPD not started, edit configuration and restart.";
 	if(m_refresh || forceRefresh) {
 		SDL_SetClipRect(m_screen, &m_clearRect);
 		SDL_BlitSurface(m_bg, &m_clearRect, m_screen, &m_clearRect );

@@ -45,6 +45,7 @@ public:
 
 	int skipVal();
 	virtual void initItemIndexLookup();
+	virtual void makeCurItemVisible();
 protected:
 	mpd_Connection* m_mpd;
 

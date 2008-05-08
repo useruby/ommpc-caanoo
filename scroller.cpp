@@ -223,7 +223,7 @@ void Scroller::draw(vector<string>& selectedOptions)
 	SDL_Surface *sText;
 	int numProcessed = 0;
 	int numDisplayed = 0;
-	int amount = 120;
+	int amount = 180;
 	for(listing_t::iterator vIter = m_listing.begin();
 		vIter != m_listing.end() && (numDisplayed <= m_numPerScreen);
 		++vIter) {
@@ -271,3 +271,14 @@ void Scroller::draw(vector<string>& selectedOptions)
 	m_curItemClearRect.y = m_origY;
 
 }
+
+void Scroller::makeCurItemVisible()
+{
+	if(m_curItemNum < m_topItemNum ||
+		m_curItemNum > m_topItemNum + m_numPerScreen) {
+
+		m_topItemNum  = m_curItemNum - (m_numPerScreen/2);
+	}
+
+}
+

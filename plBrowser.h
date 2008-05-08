@@ -33,13 +33,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 class Playlist;
 class Config;
 class GuiPos;
+class Keyboard;
 
 class PLBrowser : public Scroller
 {
 public:
 	typedef std::vector<std::pair<std::string, int> >listing_t;
 	PLBrowser(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface * bg, TTF_Font* font,
-			SDL_Rect& rect, Config& config, int skipVal, int numPerScreen, Playlist& pl);
+			SDL_Rect& rect, Config& config, int skipVal, int numPerScreen, Playlist& pl, Keyboard& kb);
     void ls(std::string dir="");
 
 	void updateListing();
@@ -53,6 +54,7 @@ protected:
 	std::string m_curDir;
 
 	Playlist& m_playlist;
+	Keyboard& m_keyboard;
 	bool m_refresh;
 };
 

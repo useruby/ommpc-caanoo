@@ -34,12 +34,13 @@ class Playlist;
 class Config;
 class StatsBar;
 class GuiPos;
+class Keyboard;
 
 class Bookmarks : public Scroller
 {
 public:
 	typedef std::vector<std::pair<std::string, int> >listing_t;
-    Bookmarks(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* bg, TTF_Font* font, SDL_Rect& rect, int skipVal, int numPerScreen, Playlist& pl, Config& config, StatsBar& sb);
+    Bookmarks(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* bg, TTF_Font* font, SDL_Rect& rect, int skipVal, int numPerScreen, Playlist& pl, Config& config, StatsBar& sb, Keyboard& kb);
     void ls(std::string dir="");
 
 	void updateListing();
@@ -57,6 +58,7 @@ protected:
 	int m_refresh;
 	Playlist& m_playlist;
 	StatsBar& m_sb;
+	Keyboard& m_keyboard;
 };
 
 #endif
