@@ -86,7 +86,7 @@ Overlay::Overlay(mpd_Connection* mpd, SDL_Surface* screen, Config& config, SDL_R
 	m_clickRect2.h = config.getItemAsNum("sk_overlay_click_2_h");
 	
 	SDL_Surface* tmpSurface = NULL;	
-	string overlayName = m_config.getItem("skin");
+	string overlayName = m_config.getItem("sk_overlay");
 	tmpSurface = IMG_Load(string("overlays/"+overlayName+"/play.png").c_str());
 	if (!tmpSurface)
 		tmpSurface = IMG_Load(string("overlays/default/play.png").c_str());

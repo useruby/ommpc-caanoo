@@ -90,7 +90,7 @@ bool showMainMenu(SDL_Surface* screen, Popup& popup)
 	popRect.x = (screen->w - popRect.w) / 2;
 	popRect.y = (screen->h - popRect.h) / 2;
 	popup.setSize(popRect);
-	popup.setTitle("  Main Menu      ommpc v0.2.1");
+	popup.setTitle("  Main Menu      ommpc v0.3");
 	show = true;
 
 	return show;
@@ -297,12 +297,9 @@ int main ( int argc, char** argv )
 			exit(-1);
 		}
 		bool mpdStarted = false;
-#ifdef GP2X
-		if(WEXITSTATUS(status) == 0)
-#else		
-		if(WEXITSTATUS(status) == 1)
-#endif
+		if(WEXITSTATUS(status) == 0 || WEXITSTATUS(status) == 1)
 			mpdStarted = true;
+
 		cout << "child exit status " << WEXITSTATUS(status) << endl;
 		try {
 			Config config;
@@ -518,9 +515,9 @@ int main ( int argc, char** argv )
 			SDL_Color backColor;
 			config.getItemAsColor("sk_screen_color", backColor.r, backColor.g, backColor.b);
 
-			Timer timer;	
-			Timer limiter;
-			limiter.start();
+			//Timer timer;	
+			//Timer limiter;
+			//limiter.start();
 			Timer delayTimer;
 			delayTimer.stop();
 			int fps=0;
@@ -550,7 +547,7 @@ int main ( int argc, char** argv )
 			if(!config.verifyMpdPaths()) {		
 				popupVisible = showOptionsMenu(screen, popup, config);
 			}
-			ofstream out("uptime", ios::out);
+//			ofstream out("uptime", ios::out);
 			while (!done)
 			{
  				SDL_mutexP(threadParms.lockConnection);
@@ -739,6 +736,7 @@ int main ( int argc, char** argv )
 							config.getItemAsNum("cpuSpeedLocked")) {
 							mpd_sendPauseCommand(threadParms.mpd, 1);
 							mpd_finishCommand(threadParms.mpd);
+							usleep(500);	
 							if(gp2xRegs.screenIsOff())
 								gp2xRegs.setClock(config.getItemAsNum("cpuSpeedLocked"));
 							else
@@ -1010,6 +1008,7 @@ int main ( int argc, char** argv )
 					} else {
 						SDL_Delay(165);
 					}
+/*
 					++frame;
 					if(timer.check() > 50000000) //5minutes
 					{
@@ -1017,11 +1016,13 @@ int main ( int argc, char** argv )
 						int elapsed = limiter.check()/1000000;
 							
 						out << elapsed << " secs." << endl;
+						sync();
 						//fps = frame/elapsed;
 						//cout << "fps " << fps << endl;
-						//frame = 0;
+						frame = 0;
 						timer.start();
 					}
+*/
 				//} else {
 				//	SDL_mutexV(threadParms.lockConnection);
 				//	SDL_Delay(150);

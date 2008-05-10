@@ -554,24 +554,61 @@ int Browser::processCommand(int command, GuiPos& guiPos)
 					}
 					break;
 				case CMD_PREV_DIR:
+/*
 					pos = m_curDir.rfind("/");;
 					if(pos == string::npos || pos == 0) 
 						dir = "";
 					else
 						dir = m_curDir.substr(0, pos);
-					ls(dir);
-					m_curItemNum = 0;
-					m_topItemNum = 0;
-					m_curItemName = "";
+*/
+					m_curItemType = TYPE_BACK;
+					
+					if(m_prevItems.size() == 0) {
+						m_topItemNum = 0;
+						switch(m_view) {
+							case VIEW_ARTISTS:
+								m_curItemNum = 0;
+							break;	
+							case VIEW_ALBUMS:
+								m_curItemNum = 1;
+							break;	
+							case VIEW_GENRES:
+								m_curItemNum = 2;
+							break;	
+							case VIEW_FILES:
+								m_curItemNum = 3;
+							break;	
+							case VIEW_SONGS:
+								m_curItemNum = 4;
+							break;	
+
+						}
+						m_curItemName = "";
+					}
+					ls("..");
 					break;
 				case CMD_ADD_TO_PL: 
-					if(m_curItemType == 1) {
+					cout << "here " << endl;
+					if(m_curItemType == (int)TYPE_FILE) {
 						std::string song = "";
-						if(!m_curDir.empty())
-							song = m_curDir+"/";
-						song += m_curItemName;
+						if(m_view == VIEW_FILES) {
+							for(prevItems_t::iterator iIter = m_prevItems.begin();
+									iIter != m_prevItems.end();
+									++iIter) {
+								dir += (*iIter).first + "/";
+							}
+							dir = dir.substr(0, dir.length()-1);
+							if(!dir.empty())
+								song = dir+"/";
+							song += m_curItemName;
+						} else {
+							song = m_curSongPaths[m_curItemNum-1];
+						}
+cout << "adding " << song << endl;
 						mpd_sendAddCommand(m_mpd, song.c_str());
 						mpd_finishCommand(m_mpd);
+					} else if(m_curItemType == TYPE_FOLDER || m_curItemType == TYPE_ALL) {
+						addFolderAsPlaylist(true);	
 					}
 					break;
 				case CMD_ADD_AS_PL: 
@@ -637,7 +674,33 @@ void Browser::draw(bool forceRefresh, bool updatingSongDb)
 		SDL_BlitSurface(m_bg, &m_clearRect, m_screen, &m_clearRect );
 
 		SDL_Surface *sText;
-		sText = TTF_RenderText_Blended(m_font, m_curDir.c_str(), m_itemColor);
+		if(m_listing[0].first != "Artists" || m_listing[4].first != "All Songs") {
+			switch(m_view) {
+				case VIEW_ARTISTS:
+					sText = TTF_RenderText_Blended(m_font, "Browse Artists", m_itemColor);
+					break;
+				case VIEW_ALBUMS:
+					sText = TTF_RenderText_Blended(m_font, "Browse Albums", m_itemColor);
+					break;
+				case VIEW_GENRES:
+					sText = TTF_RenderText_Blended(m_font, "Browse Genres", m_itemColor);
+					break;
+				case VIEW_FILES:
+					sText = TTF_RenderText_Blended(m_font, m_curDir.c_str(), m_itemColor);
+					break;
+				case VIEW_SONGS:
+					sText = TTF_RenderText_Blended(m_font, "", m_itemColor);
+					break;
+				case VIEW_ROOT:
+					sText = TTF_RenderText_Blended(m_font, "Browse Media", m_itemColor);
+					break;
+				default:
+					sText = TTF_RenderText_Blended(m_font, m_curDir.c_str(), m_itemColor);
+
+			}
+		} else {
+			sText = TTF_RenderText_Blended(m_font, "Browse Media", m_itemColor);
+		}
 		SDL_BlitSurface(sText,NULL, m_screen, &m_destRect );
 		SDL_FreeSurface(sText);
 
@@ -676,27 +739,27 @@ string Browser::replaceWildcard(string input)
 	return input;
 }
 
-void Browser::addFolderAsPlaylist()
+void Browser::addFolderAsPlaylist(bool append)
 {
 	switch(m_view) {
 		case VIEW_ARTISTS:		
 			if(m_curItemType == TYPE_ALL) {	
-				artistAsPlaylist(m_prevItems[m_prevItems.size()-1].first);
+				artistAsPlaylist(m_prevItems[m_prevItems.size()-1].first, append);
 			} else {
 				if(m_prevItems.size() == 0)
-					artistAsPlaylist(m_curItemName);
+					artistAsPlaylist(m_curItemName, append);
 				else if(m_prevItems.size() == 1)
-					albumAsPlaylist(m_curItemName, m_prevItems[0].first);
+					albumAsPlaylist(m_curItemName, m_prevItems[0].first, append);
 			}
 			break;
 		case VIEW_ALBUMS:
-				albumAsPlaylist(m_curItemName, "");
+				albumAsPlaylist(m_curItemName, "", append);
 			break;
 		case VIEW_GENRES:
 				if(m_prevItems.size() == 0) 
-					genreAsPlaylist(m_curItemName, "");
+					genreAsPlaylist(m_curItemName, "", append);
 				else if(m_prevItems.size() == 1)
-					genreAsPlaylist(m_prevItems[0].first, m_curItemName);
+					genreAsPlaylist(m_prevItems[0].first, m_curItemName, append);
 			break;
 		case VIEW_FILES:
 			std::string dir;
@@ -706,17 +769,19 @@ void Browser::addFolderAsPlaylist()
 				dir += (*iIter).first + "/";
 			}
 			dir += m_curItemName;
-			folderAsPlaylist(dir);
+			folderAsPlaylist(dir, append);
 
 			break;
 
 	}
 }
 
-void Browser::artistAsPlaylist(string artist)
+void Browser::artistAsPlaylist(string artist, bool append)
 {
-	mpd_sendClearCommand(m_mpd);
-	mpd_finishCommand(m_mpd);
+	if(!append) {
+		mpd_sendClearCommand(m_mpd);
+		mpd_finishCommand(m_mpd);
+	}
 	SongDb::songsAndPaths_t songsAndPaths = m_songDb.getSongsForArtist(artist);
     for(SongDb::songsAndPaths_t::iterator sIter = songsAndPaths.begin();
         sIter != songsAndPaths.end();
@@ -726,10 +791,12 @@ void Browser::artistAsPlaylist(string artist)
     }
 }
 
-void Browser::albumAsPlaylist(string album, string artist)
+void Browser::albumAsPlaylist(string album, string artist, bool append)
 {
-	mpd_sendClearCommand(m_mpd);
-	mpd_finishCommand(m_mpd);
+	if(!append) {
+		mpd_sendClearCommand(m_mpd);
+		mpd_finishCommand(m_mpd);
+	}
 	SongDb::songsAndPaths_t songsAndPaths = m_songDb.getSongsInAlbum(album, artist);
     for(SongDb::songsAndPaths_t::iterator sIter = songsAndPaths.begin();
         sIter != songsAndPaths.end();
@@ -739,10 +806,12 @@ void Browser::albumAsPlaylist(string album, string artist)
     }
 }
 
-void Browser::genreAsPlaylist(string genre, string album)
+void Browser::genreAsPlaylist(string genre, string album, bool append)
 {
-	mpd_sendClearCommand(m_mpd);
-	mpd_finishCommand(m_mpd);
+	if(!append) {
+		mpd_sendClearCommand(m_mpd);
+		mpd_finishCommand(m_mpd);
+	}
 	SongDb::songsAndPaths_t songsAndPaths = m_songDb.getSongsInGenre(genre, album);
     for(SongDb::songsAndPaths_t::iterator sIter = songsAndPaths.begin();
         sIter != songsAndPaths.end();
@@ -752,11 +821,13 @@ void Browser::genreAsPlaylist(string genre, string album)
     }
 }
 
-void Browser::folderAsPlaylist(string path)
+void Browser::folderAsPlaylist(string path, bool append)
 {
-cout << path << endl;
-	mpd_sendClearCommand(m_mpd);
-	mpd_finishCommand(m_mpd);
+	if(!append) {
+		cout << path << endl;
+		mpd_sendClearCommand(m_mpd);
+		mpd_finishCommand(m_mpd);
+	}
 	SongDb::songsAndPaths_t songsAndPaths = m_songDb.getSongsInFolder(path);
     for(SongDb::songsAndPaths_t::iterator sIter = songsAndPaths.begin();
         sIter != songsAndPaths.end();

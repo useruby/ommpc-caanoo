@@ -271,7 +271,7 @@ void Popup::saveOptions()
 	
 	m_config.saveConfigFile();
 
-	if(oldSpeed != m_config.getItem("cpuSpeed")) {
+	if(m_mpd != NULL && oldSpeed != m_config.getItem("cpuSpeed")) {
 		//set cpu clock
 		mpd_sendPauseCommand(m_mpd, 1);
 		mpd_finishCommand(m_mpd);

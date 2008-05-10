@@ -65,11 +65,11 @@ public:
 	bool updatingDb() { return m_updatingDb;}
 protected:
 	std::string replaceWildcard(std::string input);
-	void addFolderAsPlaylist();
-	void artistAsPlaylist(std::string artist);
-	void albumAsPlaylist(std::string album, std::string artist);
-	void genreAsPlaylist(std::string genre, std::string album);
-	void folderAsPlaylist(std::string path);
+	void addFolderAsPlaylist(bool append=false);
+	void artistAsPlaylist(std::string artist, bool append=false);
+	void albumAsPlaylist(std::string album, std::string artist, bool append=false);
+	void genreAsPlaylist(std::string genre, std::string album, bool append=false);
+	void folderAsPlaylist(std::string path, bool append=false);
 	std::string m_curDir;
 	
 	int m_view;

@@ -58,7 +58,8 @@ HelpBar::HelpBar(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* bg, Conf
 	//browser
 	tmp.push_back("B-Play|Pause");	
 	tmp.push_back("X-Go Back|Stop");	
-	tmp.push_back("A-Append");	
+	tmp.push_back("A-Append File/Folder");	
+	tmp.push_back("Y-Add as Playlist");	
 	m_modeCmdText.push_back(tmp);
 	tmp.clear();
 	//playlist	
