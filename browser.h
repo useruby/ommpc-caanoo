@@ -56,9 +56,9 @@ public:
 	void browseAlbumsByArtist(std::string artist);	
 	void browseSongsByAlbum(std::string item, std::string artist="");
 	void browseSongsByArtist(std::string artist);
-	void updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus);
+	void updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus, bool updatingSongDb);
 	int processCommand(int command, GuiPos& guiPos);
-	void draw(bool forceRefresh, bool);
+	void draw(bool forceRefresh);
 	std::string currentItemName();
 	std::string currentItemPath();
 
@@ -77,6 +77,7 @@ protected:
 	std::vector<std::string> m_curSongPaths;
 	int m_nowPlaying;
 	bool m_updatingDb;
+	bool m_updatingSongDb;
 	bool m_refresh;
 	int m_pageType;
 	std::vector<std::string> m_filters;

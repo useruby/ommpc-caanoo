@@ -39,6 +39,7 @@ Browser::Browser(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* bg, TTF_
 , m_nowPlaying(0)
 , m_view(0)
 , m_updatingDb(false)
+, m_updatingSongDb(false)
 , m_refresh(true)
 , m_songDb(songdb)
 , m_keyboard(kb)
@@ -472,7 +473,7 @@ std::string Browser::currentItemPath()
 
 }
 
-void Browser::updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus)
+void Browser::updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus, bool updatingSongDb)
 {
 	if(mpdStatusChanged & SONG_CHG) {
 		m_nowPlaying = mpdStatus->song;	
@@ -490,6 +491,19 @@ void Browser::updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus)
 		m_refresh = true;	
 		cout << "updating db " << m_updatingDb<<  endl;
 	}
+	if(m_updatingSongDb) {
+		if(!updatingSongDb) {
+			m_updatingSongDb = false;
+			ls("");
+			m_refresh = true;
+		}
+	} else if(!m_updatingSongDb) {
+		if(updatingSongDb) {
+			m_updatingSongDb = true;
+			ls("");
+			m_refresh = true;
+		}	
+	}
 }
 
 int Browser::processCommand(int command, GuiPos& guiPos)
@@ -501,9 +515,13 @@ int Browser::processCommand(int command, GuiPos& guiPos)
 			if(guiPos.curY > m_clearRect.y && (guiPos.curY < m_clearRect.y + m_clearRect.h))	 {
 				if(guiPos.curX < (m_clearRect.w-40)) {
 					m_curItemNum = m_topItemNum + m_itemIndexLookup[guiPos.curY];	
-					m_curItemType = m_listing[m_curItemNum].second;
-					m_curItemName = m_listing[m_curItemNum].first;
-					command = CMD_IMMEDIATE_PLAY;
+					if(m_curItemNum < m_listing.size()) {
+						m_curItemType = m_listing[m_curItemNum].second;
+						m_curItemName = m_listing[m_curItemNum].first;
+						command = CMD_IMMEDIATE_PLAY;
+					} else {
+						m_curItemNum = 0;
+					}
 				} else if(guiPos.curX > (m_clearRect.w-40)) {
 					if(guiPos.curY < m_clearRect.y+40) {
 						command = CMD_LEFT;
@@ -666,7 +684,7 @@ cout << "adding " << song << endl;
 	return newMode;
 }
 
-void Browser::draw(bool forceRefresh, bool updatingSongDb)
+void Browser::draw(bool forceRefresh)
 {
 	if(forceRefresh || m_refresh) {
 		//clear this portion of the screen 
@@ -715,7 +733,7 @@ void Browser::draw(bool forceRefresh, bool updatingSongDb)
 
 		Scroller::draw();	
 
-		if(m_updatingDb || updatingSongDb) {
+		if(m_updatingDb || m_updatingSongDb) {
 			SDL_Rect dstrect;
 			dstrect.x = (m_screen->w - m_dbMsg->w) / 2;
 			dstrect.y = (m_screen->h - m_dbMsg->h) / 2;

@@ -38,9 +38,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <sys/stat.h>
 #include <unistd.h>
 #include <errno.h>
-#ifdef GP2X
-#include "tslib.h"
-#endif
 #include "config.h"
 #include "browser.h"
 #include "plBrowser.h"
@@ -232,7 +229,7 @@ int processOptionsMenuItem(int action, Popup& popup)
 	return rCommand;
 }
 
-void initVolumeScale(vector<int>& volumeScale, bool f200, string softVol)
+void initVolumeScale(vector<int>& volumeScale, bool f200, string softVol, int version)
 {
 	if(softVol == "on") {
 		int softVolumeScale[21] = {0,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100};
@@ -241,7 +238,8 @@ void initVolumeScale(vector<int>& volumeScale, bool f200, string softVol)
 
 	} else {
 		if(f200) {
-			int f200VolumeScale[21] = {0,1,3,5,8,12,14,18,22,26,30,34,38,42,46,50,56,62,68,74,80};
+			//int f200VolumeScale[21] = {0,1,3,5,8,12,14,18,22,26,30,34,38,42,46,50,56,62,68,74,80};
+			int f200VolumeScale[21] = {0,4,8,12,16,20,25,30,35,40,45,50,55,60,65,70,76,82,88,94,100};
 			for(int i=0; i<22; ++i)
 				volumeScale.push_back(f200VolumeScale[i]);	
 
@@ -304,8 +302,9 @@ int main ( int argc, char** argv )
 		try {
 			Config config;
 			GuiPos guiPos;
+			GP2XRegs gp2xRegs;
 				
-			initVolumeScale(volumeScale, f200, config.getItem("softwareVolume"));
+			initVolumeScale(volumeScale, f200, config.getItem("softwareVolume"), gp2xRegs.version());
 			// initialize SDL video
 			if (SDL_Init( SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_TIMER) < 0 )
 			{
@@ -409,7 +408,7 @@ int main ( int argc, char** argv )
 			mpd_Status* rtmpdStatus = NULL;
 			int rtmpdState = MPD_STATUS_STATE_UNKNOWN;
 			int rtmpdStatusChanged = 0;
-			GP2XRegs gp2xRegs;
+			
 			if(mpdStarted) {
 				mpd_sendStatusCommand(threadParms.mpd);
 				rtmpdStatus = mpd_getStatus(threadParms.mpd);
@@ -522,28 +521,8 @@ int main ( int argc, char** argv )
 			delayTimer.stop();
 			int fps=0;
 
-#ifdef GP2X
-			struct tsdev *ts;
-			struct ts_sample sample;
-			if(f200) {
-				ts = ts_open("/dev/touchscreen/wm97xx", 0);
-
-				if(!ts) {
-					cout << "tsopen errero" << endl;
-					return 1;
-				}
-
-				int ret = ts_config(ts);
-				if(ret< 0) {
-					cout << "tsconfig errero   " <<  ret << endl;
-					return 1;
-				}
-			}
-#endif
-
 			SDL_Event event;
-			bool mouseUp= false;
-			bool mouseDown= false;
+			int mouseState = 0; //0=unpressed, 1=down, 2=up
 			if(!config.verifyMpdPaths()) {		
 				popupVisible = showOptionsMenu(screen, popup, config);
 			}
@@ -561,35 +540,6 @@ int main ( int argc, char** argv )
 				if(threadParms.mpdStatusChanged & RPT_CHG) {
 					repeat = threadParms.mpdStatus->repeat;
 				}
-#ifdef GP2X
-				if(f200) {
-					if(ts_read(ts, &sample, 1) == 1) {
-						//					cout << "mouse Down " << sample.x << " x " << sample.y << endl;
-						//					cout << "flags " << mouseUp << "   " << mouseDown << endl;
-						delayTimer.start();
-						guiPos.curX = sample.x;
-						guiPos.curY = sample.y;
-						mouseDown = true;
-						mouseUp = false;
-						keysHeld[400] = true;
-						processedEvent = true;
-					} else {
-						if(mouseDown && !mouseUp) {
-							//					cout << "mouse Up" << endl;
-							//					cout << "flags " << mouseUp << "   " << mouseDown << endl << endl;
-							keysHeld[400] = false;
-							mouseUp = true;
-							mouseDown = false;
-							delayTimer.stop();
-							repeatDelay = 1;
-							processedEvent = true;
-						} else {
-							mouseUp = false;
-							mouseDown = false;
-						}
-					}
-				}
-#endif
 				if (SDL_PollEvent(&event) && !processedEvent)
 				{
 					if(event.type == SDL_MOUSEMOTION) {
@@ -600,6 +550,7 @@ int main ( int argc, char** argv )
 					//this stops the mouse motion event from taking 
 					//too much time and screwing sutff up.
 						case SDL_KEYDOWN:
+							processedEvent = true;
 							keysHeld[event.key.keysym.sym] = true;
 							delayTimer.start();
 						break;
@@ -609,6 +560,7 @@ int main ( int argc, char** argv )
 							delayTimer.stop();
 						break;
 						case SDL_JOYBUTTONDOWN:
+							processedEvent = true;
 							keysHeld[event.jbutton.button] = true;
 							delayTimer.start();
 						break;
@@ -617,21 +569,19 @@ int main ( int argc, char** argv )
 							repeatDelay = 1;
 							delayTimer.stop();
 						break;
-#ifndef GP2X
 						case SDL_MOUSEBUTTONDOWN:
 							keysHeld[400] = true;
 							delayTimer.start();
-							mouseDown = true;
 							SDL_GetMouseState(&guiPos.curX, &guiPos.curY);
-								
+							processedEvent = true;
+							mouseState =1;
 						break;
 						case SDL_MOUSEBUTTONUP:
 							keysHeld[400] = false;
 							repeatDelay = 1;
 							delayTimer.stop();
-							mouseUp = true;
+							mouseState =2;
 						break;
-#endif
 						default:
 							processedEvent = false;
 					}
@@ -641,11 +591,8 @@ int main ( int argc, char** argv )
 				long delayTime = delayTimer.check();
 				if(processedEvent || repeatDelay > 0) {	
 					if (event.type == SDL_KEYDOWN || event.type == SDL_JOYBUTTONDOWN
-						|| mouseDown == true) {
+						|| mouseState == 1) {
 						++repeatDelay;	
-#ifndef GP2X
-						mouseDown = false;
-#endif
 					}
 					if(!gp2xRegs.screenIsOff()) 
 						command = commandFactory.getCommand(keysHeld, curMode, repeatDelay, popupVisible, overlayVisible, volume, delayTime);
@@ -653,12 +600,10 @@ int main ( int argc, char** argv )
 						command = commandFactory.getCommandWhileLocked(keysHeld, curMode, repeatDelay, popupVisible, delayTime);
 		
 					if (event.type == SDL_KEYUP || event.type == SDL_JOYBUTTONUP
-						|| mouseUp == true)  {
+						|| mouseState == 2)  {
 						repeatDelay = 0;
 						event.type = -1;
-#ifndef GP2X
-						mouseUp = false;
-#endif
+						mouseState = 0;
 					}
 					processedEvent = false;
 				}
@@ -905,7 +850,7 @@ int main ( int argc, char** argv )
 							threadParms.mpdStatus, 
 							rtmpdStatusChanged, rtmpdStatus, repeatDelay);
 					browser.updateStatus(threadParms.mpdStatusChanged, 
-							threadParms.mpdStatus);
+							threadParms.mpdStatus, songDbParms.updating);
 					plBrowser.updateStatus(threadParms.mpdStatusChanged, 
 							threadParms.mpdStatus);
 					bookmarks.updateStatus(threadParms.mpdStatusChanged, 
@@ -921,7 +866,7 @@ int main ( int argc, char** argv )
 								forceRefresh = true;
 							} else
 								curMode = rMode;
-							browser.draw(forceRefresh, songDbParms.updating);
+							browser.draw(forceRefresh);
 							break;
 						case 1:
 							playlist.processCommand(command, rtmpdStatusChanged, rtmpdStatus, repeatDelay, volume, delayTime, guiPos);

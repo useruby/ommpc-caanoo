@@ -109,8 +109,12 @@ int PLBrowser::processCommand(int command, int curMode, GuiPos& guiPos)
 			if(guiPos.curY > m_clearRect.y && (guiPos.curY < m_clearRect.y + m_clearRect.h))	 {
 				if(guiPos.curX < (m_clearRect.w-40)) {
 					m_curItemNum = m_topItemNum + m_itemIndexLookup[guiPos.curY];	
-					m_curItemType = m_listing[m_curItemNum].second;
-					command = CMD_LOAD_PL;
+					if(m_curItemNum < m_listing.size()) {
+						m_curItemType = m_listing[m_curItemNum].second;
+						command = CMD_LOAD_PL;
+					} else {
+						m_curItemNum = 0;
+					}
 				} else if(guiPos.curX > (m_clearRect.w-40)) {
 					if(guiPos.curY < m_clearRect.y+40) {
 						command = CMD_LEFT;

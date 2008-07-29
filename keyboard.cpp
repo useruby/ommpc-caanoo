@@ -39,28 +39,28 @@ Keyboard::Keyboard(SDL_Surface* screen, Config& config)
 , m_curCol(3)
 {
 	SDL_Surface* tmpSurface = NULL;	
-	tmpSurface = IMG_Load(string("skins/keyboard_entry.png").c_str());
+	tmpSurface = IMG_Load(string("overlays/default/keyboard_entry.png").c_str());
 	m_keyboardEntry = SDL_DisplayFormatAlpha(tmpSurface);
 	SDL_FreeSurface(tmpSurface);
 	
-	tmpSurface = IMG_Load(string("skins/key.png").c_str());
+	tmpSurface = IMG_Load(string("overlays/default/key.png").c_str());
 	m_keyBack = SDL_DisplayFormatAlpha(tmpSurface);
 	SDL_FreeSurface(tmpSurface);
-	tmpSurface = IMG_Load(string("skins/curkey.png").c_str());
+	tmpSurface = IMG_Load(string("overlays/default/curkey.png").c_str());
 	m_curKeyBack = SDL_DisplayFormatAlpha(tmpSurface);
 	SDL_FreeSurface(tmpSurface);
 	
-	tmpSurface = IMG_Load(string("skins/mediumKey.png").c_str());
+	tmpSurface = IMG_Load(string("overlays/default/mediumKey.png").c_str());
 	m_mediumKey = SDL_DisplayFormatAlpha(tmpSurface);
 	SDL_FreeSurface(tmpSurface);
-	tmpSurface = IMG_Load(string("skins/curmediumKey.png").c_str());
+	tmpSurface = IMG_Load(string("overlays/default/curmediumKey.png").c_str());
 	m_curMediumKey = SDL_DisplayFormatAlpha(tmpSurface);
 	SDL_FreeSurface(tmpSurface);
 	
-	tmpSurface = IMG_Load(string("skins/largeKey.png").c_str());
+	tmpSurface = IMG_Load(string("overlays/default/largeKey.png").c_str());
 	m_largeKey = SDL_DisplayFormatAlpha(tmpSurface);
 	SDL_FreeSurface(tmpSurface);
-	tmpSurface = IMG_Load(string("skins/curlargeKey.png").c_str());
+	tmpSurface = IMG_Load(string("overlays/default/curlargeKey.png").c_str());
 	m_curLargeKey = SDL_DisplayFormatAlpha(tmpSurface);
 	SDL_FreeSurface(tmpSurface);
 	

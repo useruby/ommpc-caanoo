@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "gp2xregs.h"
 #include <iostream>
+#include <fstream>
 #include <sys/stat.h>
 
 using namespace std;
@@ -40,12 +41,32 @@ GP2XRegs::GP2XRegs()
 	else 
 		m_f200 = false;
 #endif
+	initVersion();
 }
 
 GP2XRegs::~GP2XRegs()
 {
 #ifdef GP2X
 	close(m_memfd);
+#endif
+}
+
+void GP2XRegs::initVersion()
+{
+#ifdef GP2X
+    ifstream versionFile("/usr/gp2x/version", ios::in);
+    if(versionFile.fail()) {
+		m_version = 0;
+	} else {
+		string curItem;
+        getline(versionFile, curItem);
+		curItem.erase(3,1);
+		curItem.erase(1,1);	
+					
+		m_version = atoi(curItem.c_str());
+	}
+#else
+	m_version = 0;
 #endif
 }
 

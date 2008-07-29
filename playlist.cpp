@@ -34,10 +34,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <SDL_image.h>
 
 using namespace std;
-#define X2DELAY 3000000
-#define X4DELAY 8000000
-#define X8DELAY 25000000
-#define FFWAIT 500000
+#define X2DELAY 2000000
+#define X4DELAY 6000000
+#define X8DELAY 12000000
+#define X16DELAY 25000000
+#define X32DELAY 45000000
+#define FFWAIT 400000
 
 Playlist::Playlist(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* bg, TTF_Font* font, Config& config, SDL_Rect& rect, int skipVal, int numPerScreen)
 : Scroller(mpd, screen, bg, font, rect, config, skipVal, numPerScreen)
@@ -373,8 +375,12 @@ void Playlist::processCommand(int command, int& rtmpdStatusChanged, mpd_Status* 
 			if(guiPos.curY > m_clearRect.y && (guiPos.curY < m_clearRect.y + m_clearRect.h))	 {
 				if(guiPos.curX < (m_clearRect.w-40)) {
 					m_curItemNum = m_topItemNum + m_itemIndexLookup[guiPos.curY];	
-					m_curItemType = m_listing[m_curItemNum].second;
-					command = CMD_PLAY_PAUSE;
+					if(m_curItemNum < m_listing.size()) {
+						m_curItemType = m_listing[m_curItemNum].second;
+						command = CMD_PLAY_PAUSE;
+					} else {
+						m_curItemNum =0;
+					}
 				} else if(guiPos.curX > (m_clearRect.w-40)) {
 					if(guiPos.curY < m_clearRect.y+40) {
 						command = CMD_LEFT;
@@ -446,7 +452,11 @@ void Playlist::processCommand(int command, int& rtmpdStatusChanged, mpd_Status* 
 					m_timer.start();
 					int jump = 0;
 					if(delayTime > X2DELAY) {
-						if(delayTime > X8DELAY)
+						if(delayTime > X32DELAY)
+							jump = 64;	
+						else if(delayTime > X16DELAY)
+							jump = 32;	
+						else if(delayTime > X8DELAY)
 							jump = 16;	
 						else if(delayTime > X4DELAY)
 							jump = 8;	
@@ -469,7 +479,11 @@ void Playlist::processCommand(int command, int& rtmpdStatusChanged, mpd_Status* 
 				if(repeatDelay > 0) {
 					int jump = 0;
 					if(delayTime > X2DELAY) {
-						if(delayTime > X8DELAY)
+						if(delayTime > X32DELAY)
+							jump = 64;	
+						else if(delayTime > X16DELAY)
+							jump = 32;	
+						else if(delayTime > X8DELAY)
 							jump = 16;	
 						else if(delayTime > X4DELAY)
 							jump = 8;	

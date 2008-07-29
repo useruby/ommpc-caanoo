@@ -43,9 +43,11 @@ public:
 	void setClock(unsigned int mhz);
 	void toggleScreen();	
 	inline bool screenIsOff() {return m_screenIsOff;}
+	inline int version() {return m_version;}
 protected:
-
+	void initVersion();
 	bool m_screenIsOff;
+	int m_version;
 #ifdef GP2X
 	int m_memfd;
 	unsigned long* m_memregs32;

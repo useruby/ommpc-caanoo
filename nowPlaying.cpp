@@ -102,6 +102,7 @@ void NowPlaying::updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus,
 			m_scrollingText = m_artist + " - " + m_title;
 		}
 		m_pos = 0;
+		m_inc = true;
 		m_noScroll = false;
 		m_artistNoScroll = false;
 		m_refresh = true;	
@@ -159,7 +160,7 @@ void NowPlaying::draw(bool forceRefresh)
 			SDL_FreeSurface(sText);
 			m_refresh = false;
 		}
-		if(m_delayCnt > 2 && !m_noScroll) {
+		if((m_delayCnt > 2 || forceRefresh) && !m_noScroll) {
 			//clear this portion of the screen 
 			SDL_SetClipRect(m_screen, &m_scrollClearRect);
 			SDL_BlitSurface(m_bg, &m_scrollClearRect, m_screen, &m_destRect );
@@ -170,8 +171,9 @@ void NowPlaying::draw(bool forceRefresh)
 				if(sText->w > m_clearRect.w) {
 					std::string name = m_scrollingText;
 					if(m_inc) {
-						if(m_pos < name.length())
+						if(m_pos < name.length()) {
 							name = name.substr(m_pos);
+						}
 						else {
 							m_inc = false;
 							name = name.substr(m_pos-1);
@@ -190,10 +192,12 @@ void NowPlaying::draw(bool forceRefresh)
 				} 
 				SDL_BlitSurface(sText, NULL, m_screen, &m_destRect );
 				SDL_FreeSurface(sText);
-				if(m_inc)
-					++m_pos;
-				else
-					--m_pos;
+				if(!forceRefresh) {
+					if(m_inc)
+						++m_pos;
+					else
+						--m_pos;
+				}
 			}
 			m_delayCnt = 0;
 			m_refresh = true;
@@ -202,7 +206,7 @@ void NowPlaying::draw(bool forceRefresh)
 			m_refresh = true;
 		}
 		if(m_format == 1) {
-			if(m_delayCnt2 > 2 && !m_artistNoScroll) {
+			if((m_delayCnt2 > 2 || forceRefresh) && !m_artistNoScroll) {
 				//clear this portion of the screen 
 				SDL_SetClipRect(m_screen, &m_artistClearRect);
 				SDL_BlitSurface(m_bg, &m_artistClearRect, m_screen, &m_artistRect );
@@ -233,10 +237,12 @@ void NowPlaying::draw(bool forceRefresh)
 					}
 					SDL_BlitSurface(sText, NULL, m_screen, &m_artistRect );
 					SDL_FreeSurface(sText);
-					if(m_inc)
-						++m_pos;
-					else
-						--m_pos;
+					if(!forceRefresh) {
+						if(m_inc)
+							++m_pos;
+						else
+							--m_pos;
+					}
 				}
 				m_delayCnt2 = 0;
 				m_refresh = true;
