@@ -65,6 +65,9 @@ public:
 	std::string nowPlayingFormat(int song=-1);
 	void nowPlaying(int song);
 
+	void lastQueued(int pos) { m_lastQueued = pos; }
+	int lastQueued() { return m_lastQueued; }
+
 	int getPlayingState() {return m_curState;}
 protected:
 	std::string m_curDir;
@@ -81,6 +84,7 @@ protected:
 	int m_moveFrom;
 	int m_moveTo;
 
+	int m_lastQueued;
 	std::vector<int> m_used;
 	bool m_refresh;
 	Timer m_timer;

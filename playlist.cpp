@@ -52,6 +52,7 @@ Playlist::Playlist(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* bg, TT
 , m_moveTo(-1)
 , m_moveFrom(-1)
 , m_refresh(true)
+, m_lastQueued(-1)
 {
 	m_origY = m_destRect.y;
 	m_config.getItemAsColor("sk_main_itemColor", m_itemColor.r, m_itemColor.g, m_itemColor.b);
@@ -532,6 +533,21 @@ void Playlist::processCommand(int command, int& rtmpdStatusChanged, mpd_Status* 
 				break;
 				case CMD_TOGGLE_MODE:
 				break;
+				case CMD_QUEUE:
+				if(m_curItemNum < m_nowPlaying || m_curItemNum > m_lastQueued || m_lastQueued == -1) {
+					int pos = m_lastQueued+1;
+					if(m_lastQueued == -1)
+						pos = m_nowPlaying+1;
+					mpd_sendMoveCommand(m_mpd, m_curItemNum, pos);
+					mpd_finishCommand(m_mpd);
+					m_lastQueued = pos;
+				} else {
+					mpd_sendMoveCommand(m_mpd, m_curItemNum, m_listing.size()-1);
+					mpd_finishCommand(m_mpd);
+					m_lastQueued--;
+					
+				}
+				break;
 				default:
 				break;
 			}
@@ -553,7 +569,7 @@ void Playlist::draw(bool forceRefresh)
 			SDL_FreeSurface(sText);
 		}
 		
-		Scroller::draw();
+		Scroller::draw(false, m_nowPlaying, m_lastQueued);
 
 		m_refresh = false;
 	}

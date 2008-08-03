@@ -40,7 +40,7 @@ public:
 				SDL_Rect& rect, Config& config, int skipVal, int numPerScreen);
 
 	bool processCommand(int& command);
-	void draw();
+	void draw(bool drawIcons = false, int nowPlaying = -1, int lastQueued = -1);
 	void draw(std::vector<std::string>& selectedOptions);
 
 	int skipVal();
@@ -57,6 +57,7 @@ protected:
 	SDL_Rect m_destRect;
 	SDL_Rect& m_clearRect;
 	SDL_Rect m_curItemClearRect;
+	SDL_Rect m_curItemIconRect;
 	SDL_Rect m_upClearRect;
 	SDL_Rect m_downClearRect;
 	Config& m_config;
@@ -80,9 +81,13 @@ protected:
 	SDL_Color m_pauseItemColor;
 	SDL_Surface * m_bg;
 	SDL_Surface * m_bgCurItem;
+	SDL_Surface * m_bgNowPlaying;
 	SDL_Surface * m_pauseBtn;
 	SDL_Surface * m_downBtn;
 	SDL_Surface * m_upBtn;
+	SDL_Surface * m_iconFolder;
+	SDL_Surface * m_iconFile;
+	SDL_Surface * m_iconFilter;
 
 	int m_prevX;
 	int m_prevY;

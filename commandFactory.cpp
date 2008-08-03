@@ -37,6 +37,8 @@ CommandFactory::CommandFactory(mpd_Connection* mpd, vector<int>& volScale)
 , m_prevDir(false)
 , m_rand(false)
 , m_append(false)
+, m_move(false)
+, m_addAsPl(false)
 , m_mpd(mpd)
 , m_setVol(false)
 , m_delayCommand(false)
@@ -118,8 +120,6 @@ int CommandFactory::getCommand(bool keysHeld[], int curMode, int& repeatDelay, b
 						{ //song browser
 							if (keysHeld[GP2X_VK_FA] || keysHeld[SDLK_i])
 								command = CMD_ADD_TO_PL;
-							else if (keysHeld[GP2X_VK_FY] || keysHeld[SDLK_y])
-								command = CMD_ADD_AS_PL;
 							else if (keysHeld[GP2X_VK_FX] || keysHeld[SDLK_s]) {
 								if(!m_delayCommand) {
 									if(delayTime >= DELAY) {
@@ -128,6 +128,16 @@ int CommandFactory::getCommand(bool keysHeld[], int curMode, int& repeatDelay, b
 										m_delayCommand = true;
 									} else if(delayTime < DELAY){
 										m_prevDir = true;
+									}
+								}
+							} else if (keysHeld[GP2X_VK_FY] || keysHeld[SDLK_y]) {
+								if(!m_delayCommand) {
+									if(delayTime >= DELAY) {
+										command	= CMD_QUEUE;
+										m_addAsPl = false;
+										m_delayCommand = true;
+									} else if(delayTime < DELAY){
+										m_addAsPl = true;
 									}
 								}
 							}
@@ -160,15 +170,19 @@ int CommandFactory::getCommand(bool keysHeld[], int curMode, int& repeatDelay, b
 									}
 									m_delayCommand = false;
 								}
+								if (!keysHeld[GP2X_VK_FY] && !keysHeld[SDLK_y]) {
+									if(m_addAsPl) {
+										command	= CMD_ADD_AS_PL;
+										m_addAsPl = false;
+									}
+									m_delayCommand = false;
+								}
 							}
 						}
 						break;
 					case 1:
 						{ //playlist
-							if (keysHeld[GP2X_VK_FY] || keysHeld[SDLK_y]) {
-								command	= CMD_MOVE_IN_PL;
-							}
-							else if (keysHeld[GP2X_VK_FX])
+							if (keysHeld[GP2X_VK_FX])
 								command = CMD_STOP;
 							else if (keysHeld[GP2X_VK_FR] || keysHeld[SDLK_n]) {
 								if(delayTime > DELAY) {
@@ -204,6 +218,16 @@ int CommandFactory::getCommand(bool keysHeld[], int curMode, int& repeatDelay, b
 										m_rand = true;
 									}
 								}
+							} else if (keysHeld[GP2X_VK_FY] || keysHeld[SDLK_y]) {
+								if(!m_delayCommand) {
+									if(delayTime >= DELAY) {
+										command	= CMD_QUEUE;
+										m_move = false;
+										m_delayCommand = true;
+									} else if(delayTime < DELAY){
+										m_move = true;
+									}
+								}
 							} else if (keysHeld[SDLK_r]) {
 								command = CMD_MODE_RANDOM;
 							}  else if (keysHeld[SDLK_t]) {
@@ -220,6 +244,13 @@ int CommandFactory::getCommand(bool keysHeld[], int curMode, int& repeatDelay, b
 									if(m_rand) {
 										command	= CMD_RAND_RPT;
 										m_rand = false;
+									}
+									m_delayCommand = false;
+								}
+								if (!keysHeld[GP2X_VK_FY] && !keysHeld[SDLK_y]) {
+									if(m_move) {
+										command	= CMD_MOVE_IN_PL;
+										m_move = false;
 									}
 									m_delayCommand = false;
 								}

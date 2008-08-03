@@ -44,7 +44,7 @@ LDFLAGS = -static
 .cpp:
 	$(CXX) $(CXXFLAGS) $< -o $@
 
-SRC     = plBrowser.cpp browser.cpp playlist.cpp main.cpp config.cpp nowPlaying.cpp statsBar.cpp commandFactory.cpp popup.cpp scroller.cpp timestamp.cpp helpBar.cpp albumArt.cpp threadFunctions.cpp bookmarks.cpp gp2xregs.cpp overlay.cpp gp2x_tslib.cpp songDb.cpp keyboard.cpp
+SRC     = plBrowser.cpp browser.cpp playlist.cpp main.cpp config.cpp nowPlaying.cpp statsBar.cpp commandFactory.cpp popup.cpp scroller.cpp timestamp.cpp helpBar.cpp albumArt.cpp threadFunctions.cpp bookmarks.cpp gp2xregs.cpp overlay.cpp  songDb.cpp keyboard.cpp
 
 OBJ = $(SRC:.cpp=.o) libmpdclient.o
 #-------------------------------------------------------------------------------

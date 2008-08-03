@@ -48,7 +48,11 @@ Scroller::Scroller(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* bg, TT
 	m_destRect.x = rect.x;
 	m_destRect.y = rect.y;
 	m_origY = m_destRect.y;
-	m_curItemClearRect = m_destRect;
+	m_curItemClearRect = rect;
+	m_curItemIconRect.x = rect.x;
+	m_curItemIconRect.y = rect.y;
+	m_curItemIconRect.w = 12;
+	m_curItemIconRect.h = 12;
 	m_upClearRect.x = rect.x + rect.w - 25;
 	m_upClearRect.w = 25;
 	m_upClearRect.y = rect.y;
@@ -57,7 +61,7 @@ Scroller::Scroller(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* bg, TT
 	m_downClearRect.w = 25;
 	m_downClearRect.y = rect.y+rect.h-25;
 	m_downClearRect.h = 25;
-
+cout << m_skipVal << endl;
 	m_config.getItemAsColor("sk_popup_itemColor", m_pauseItemColor.r, m_pauseItemColor.g, m_pauseItemColor.b);
 	
 	string skinName = m_config.getItem("skin");
@@ -81,6 +85,42 @@ Scroller::Scroller(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* bg, TT
 		printf("Unable to load image: %s\n", SDL_GetError());
 	else 
 		m_upBtn = SDL_DisplayFormatAlpha(m_upBtn);
+	
+	SDL_Surface* tmpSurface = NULL;	
+	tmpSurface = IMG_Load(string("skins/"+skinName+"/iconFolder.png").c_str());
+	if (!tmpSurface)
+		tmpSurface = IMG_Load(string("skins/default/iconFolder.png").c_str());
+	m_iconFolder = SDL_DisplayFormatAlpha(tmpSurface);
+	SDL_FreeSurface(tmpSurface);
+	
+	tmpSurface = IMG_Load(string("skins/"+skinName+"/iconFile.png").c_str());
+	if (!tmpSurface)
+		tmpSurface = IMG_Load(string("skins/default/iconFile.png").c_str());
+	if (!tmpSurface)
+		printf("Unable to load image: %s\n", SDL_GetError());
+	else { 
+		m_iconFile = SDL_DisplayFormatAlpha(tmpSurface);
+		SDL_FreeSurface(tmpSurface);
+	}
+	tmpSurface = IMG_Load(string("skins/"+skinName+"/iconFilter.png").c_str());
+	if (!tmpSurface)
+		tmpSurface = IMG_Load(string("skins/default/iconFilter.png").c_str());
+	if (!tmpSurface)
+		printf("Unable to load image: %s\n", SDL_GetError());
+	else { 
+		m_iconFilter = SDL_DisplayFormatAlpha(tmpSurface);
+		SDL_FreeSurface(tmpSurface);
+	}
+	tmpSurface = IMG_Load(string("skins/"+skinName+"/bg_nowPlaying.png").c_str());
+	if (!tmpSurface)
+		tmpSurface = IMG_Load(string("skins/default/bg_nowPlaying.png").c_str());
+	if (!tmpSurface)
+		printf("Unable to load image: %s\n", SDL_GetError());
+	else { 
+		m_bgNowPlaying = SDL_DisplayFormatAlpha(tmpSurface);
+		SDL_FreeSurface(tmpSurface);
+	}
+	
 
 
 }
@@ -158,17 +198,19 @@ int Scroller::skipVal()
 	return m_skipVal;
 }
 	
-void Scroller::draw() 
+void Scroller::draw(bool drawIcons, int nowPlaying, int lastQueued) 
 {
 	SDL_Surface *sText;
 	int numProcessed = 0;
 	int numDisplayed = 0;
 	string str;
+	int type;
 	for(listing_t::iterator vIter = m_listing.begin();
 		vIter != m_listing.end() && (numDisplayed <= m_numPerScreen);
 		++vIter) {
 		if(numProcessed >= m_topItemNum) {
 			str = (*vIter).first;
+
 			if(numProcessed == m_curItemNum) {
 				sText = TTF_RenderText_Blended(m_font, str.c_str(), m_curItemColor);
 				m_curItemClearRect.w = m_clearRect.w;
@@ -177,6 +219,12 @@ void Scroller::draw()
 				SDL_BlitSurface(m_bgCurItem, NULL, m_screen, &m_curItemClearRect );
 				m_curItemName = (*vIter).first;
 				m_curItemType = (*vIter).second;
+			} else if(numProcessed == nowPlaying || (lastQueued != -1 && numProcessed >= nowPlaying && numProcessed <= lastQueued)) {
+				sText = TTF_RenderText_Blended(m_font, str.c_str(), m_itemColor);
+				m_curItemClearRect.w = m_clearRect.w;
+				m_curItemClearRect.h = sText->h;
+				SDL_SetClipRect(m_screen, &m_curItemClearRect);
+				SDL_BlitSurface(m_bgNowPlaying, NULL, m_screen, &m_curItemClearRect );
 			} else {
 				sText = TTF_RenderText_Blended(m_font, str.c_str(), m_itemColor);
 				
@@ -185,16 +233,28 @@ void Scroller::draw()
 			}
 
 			SDL_SetClipRect(m_screen, &m_curItemClearRect);
+			if(drawIcons) {
+				type = (*vIter).second;
+				if(type == 0 || type == 2 || type == 3) {
+					SDL_BlitSurface(m_iconFolder, NULL, m_screen, &m_curItemIconRect );
+				} else if (type == 4) {
+					SDL_BlitSurface(m_iconFilter, NULL, m_screen, &m_curItemIconRect );
+				}
+				else if(type == 1)
+					SDL_BlitSurface(m_iconFile, NULL, m_screen, &m_curItemIconRect );
+			}	
 			SDL_BlitSurface(sText,NULL, m_screen, &m_destRect );
 			SDL_FreeSurface(sText);
 			m_destRect.y += m_skipVal;
 			m_curItemClearRect.y += m_skipVal;
+			m_curItemIconRect.y += m_skipVal;
 			++numDisplayed;
 		}
 		++numProcessed;
 	}
 	m_destRect.y = m_origY;
 	m_curItemClearRect.y = m_origY;
+	m_curItemIconRect.y = m_origY;
 
 	if(numDisplayed < m_listing.size()) {	
 		if(m_topItemNum != 0) {

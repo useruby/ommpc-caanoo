@@ -39,28 +39,47 @@ Keyboard::Keyboard(SDL_Surface* screen, Config& config)
 , m_curCol(3)
 {
 	SDL_Surface* tmpSurface = NULL;	
-	tmpSurface = IMG_Load(string("overlays/default/keyboard_entry.png").c_str());
+	string keyboardName = m_config.getItem("sk_keyboard");
+
+	tmpSurface = IMG_Load(string("keyboards/"+keyboardName+"/keyboard_entry.png").c_str());
+	if (!tmpSurface)
+		tmpSurface = IMG_Load(string("keyboards/default/keyboard_entry.png").c_str());
 	m_keyboardEntry = SDL_DisplayFormatAlpha(tmpSurface);
 	SDL_FreeSurface(tmpSurface);
 	
-	tmpSurface = IMG_Load(string("overlays/default/key.png").c_str());
+	tmpSurface = IMG_Load(string("keyboards/"+keyboardName+"/key.png").c_str());
+	if (!tmpSurface)
+		tmpSurface = IMG_Load(string("keyboards/default/key.png").c_str());
 	m_keyBack = SDL_DisplayFormatAlpha(tmpSurface);
 	SDL_FreeSurface(tmpSurface);
-	tmpSurface = IMG_Load(string("overlays/default/curkey.png").c_str());
+
+	tmpSurface = IMG_Load(string("keyboards/"+keyboardName+"/curkey.png").c_str());
+	if (!tmpSurface)
+		tmpSurface = IMG_Load(string("keyboards/default/curkey.png").c_str());
 	m_curKeyBack = SDL_DisplayFormatAlpha(tmpSurface);
 	SDL_FreeSurface(tmpSurface);
-	
-	tmpSurface = IMG_Load(string("overlays/default/mediumKey.png").c_str());
+
+	tmpSurface = IMG_Load(string("keyboards/"+keyboardName+"/mediumKey.png").c_str());
+	if (!tmpSurface)
+		tmpSurface = IMG_Load(string("keyboards/default/mediumKey.png").c_str());
 	m_mediumKey = SDL_DisplayFormatAlpha(tmpSurface);
 	SDL_FreeSurface(tmpSurface);
-	tmpSurface = IMG_Load(string("overlays/default/curmediumKey.png").c_str());
+
+	tmpSurface = IMG_Load(string("keyboards/"+keyboardName+"/curmediumKey.png").c_str());
+	if (!tmpSurface)
+		tmpSurface = IMG_Load(string("keyboards/default/curmediumKey.png").c_str());
 	m_curMediumKey = SDL_DisplayFormatAlpha(tmpSurface);
 	SDL_FreeSurface(tmpSurface);
-	
-	tmpSurface = IMG_Load(string("overlays/default/largeKey.png").c_str());
+
+	tmpSurface = IMG_Load(string("keyboards/"+keyboardName+"/largeKey.png").c_str());
+	if (!tmpSurface)
+		tmpSurface = IMG_Load(string("keyboards/default/largeKey.png").c_str());
 	m_largeKey = SDL_DisplayFormatAlpha(tmpSurface);
 	SDL_FreeSurface(tmpSurface);
-	tmpSurface = IMG_Load(string("overlays/default/curlargeKey.png").c_str());
+
+	tmpSurface = IMG_Load(string("keyboards/"+keyboardName+"/curlargeKey.png").c_str());
+	if (!tmpSurface)
+		tmpSurface = IMG_Load(string("keyboards/default/curlargeKey.png").c_str());
 	m_curLargeKey = SDL_DisplayFormatAlpha(tmpSurface);
 	SDL_FreeSurface(tmpSurface);
 	
@@ -368,6 +387,19 @@ int Keyboard::processCommand(int command, GuiPos& guiPos)
 		
 			rCommand = 0;
 			foundKey = true;	
+		} else if(command == CMD_STOP
+				|| command == CMD_POP_CANCEL
+				|| command == CMD_PREV_DIR
+				|| command == CMD_PREV_DIR ) {
+			rCommand = CMD_HIDE_KEYBOARD;
+			foundKey = false;
+		} else if(command == CMD_SHOW_MENU) {
+			rCommand = m_returnCmd;	
+			foundKey = false;
+		} else if(command == CMD_ADD_AS_PL
+				|| command == CMD_MOVE_IN_PL) {
+			rCommand = 0;
+			m_text = m_text.substr(0, m_text.length()-1);
 		}
 
 		if(foundKey) {
@@ -423,7 +455,7 @@ void Keyboard::draw()
 		kIter != m_top.end();
 		++kIter) {
 		SDL_Rect letterRect = (*pIter);
-		letterRect.x += 4;
+		letterRect.x += 2;
 		letterRect.y += 2;
 		SDL_SetClipRect(m_screen, &(*pIter));
 		if(m_curRow == 0 && m_curCol == col)

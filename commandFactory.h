@@ -40,7 +40,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 					CMD_MPD_ADD_ALL, CMD_SHOW_OVERLAY, CMD_CLICK, CMD_LAUNCH_PROCESS,
 					CMD_SAVE_PL_KEYBOARD, CMD_SAVE_BKMRK_KEYBOARD, CMD_SAVE_PL_FROM_BROWSER,
 					CMD_SHOW_KEYBOARD, CMD_HIDE_KEYBOARD, CMD_POP_KEYBOARD, CMD_POP_CHG_OPTION,
-					CMD_FILTER_KEYBOARD, CMD_ADD_AS_PL} cmdTypes_t;
+					CMD_FILTER_KEYBOARD, CMD_ADD_AS_PL, CMD_QUEUE} cmdTypes_t;
 
 class CommandFactory
 {
@@ -60,6 +60,8 @@ protected:
 	bool m_prevDir;
 	bool m_rand;
 	bool m_append;
+	bool m_move;
+	bool m_addAsPl;
 	mpd_Connection* m_mpd;
 
 	int m_volume;

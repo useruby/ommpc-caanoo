@@ -34,6 +34,7 @@ class Config;
 class GuiPos;
 class SongDb;
 class Keyboard;
+class Playlist;
 
 class Browser : public Scroller
 {
@@ -42,7 +43,7 @@ public:
  	enum {TYPE_FOLDER, TYPE_FILE, TYPE_BACK, TYPE_ALL, TYPE_FILTER};
  	enum {VIEW_ROOT, VIEW_FILES, VIEW_ARTISTS, VIEW_ALBUMS, VIEW_SONGS, VIEW_GENRES};
 	typedef std::vector<std::pair<std::string, int> > prevItems_t;
-    Browser(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* screen, TTF_Font* font, SDL_Rect& rect, Config& config, int skipVal, int numPerScreen, SongDb& songdb, Keyboard& kb);
+    Browser(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* screen, TTF_Font* font, SDL_Rect& rect, Config& config, int skipVal, int numPerScreen, SongDb& songdb, Keyboard& kb, Playlist& pl);
     void ls(std::string dir="");
 	
 	void browseRoot();
@@ -82,8 +83,16 @@ protected:
 	int m_pageType;
 	std::vector<std::string> m_filters;
 	SDL_Surface* m_dbMsg;
+	SDL_Surface* m_appendedImg;
+	SDL_Surface* m_queuedImg;
+	SDL_Surface * m_iconBrowse;
 	SongDb& m_songDb;
 	Keyboard& m_keyboard;
+	Playlist& m_pl;
+	bool m_drawIcons;
+	bool m_queued;
+	bool m_appended;
+	int m_showTime;
 };
 
 #endif

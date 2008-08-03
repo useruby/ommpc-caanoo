@@ -27,6 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "guiPos.h"
 #include "songDb.h"
 #include "keyboard.h"
+#include "playlist.h"
 #include <iostream>
 #include <stdexcept>
 #include <SDL_image.h>
@@ -34,7 +35,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 using namespace std;
 
 Browser::Browser(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* bg, TTF_Font* font, 
-				SDL_Rect& rect,	Config& config, int skipVal, int numPerScreen, SongDb& songdb, Keyboard& kb)
+				SDL_Rect& rect,	Config& config, int skipVal, int numPerScreen, SongDb& songdb, Keyboard& kb, Playlist& pl)
 : Scroller(mpd, screen, bg, font, rect, config, skipVal, numPerScreen-1)
 , m_nowPlaying(0)
 , m_view(0)
@@ -43,16 +44,50 @@ Browser::Browser(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* bg, TTF_
 , m_refresh(true)
 , m_songDb(songdb)
 , m_keyboard(kb)
+, m_pl(pl)
+, m_appended(false)
+, m_queued(false)
+, m_showTime(0)
 {
 	m_config.getItemAsColor("sk_main_itemColor", m_itemColor.r, m_itemColor.g, m_itemColor.b);
 	m_config.getItemAsColor("sk_main_curItemColor", m_curItemColor.r, m_curItemColor.g, m_curItemColor.b);
     
 	string skinName = m_config.getItem("skin");
+	m_drawIcons =  m_config.getItemAsNum("drawIcons");
 	m_dbMsg= IMG_Load(string("skins/"+skinName+"/updatingdb.png").c_str());
-	if (!m_pauseBtn)
+	if (!m_dbMsg)
 		printf("Unable to load image: %s\n", SDL_GetError());
 	else 
 		m_dbMsg = SDL_DisplayFormatAlpha(m_dbMsg);
+	
+	SDL_Surface* tmpSurface = NULL;	
+	tmpSurface = IMG_Load(string("skins/"+skinName+"/iconBrowse.png").c_str());
+	if (!tmpSurface)
+		tmpSurface = IMG_Load(string("skins/default/iconBrowse.png").c_str());
+	if (!tmpSurface)
+		printf("Unable to load image: %s\n", SDL_GetError());
+	else {
+		m_iconBrowse = SDL_DisplayFormatAlpha(tmpSurface);
+		SDL_FreeSurface(tmpSurface);
+	}
+	tmpSurface = IMG_Load(string("skins/"+skinName+"/queued.png").c_str());
+	if (!tmpSurface)
+		tmpSurface = IMG_Load(string("skins/default/queued.png").c_str());
+	if (!tmpSurface)
+		printf("Unable to load image: %s\n", SDL_GetError());
+	else {
+		m_queuedImg = SDL_DisplayFormatAlpha(tmpSurface);
+		SDL_FreeSurface(tmpSurface);
+	}
+	tmpSurface = IMG_Load(string("skins/"+skinName+"/appended.png").c_str());
+	if (!tmpSurface)
+		tmpSurface = IMG_Load(string("skins/default/appended.png").c_str());
+	if (!tmpSurface)
+		printf("Unable to load image: %s\n", SDL_GetError());
+	else {
+		m_appendedImg = SDL_DisplayFormatAlpha(tmpSurface);
+		SDL_FreeSurface(tmpSurface);
+	}
 
 	m_numPerScreen--;
 	initItemIndexLookup();	
@@ -291,8 +326,8 @@ void Browser::browseArtists() {
 	string massagedFilter = replaceWildcard(m_filters[m_view]);
 	SongDb::artists_t artists = m_songDb.getArtists(massagedFilter);
 	m_listing.clear();
-	m_listing.push_back(make_pair("..", (int)TYPE_BACK));
 	m_listing.push_back(make_pair("Artist Filter: " + m_filters[m_view], (int)TYPE_FILTER));
+	m_listing.push_back(make_pair("..", (int)TYPE_BACK));
 	bool hasUnknown = false;
 	for(SongDb::artists_t::iterator aIter = artists.begin();
 		aIter != artists.end();
@@ -341,8 +376,8 @@ void Browser::browseAlbums() {
 	string massagedFilter = replaceWildcard(m_filters[m_view]);
 	SongDb::albums_t albums = m_songDb.getAlbums(massagedFilter);
 	m_listing.clear();
-	m_listing.push_back(make_pair("..", (int)TYPE_BACK));
 	m_listing.push_back(make_pair("Albums Filter: " + m_filters[m_view], (int)TYPE_FILTER));
+	m_listing.push_back(make_pair("..", (int)TYPE_BACK));
 	bool hasUnknown = false;
 	for(SongDb::albums_t::iterator aIter = albums.begin();
 		aIter != albums.end();
@@ -398,8 +433,8 @@ void Browser::browseGenres() {
 	string massagedFilter = replaceWildcard(m_filters[m_view]);
 	SongDb::genres_t genres = m_songDb.getGenres(massagedFilter);
 	m_listing.clear();
-	m_listing.push_back(make_pair("..", (int)TYPE_BACK));
 	m_listing.push_back(make_pair("Genre Filter: " + m_filters[m_view], (int)TYPE_FILTER));
+	m_listing.push_back(make_pair("..", (int)TYPE_BACK));
 	bool hasUnknown = false;
 	for(SongDb::genres_t::iterator gIter = genres.begin();
 		gIter != genres.end();
@@ -571,6 +606,34 @@ int Browser::processCommand(int command, GuiPos& guiPos)
 						newMode = CMD_SHOW_KEYBOARD;
 					}
 					break;
+				case CMD_QUEUE: 
+					{
+					std::string song = "";
+					if(m_view == VIEW_FILES) {
+						for(prevItems_t::iterator iIter = m_prevItems.begin();
+								iIter != m_prevItems.end();
+								++iIter) {
+							dir += (*iIter).first + "/";
+						}
+						dir = dir.substr(0, dir.length()-1);
+						if(!dir.empty())
+							song = dir+"/";
+						song += m_curItemName;
+					} else {
+						song = m_curSongPaths[m_curItemNum-1];
+					}
+					int pos = m_pl.lastQueued();
+					if(pos == -1)
+						pos = m_nowPlaying+1;
+
+					int id = mpd_sendAddIdCommand(m_mpd, song.c_str());
+					mpd_finishCommand(m_mpd);
+					mpd_sendMoveIdCommand(m_mpd, id, m_nowPlaying+1);
+					mpd_finishCommand(m_mpd);
+					m_pl.lastQueued(pos);
+					m_queued = true;
+					}
+					break;
 				case CMD_PREV_DIR:
 /*
 					pos = m_curDir.rfind("/");;
@@ -622,12 +685,12 @@ int Browser::processCommand(int command, GuiPos& guiPos)
 						} else {
 							song = m_curSongPaths[m_curItemNum-1];
 						}
-cout << "adding " << song << endl;
 						mpd_sendAddCommand(m_mpd, song.c_str());
 						mpd_finishCommand(m_mpd);
 					} else if(m_curItemType == TYPE_FOLDER || m_curItemType == TYPE_ALL) {
 						addFolderAsPlaylist(true);	
 					}
+					m_appended = true;
 					break;
 				case CMD_ADD_AS_PL: 
 					if(m_curItemType == TYPE_FOLDER || m_curItemType == TYPE_ALL) {
@@ -686,7 +749,7 @@ cout << "adding " << song << endl;
 
 void Browser::draw(bool forceRefresh)
 {
-	if(forceRefresh || m_refresh) {
+	if(forceRefresh || m_refresh || m_queued || m_appended) {
 		//clear this portion of the screen 
 		SDL_SetClipRect(m_screen, &m_clearRect);
 		SDL_BlitSurface(m_bg, &m_clearRect, m_screen, &m_clearRect );
@@ -719,6 +782,10 @@ void Browser::draw(bool forceRefresh)
 		} else {
 			sText = TTF_RenderText_Blended(m_font, "Browse Media", m_itemColor);
 		}
+		if(m_drawIcons) {
+			m_destRect.x = m_curItemIconRect.x + 12;
+			SDL_BlitSurface(m_iconBrowse, NULL, m_screen, &m_curItemIconRect );
+		}
 		SDL_BlitSurface(sText,NULL, m_screen, &m_destRect );
 		SDL_FreeSurface(sText);
 
@@ -730,9 +797,15 @@ void Browser::draw(bool forceRefresh)
 		
 		m_destRect.y += m_skipVal*2;
 		m_curItemClearRect.y += m_skipVal*2;
+		m_curItemIconRect.y += m_skipVal*2;
 
-		Scroller::draw();	
+		Scroller::draw(m_drawIcons);	
 
+		if(m_showTime == 10) {
+			m_showTime =0;
+			m_queued = false;
+			m_appended= false;
+		}
 		if(m_updatingDb || m_updatingSongDb) {
 			SDL_Rect dstrect;
 			dstrect.x = (m_screen->w - m_dbMsg->w) / 2;
@@ -742,6 +815,25 @@ void Browser::draw(bool forceRefresh)
 
 			SDL_SetClipRect(m_screen, &dstrect);
 			SDL_BlitSurface(m_dbMsg, NULL, m_screen, &dstrect );
+		} else if(m_queued) {
+			SDL_Rect dstrect;
+			dstrect.x = (m_screen->w - m_queuedImg->w) / 2;
+			dstrect.y = (m_screen->h - m_queuedImg->h) / 2;
+			dstrect.w = m_queuedImg->w;
+			dstrect.h = m_queuedImg->h;
+			SDL_SetClipRect(m_screen, &dstrect);
+			SDL_BlitSurface(m_queuedImg, NULL, m_screen, &dstrect );
+			++m_showTime;
+		} else if(m_appended) {
+			SDL_Rect dstrect;
+			dstrect.x = (m_screen->w - m_appendedImg->w) / 2;
+			dstrect.y = (m_screen->h - m_appendedImg->h) / 2;
+			dstrect.w = m_appendedImg->w;
+			dstrect.h = m_appendedImg->h;
+
+			SDL_SetClipRect(m_screen, &dstrect);
+			SDL_BlitSurface(m_appendedImg, NULL, m_screen, &dstrect );
+			++m_showTime;
 		}
 		m_refresh = false;
 	}

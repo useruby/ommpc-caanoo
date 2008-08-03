@@ -223,7 +223,7 @@ void PLBrowser::draw(bool forceRefresh)
 		SDL_BlitSurface(m_bg, &m_clearRect, m_screen, &m_clearRect );
 
 		SDL_Surface *sText;
-		sText = TTF_RenderText_Solid(m_font, "Playlists", m_itemColor);
+		sText = TTF_RenderText_Blended(m_font, "Playlists", m_itemColor);
 		SDL_BlitSurface(sText,NULL, m_screen, &m_destRect );
 		SDL_FreeSurface(sText);
 		m_destRect.y += m_skipVal*2;

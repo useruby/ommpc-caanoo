@@ -87,7 +87,7 @@ bool showMainMenu(SDL_Surface* screen, Popup& popup)
 	popRect.x = (screen->w - popRect.w) / 2;
 	popRect.y = (screen->h - popRect.h) / 2;
 	popup.setSize(popRect);
-	popup.setTitle("  Main Menu      ommpc v0.3");
+	popup.setTitle("  Main Menu      ommpc v0.3.3");
 	show = true;
 
 	return show;
@@ -440,8 +440,8 @@ int main ( int argc, char** argv )
 			Keyboard keyboard(screen, config);
 			int popPerScreen = (popRect.h-(2*skipVal))/skipVal;
 			Popup popup(threadParms.mpd, screen, config, popRect, skipVal, popPerScreen, gp2xRegs, keyboard);
-			Browser browser(threadParms.mpd, screen, bg, font, mainRect, config, skipVal, numPerScreen, songDb, keyboard);
 			Playlist playlist(threadParms.mpd, screen, bg, font, config, mainRect, skipVal, numPerScreen);
+			Browser browser(threadParms.mpd, screen, bg, font, mainRect, config, skipVal, numPerScreen, songDb, keyboard, playlist);
 			PLBrowser plBrowser(threadParms.mpd, screen, bg, font, mainRect, config, skipVal, numPerScreen, playlist, keyboard);
 			NowPlaying playing(threadParms.mpd, threadParms.lockConnection, screen, bg, config, nowPlayingRect, playlist);
 			StatsBar statsBar(threadParms.mpd, threadParms.lockConnection, screen, bg, config, statsRect, initVolume, playlist, f200, volumeScale);
