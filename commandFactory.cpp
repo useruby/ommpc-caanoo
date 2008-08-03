@@ -114,6 +114,27 @@ int CommandFactory::getCommand(bool keysHeld[], int curMode, int& repeatDelay, b
 			if(popupVisible) {
 				if (keysHeld[GP2X_VK_FX] || keysHeld[SDLK_s])
 					command = CMD_POP_CANCEL;
+				if (!keysHeld[GP2X_VK_START] && !keysHeld[SDLK_c]) {
+					if(m_start) {
+						command	= CMD_SHOW_MENU;
+						m_start = false;
+					}
+					m_delayCommand = false;
+				}
+				if (!keysHeld[GP2X_VK_FX]) {
+					if(m_prevDir) {
+						command = CMD_PREV_DIR;
+						m_prevDir = false;
+					}
+					m_delayCommand = false;
+				}
+				if (!keysHeld[GP2X_VK_FY] && !keysHeld[SDLK_y]) {
+					if(m_move) {
+						command	= CMD_MOVE_IN_PL;
+						m_move = false;
+					}
+					m_delayCommand = false;
+				}
 			} else {
 				switch(curMode) {
 					case 0:
@@ -149,7 +170,7 @@ int CommandFactory::getCommand(bool keysHeld[], int curMode, int& repeatDelay, b
 									}
 									m_delayCommand = false;
 								}
-								if (!keysHeld[GP2X_VK_START]) {
+								if (!keysHeld[GP2X_VK_START] && !keysHeld[SDLK_c]) {
 									if(m_start) {
 										command	= CMD_SHOW_MENU;
 										m_start = false;

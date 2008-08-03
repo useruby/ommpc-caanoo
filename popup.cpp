@@ -255,14 +255,26 @@ void Popup::saveOptions()
 				name = "skin";
 			else if(itemNum == 4)
 				name = "softwareVolume";
-			else if(itemNum == 5)
+			else if(itemNum == 5) {
 				name = "programRoot";
-			else if(itemNum == 6)
+				if((*m_optionsIters[itemNum])[(*m_optionsIters[itemNum]).length()-1] != '/')
+					(*m_optionsIters[itemNum]) = (*m_optionsIters[itemNum]) + '/';
+			}
+			else if(itemNum == 6) {
 				name = "musicRoot";
-			else if(itemNum == 7)
+				if((*m_optionsIters[itemNum])[(*m_optionsIters[itemNum]).length()-1] != '/')
+					(*m_optionsIters[itemNum]) = (*m_optionsIters[itemNum]) + '/';
+			}
+			else if(itemNum == 7) {
 				name = "playlistRoot";
-			else if(itemNum == 8)
+				if((*m_optionsIters[itemNum])[(*m_optionsIters[itemNum]).length()-1] != '/')
+					(*m_optionsIters[itemNum]) = (*m_optionsIters[itemNum]) + '/';
+			}
+			else if(itemNum == 8) {
 				name = "albumArtRoot";
+				if((*m_optionsIters[itemNum])[(*m_optionsIters[itemNum]).length()-1] != '/')
+					(*m_optionsIters[itemNum]) = (*m_optionsIters[itemNum]) + '/';
+			}
 			m_config.setItem(name, (*m_optionsIters[itemNum]));
 		}
 		++itemNum;
@@ -300,7 +312,7 @@ void Popup::updateMpdConf()
 	string mR = m_config.getItem("musicRoot");
 	string pR = m_config.getItem("playlistRoot");
 	string progR = m_config.getItem("programRoot");
-		
+	
 	char pwd[129];
 	getcwd(pwd, 128);
 	string pwdStr(pwd);

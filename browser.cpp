@@ -625,10 +625,12 @@ int Browser::processCommand(int command, GuiPos& guiPos)
 					int pos = m_pl.lastQueued();
 					if(pos == -1)
 						pos = m_nowPlaying+1;
+					else 
+						++pos;
 
 					int id = mpd_sendAddIdCommand(m_mpd, song.c_str());
 					mpd_finishCommand(m_mpd);
-					mpd_sendMoveIdCommand(m_mpd, id, m_nowPlaying+1);
+					mpd_sendMoveIdCommand(m_mpd, id, pos);
 					mpd_finishCommand(m_mpd);
 					m_pl.lastQueued(pos);
 					m_queued = true;
@@ -786,14 +788,12 @@ void Browser::draw(bool forceRefresh)
 			m_destRect.x = m_curItemIconRect.x + 12;
 			SDL_BlitSurface(m_iconBrowse, NULL, m_screen, &m_curItemIconRect );
 		}
-		SDL_BlitSurface(sText,NULL, m_screen, &m_destRect );
-		SDL_FreeSurface(sText);
 
 		if(m_listing.size() == 1) {
 			sText = TTF_RenderText_Blended(m_font, "No songs in database, update from Main Menu", m_itemColor);
-			SDL_BlitSurface(sText,NULL, m_screen, &m_destRect );
-			SDL_FreeSurface(sText);
 		}
+		SDL_BlitSurface(sText,NULL, m_screen, &m_destRect );
+		SDL_FreeSurface(sText);
 		
 		m_destRect.y += m_skipVal*2;
 		m_curItemClearRect.y += m_skipVal*2;
