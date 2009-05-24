@@ -46,7 +46,7 @@ public:
 	void updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus, 
 							int rtmpdStatusChanged, mpd_Status* rtmpdStatus, int repeatDelay);
     void processCommand(int event, int& rtmpdStatusChanged, mpd_Status* rtmpdStatus, int repeatDelay, int volume, long delayTime, GuiPos& guiPos);
-    void draw(bool force);
+    void draw(bool force, long timePerFrame, bool inBack);
 	std::string currentItemName();
 	std::string currentItemPath();
 
@@ -86,7 +86,6 @@ protected:
 
 	int m_lastQueued;
 	std::vector<int> m_used;
-	bool m_refresh;
 	Timer m_timer;
 	typedef struct { 
 		std::string title;

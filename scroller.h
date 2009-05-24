@@ -35,12 +35,14 @@ class Scroller
 {
 public:
 	typedef std::vector<std::pair<std::string, int> >listing_t;
+	typedef std::vector<std::pair<SDL_Surface*, int> >displayList_t;
 	typedef std::vector<int> pos2index_t;
 	Scroller(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* bg, TTF_Font* font, 
 				SDL_Rect& rect, Config& config, int skipVal, int numPerScreen);
 
+	void updateDisplayList();
 	bool processCommand(int& command);
-	void draw(bool drawIcons = false, int nowPlaying = -1, int lastQueued = -1);
+	void draw(long timePerFrame, bool drawIcons = false, int nowPlaying = -1, int lastQueued = -1);
 	void draw(std::vector<std::string>& selectedOptions);
 
 	int skipVal();
@@ -50,6 +52,7 @@ protected:
 	mpd_Connection* m_mpd;
 
 	listing_t m_listing;
+	displayList_t m_displayList;
 	pos2index_t m_itemIndexLookup;
 	
 	SDL_Surface* m_screen;
@@ -69,7 +72,7 @@ protected:
 	std::string m_curItemName;
 	int m_curItemType;
 	int m_curState;
-	
+	int m_displayListOffset;	
 	int m_skipVal;
 	int m_numPerScreen;
 
@@ -92,6 +95,10 @@ protected:
 	int m_prevX;
 	int m_prevY;
 	int m_skipFirstMouse;	
+
+	int m_delay;
+	int m_delayCnt;
+	bool m_refresh;
 };
 
 #endif

@@ -46,11 +46,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "albumArt.h"
 #include "overlay.h"
 #include "nowPlaying.h"
+#include "buttonManager.h"
 #include "libmpdclient.h"
 #include "threadFunctions.h"
 #include "commandFactory.h"
 #include "statsBar.h"
-#include "helpBar.h"
+#include "menu.h"
 #include "timer.h"
 #include "popup.h"
 #include "gp2xregs.h"
@@ -64,20 +65,20 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 using namespace std;
 
 
-bool showMainMenu(SDL_Surface* screen, Popup& popup)
+bool showMainMenu(SDL_Surface* screen, Popup& popup, Config& config)
 {
 	bool show = false;	
 	
 	Scroller::listing_t items;
 	int type = Popup::POPUP_MENU;
-	items.push_back(make_pair("  Return to player", (int)Popup::POPUP_CANCEL));
-	items.push_back(make_pair("  Save Playlist", (int)Popup::POPUP_SAVE_PL));
-	items.push_back(make_pair("  Create Bookmark", (int)Popup::POPUP_BKMRK));
-	items.push_back(make_pair("  Launch Program", (int)Popup::POPUP_LAUNCH));
-	items.push_back(make_pair("  Detach Client", (int)Popup::POPUP_DETACH));
-	items.push_back(make_pair("  Update Mpd Database", (int)Popup::POPUP_MPD_UPDATE));
-	items.push_back(make_pair("  Player Options", (int)Popup::POPUP_SHOW_OPTIONS));
-	items.push_back(make_pair("  Exit", (int)Popup::POPUP_EXIT));
+	items.push_back(make_pair("  "+config.getItem("LANG_RET_TO_PLAYER"), (int)Popup::POPUP_CANCEL));
+	items.push_back(make_pair("  "+config.getItem("LANG_SAVE_PL"), (int)Popup::POPUP_SAVE_PL));
+	items.push_back(make_pair("  "+config.getItem("LANG_CREATE_BKMRK"), (int)Popup::POPUP_BKMRK));
+	items.push_back(make_pair("  "+config.getItem("LANG_LAUNCH_PRGM"), (int)Popup::POPUP_LAUNCH));
+	items.push_back(make_pair("  "+config.getItem("LANG_DETACH"), (int)Popup::POPUP_DETACH));
+	items.push_back(make_pair("  "+config.getItem("LANG_UPDATE"), (int)Popup::POPUP_MPD_UPDATE));
+	items.push_back(make_pair("  "+config.getItem("LANG_OPTIONS"), (int)Popup::POPUP_SHOW_OPTIONS));
+	items.push_back(make_pair("  "+config.getItem("LANG_EXIT"), (int)Popup::POPUP_EXIT));
 //	items.push_back(make_pair("", type));	
 			
 	popup.setItemsText(items, type);
@@ -87,7 +88,7 @@ bool showMainMenu(SDL_Surface* screen, Popup& popup)
 	popRect.x = (screen->w - popRect.w) / 2;
 	popRect.y = (screen->h - popRect.h) / 2;
 	popup.setSize(popRect);
-	popup.setTitle("  Main Menu      ommpc v0.3.3");
+	popup.setTitle("  "+config.getItem("LANG_MENU")+"      ommpc v0.3.3");
 	show = true;
 
 	return show;
@@ -129,7 +130,7 @@ int processMainMenuItem(int action, std::string item)
 	return rCommand;
 }
 
-bool showLaunchMenu(SDL_Surface* screen, Popup& popup, string dir)
+bool showLaunchMenu(SDL_Surface* screen, Popup& popup, string dir, Config& config)
 {
 	bool show = false;	
 	
@@ -137,7 +138,7 @@ bool showLaunchMenu(SDL_Surface* screen, Popup& popup, string dir)
 	int type = Popup::POPUP_MENU;
 	DIR * udir = opendir((dir+"/shortcuts/").c_str());
 
-	items.push_back(make_pair("  Cancel", 0));	
+	items.push_back(make_pair("  "+config.getItem("LANG_CANCEL"), 0));	
 	if(udir != NULL) {
 		struct dirent * dirent = readdir(udir);
 
@@ -159,7 +160,7 @@ bool showLaunchMenu(SDL_Surface* screen, Popup& popup, string dir)
 	popRect.x = (screen->w - popRect.w) / 2;
 	popRect.y = (screen->h - popRect.h) / 2;
 	popup.setSize(popRect);
-	popup.setTitle("  Launch Program");
+	popup.setTitle("  "+config.getItem("LANG_LAUNCH_PRGM"));
 	show = true;
 
 	return show;
@@ -187,19 +188,19 @@ bool showOptionsMenu(SDL_Surface* screen, Popup& popup, Config& config)
 	Scroller::listing_t items;
 	int type = Popup::POPUP_OPTIONS;
 	int itemType = Popup::POPUP_SAVE_OPTIONS;
-	items.push_back(make_pair("  Clock Speed", 21));
-	items.push_back(make_pair("  Clock Speed when Locked", 25));
-	items.push_back(make_pair("  Show Album Art", 22));
-	items.push_back(make_pair("  Skin", 23));
-	items.push_back(make_pair("  Software Vol.", 24));
-	items.push_back(make_pair("  Install Path", 26));
-	items.push_back(make_pair("  Music Path", 27));
-	items.push_back(make_pair("  Playlist Path", 28));
-	items.push_back(make_pair("  AlbumArt Path", 29));
+	items.push_back(make_pair("  "+config.getItem("LANG_CLOCK"), 21));
+	items.push_back(make_pair("  "+config.getItem("LANG_CLOCK_LOCKED"), 25));
+	items.push_back(make_pair("  "+config.getItem("LANG_SHOW_ART"), 22));
+	items.push_back(make_pair("  "+config.getItem("LANG_SKIN"), 23));
+	items.push_back(make_pair("  "+config.getItem("LANG_SOFT_VOL"), 24));
+	items.push_back(make_pair("  "+config.getItem("LANG_INSTALL_PATH"), 26));
+	items.push_back(make_pair("  "+config.getItem("LANG_MUSIC_PATH"), 27));
+	items.push_back(make_pair("  "+config.getItem("LANG_PL_PATH"), 28));
+	items.push_back(make_pair("  "+config.getItem("LANG_ART_PATH"), 29));
 
 	items.push_back(make_pair(" ", 99));
-	items.push_back(make_pair("  Save", 8));
-	items.push_back(make_pair("  Cancel", 0));
+	items.push_back(make_pair(" "+config.getItem("LANG_SAVE"), 8));
+	items.push_back(make_pair(" "+config.getItem("LANG_CANCEL"), 0));
 	
 	popup.setItemsText(items, type);
 	SDL_Rect popRect;
@@ -208,7 +209,7 @@ bool showOptionsMenu(SDL_Surface* screen, Popup& popup, Config& config)
 	popRect.x = (screen->w - popRect.w) / 2;
 	popRect.y = (screen->h - popRect.h) / 2;
 	popup.setSize(popRect);
-	popup.setTitle("       Player Options");
+	popup.setTitle("       "+config.getItem("LANG_OPTIONS"));
 	show = true;
 
 	return show;
@@ -349,6 +350,11 @@ int main ( int argc, char** argv )
 				config.getItemAsNum("sk_main_width"),
 				config.getItemAsNum("sk_main_height")
 			};
+			SDL_Rect fullRect = { config.getItemAsNum("0"),
+				config.getItemAsNum("0"),
+				config.getItemAsNum("320"),
+				config.getItemAsNum("240")
+			};
 			SDL_Rect artRect = { config.getItemAsNum("sk_art_x"),
 				config.getItemAsNum("sk_art_y"),
 				config.getItemAsNum("sk_art_width"),
@@ -442,13 +448,15 @@ int main ( int argc, char** argv )
 			Popup popup(threadParms.mpd, screen, config, popRect, skipVal, popPerScreen, gp2xRegs, keyboard);
 			Playlist playlist(threadParms.mpd, screen, bg, font, config, mainRect, skipVal, numPerScreen);
 			Browser browser(threadParms.mpd, screen, bg, font, mainRect, config, skipVal, numPerScreen, songDb, keyboard, playlist);
+			Menu menu(threadParms.mpd, screen, bg, font, mainRect, config, skipVal, numPerScreen, songDb, keyboard, playlist);
 			PLBrowser plBrowser(threadParms.mpd, screen, bg, font, mainRect, config, skipVal, numPerScreen, playlist, keyboard);
 			NowPlaying playing(threadParms.mpd, threadParms.lockConnection, screen, bg, config, nowPlayingRect, playlist);
 			StatsBar statsBar(threadParms.mpd, threadParms.lockConnection, screen, bg, config, statsRect, initVolume, playlist, f200, volumeScale);
-			HelpBar helpBar(threadParms.mpd, screen, bg, config, helpRect);
 			Overlay overlay(threadParms.mpd, screen, config, clearRect, playlist);
 			Bookmarks bookmarks(threadParms.mpd, screen, bg, font, mainRect, skipVal, numPerScreen, playlist, config, statsBar, keyboard);
+			ButtonManager buttonManager(threadParms.mpd, threadParms.lockConnection, screen, bg, config, volumeScale);
 			CommandFactory commandFactory(threadParms.mpd, volumeScale);
+	
 
 			int curMode = 0;	
 			int volume = 10;
@@ -501,6 +509,7 @@ int main ( int argc, char** argv )
 			bool launchProcess = false;
 			string launchProcessName = "";
 			int command = -1;
+			int prevCommand = -1;
 			bool keysHeld[401] = {false};
 			int repeatDelay = 0;
 			bool forceRefresh = true;
@@ -511,15 +520,18 @@ int main ( int argc, char** argv )
 			bool popupVisible = false;
 			bool overlayVisible = false;
 			bool keyboardVisible = false;
+			bool classicStatsBar = config.getItemAsBool("sk_classicStatsBar");
 			SDL_Color backColor;
 			config.getItemAsColor("sk_screen_color", backColor.r, backColor.g, backColor.b);
 
-			//Timer timer;	
-			//Timer limiter;
-			//limiter.start();
-			Timer delayTimer;
-			delayTimer.stop();
+			Timer timer;	
+			Timer timer2;	
 			int fps=0;
+			long frameTime = ((float)1000/(float)15) * 1000;
+			long now = timer.check();
+			long nextFrame = 0;
+			long timePerFrame = 0;
+			long diffTime = 0;
 
 			SDL_Event event;
 			int mouseState = 0; //0=unpressed, 1=down, 2=up
@@ -529,7 +541,10 @@ int main ( int argc, char** argv )
 //			ofstream out("uptime", ios::out);
 			while (!done)
 			{
- 				SDL_mutexP(threadParms.lockConnection);
+				now = timer.check();
+				nextFrame = now + frameTime;
+ 				
+				SDL_mutexP(threadParms.lockConnection);
 				// let's start with checking some polled status items
 				if(threadParms.mpdStatusChanged & VOL_CHG) {
 					//volume = threadParms.mpdStatus->volume;
@@ -540,7 +555,7 @@ int main ( int argc, char** argv )
 				if(threadParms.mpdStatusChanged & RPT_CHG) {
 					repeat = threadParms.mpdStatus->repeat;
 				}
-				if (SDL_PollEvent(&event) && !processedEvent)
+				if (SDL_PollEvent(&event))
 				{
 					if(event.type == SDL_MOUSEMOTION) {
  						SDL_mutexV(threadParms.lockConnection);
@@ -550,82 +565,59 @@ int main ( int argc, char** argv )
 					//this stops the mouse motion event from taking 
 					//too much time and screwing sutff up.
 						case SDL_KEYDOWN:
-							processedEvent = true;
-							keysHeld[event.key.keysym.sym] = true;
-							delayTimer.start();
+							command = commandFactory.keyDown(event.key.keysym.sym, curMode);
 						break;
 						case SDL_KEYUP:
-							keysHeld[event.key.keysym.sym] = false;
-							repeatDelay = 1;
-							delayTimer.stop();
+							command = commandFactory.keyUp(event.key.keysym.sym, curMode);
 						break;
 						case SDL_JOYBUTTONDOWN:
-							processedEvent = true;
-							keysHeld[event.jbutton.button] = true;
-							delayTimer.start();
+							command = commandFactory.keyDown(event.jbutton.button, curMode);
 						break;
 						case SDL_JOYBUTTONUP:
-							keysHeld[event.jbutton.button] = false;
-							repeatDelay = 1;
-							delayTimer.stop();
+							command = commandFactory.keyUp(event.jbutton.button, curMode);
 						break;
 						case SDL_MOUSEBUTTONDOWN:
-							keysHeld[400] = true;
-							delayTimer.start();
 							SDL_GetMouseState(&guiPos.curX, &guiPos.curY);
-							processedEvent = true;
-							mouseState =1;
+							command = commandFactory.mouseDown(curMode, guiPos.curX, guiPos.curY);
 						break;
 						case SDL_MOUSEBUTTONUP:
-							keysHeld[400] = false;
-							repeatDelay = 1;
-							delayTimer.stop();
-							mouseState =2;
+							SDL_GetMouseState(&guiPos.curX, &guiPos.curY);
+							command = commandFactory.mouseUp(curMode, guiPos.curX, guiPos.curY);
 						break;
 						default:
 							processedEvent = false;
 					}
 					processedEvent = true;
 				} // end of message processing
-
-				long delayTime = delayTimer.check();
-				if(processedEvent || repeatDelay > 0) {	
-					if (event.type == SDL_KEYDOWN || event.type == SDL_JOYBUTTONDOWN
-						|| mouseState == 1) {
-						++repeatDelay;	
-					}
-					if(!gp2xRegs.screenIsOff()) 
-						command = commandFactory.getCommand(keysHeld, curMode, repeatDelay, popupVisible, overlayVisible, volume, delayTime);
-					else
-						command = commandFactory.getCommandWhileLocked(keysHeld, curMode, repeatDelay, popupVisible, delayTime);
-		
-					if (event.type == SDL_KEYUP || event.type == SDL_JOYBUTTONUP
-						|| mouseState == 2)  {
-						repeatDelay = 0;
-						event.type = -1;
-						mouseState = 0;
-					}
-					processedEvent = false;
-				}
-
+				command = commandFactory.checkRepeat(command, prevCommand, curMode, guiPos.curX, guiPos.curY);	
 				if(keyboardVisible) {
+					int preCommand = command;
 					command = keyboard.processCommand(command, guiPos);
 					if(command == CMD_SAVE_PL || command == CMD_SAVE_BKMRK 
 						|| command == CMD_HIDE_KEYBOARD || command == CMD_POP_CHG_OPTION) {
 						keyboardVisible = false;
 						forceRefresh = true;
 					}
-
+					if(command != preCommand) {
+						forceRefresh = true;
+					}
 				}
 				if(overlayVisible) {
+					int preCommand = command;
 					command = overlay.processCommand(command, guiPos, overlayVisible);
 					if(command == CMD_SHOW_MENU) {
 						overlayVisible = false;
 						forceRefresh = true;
 					}
+					if(command != preCommand) {
+						forceRefresh = true;
+					}
 				} else {
 					command = overlay.processCommand(command, guiPos, overlayVisible);
 				}	
+				if(curMode == 4) {
+					command = menu.processCommand(command, guiPos);
+				}
 				if(popupVisible) {
 					command = popup.processCommand(command, guiPos);
 					switch(command) {
@@ -656,6 +648,7 @@ int main ( int argc, char** argv )
 							break;
 					}
 				}
+				command = buttonManager.processCommand(command, guiPos);
 				switch(command) {
 					case CMD_QUIT:
 						done = true;
@@ -796,7 +789,8 @@ int main ( int argc, char** argv )
 						popupVisible = false;	
 						break;
 					case CMD_SHOW_MENU:
-						popupVisible = showMainMenu(screen, popup);
+						curMode = 4;
+						forceRefresh = true;
 						break;
 					case CMD_SHOW_OVERLAY:
 						overlayVisible = !overlayVisible;
@@ -805,24 +799,41 @@ int main ( int argc, char** argv )
 					case CMD_LAUNCH_APP:
 						char pwd[129];
 						getcwd(pwd, 128);
-						popupVisible = showLaunchMenu(screen, popup, pwd);
+						popupVisible = showLaunchMenu(screen, popup, pwd, config);
 						break;
 					case CMD_SHOW_OPTIONS:
 						popupVisible = showOptionsMenu(screen, popup, config);
 						break;
-					case CMD_MPD_UPDATE:
-						mpd_sendUpdateCommand(threadParms.mpd, "");
-						mpd_finishCommand(threadParms.mpd);
-						if(songDbThread != NULL)	
-							SDL_WaitThread(songDbThread, NULL);
-						songDbThread = SDL_CreateThread(updateSongDb, &songDbParms);
-						if(statusThread == NULL) {
-							cout << "unable to create status thread" << endl;
-							return -1;
+					case CMD_MPD_UPDATE: 
+						{
+							char path[3] = "";
+							mpd_sendUpdateCommand(threadParms.mpd, path);
+							mpd_finishCommand(threadParms.mpd);
+							if(songDbThread != NULL)	
+								SDL_WaitThread(songDbThread, NULL);
+							songDbThread = SDL_CreateThread(updateSongDb, &songDbParms);
+							if(statusThread == NULL) {
+								cout << "unable to create status thread" << endl;
+								return -1;
+							}
 						}
 						break;	
+					case CMD_SHOW_NP:
+						curMode = 4;
+						break;
+					case CMD_SHOW_PL:
+						curMode = 1;
+						break;
+					case CMD_SHOW_PLS:
+						curMode = 3;
+						break;
+					case CMD_SHOW_LIB:
+						curMode = 0;
+						break;
+					case CMD_SHOW_BKMRKS:
+						curMode = 4;
+						break;
 				}
-
 
 				//if(!gp2xRegs.screenIsOff())  {
 					// DRAWING STARTS HERE
@@ -834,21 +845,25 @@ int main ( int argc, char** argv )
 					playlist.updateStatus(threadParms.mpdStatusChanged, 
 							threadParms.mpdStatus, 
 							rtmpdStatusChanged, rtmpdStatus, repeatDelay);
-					playing.updateStatus(threadParms.mpdStatusChanged, threadParms.mpdStatus, 
-							rtmpdStatusChanged, rtmpdStatus);
-					playing.draw(forceRefresh);
-					statsBar.updateStatus(threadParms.mpdStatusChanged, threadParms.mpdStatus,
-							rtmpdStatusChanged, rtmpdStatus, forceRefresh);
-					statsBar.draw(forceRefresh, fps);
-					if(config.getItem("showAlbumArt") == "true") {
-						albumArt.updateStatus(threadParms.mpdStatusChanged, 
-								threadParms.mpdStatus,
+					if(curMode != 2) {
+						playing.updateStatus(threadParms.mpdStatusChanged, threadParms.mpdStatus, 
 								rtmpdStatusChanged, rtmpdStatus);
-						albumArt.draw(forceRefresh);
+						playing.draw(forceRefresh, timePerFrame, overlayVisible||keyboardVisible);
+						if(classicStatsBar) {
+							statsBar.updateStatus(threadParms.mpdStatusChanged, 
+									threadParms.mpdStatus,
+									rtmpdStatusChanged, 
+									rtmpdStatus, 
+									forceRefresh);
+							statsBar.draw(forceRefresh, fps);
+						}
+						if(config.getItem("showAlbumArt") == "true") {
+							albumArt.updateStatus(threadParms.mpdStatusChanged, 
+									threadParms.mpdStatus,
+									rtmpdStatusChanged, rtmpdStatus);
+							albumArt.draw(forceRefresh);
+						}
 					}
-					playlist.updateStatus(threadParms.mpdStatusChanged, 
-							threadParms.mpdStatus, 
-							rtmpdStatusChanged, rtmpdStatus, repeatDelay);
 					browser.updateStatus(threadParms.mpdStatusChanged, 
 							threadParms.mpdStatus, songDbParms.updating);
 					plBrowser.updateStatus(threadParms.mpdStatusChanged, 
@@ -859,58 +874,71 @@ int main ( int argc, char** argv )
 					switch (curMode) {
 						case 0:
 							rMode = browser.processCommand(command, guiPos);
-							if(rMode == CMD_SHOW_KEYBOARD)
+							if(rMode == CMD_SHOW_KEYBOARD) {
 								keyboardVisible = true;
-							else if(rMode == CMD_HIDE_KEYBOARD) {
+								forceRefresh = true;
+							} else if(rMode == CMD_HIDE_KEYBOARD) {
 								keyboardVisible = false;
 								forceRefresh = true;
 							} else
 								curMode = rMode;
-							browser.draw(forceRefresh);
+							browser.draw(forceRefresh, timePerFrame, overlayVisible||keyboardVisible);
 							break;
 						case 1:
-							playlist.processCommand(command, rtmpdStatusChanged, rtmpdStatus, repeatDelay, volume, delayTime, guiPos);
-							playlist.draw(forceRefresh);
+							playlist.processCommand(command, rtmpdStatusChanged, rtmpdStatus, repeatDelay, volume, commandFactory.getHoldTime(), guiPos);
+							playlist.draw(forceRefresh, timePerFrame, overlayVisible||keyboardVisible);
 
 							break;
 						case 2:
 							{
 							rMode = plBrowser.processCommand(command, curMode, guiPos);
-							if(rMode == CMD_SHOW_KEYBOARD)
+							if(rMode == CMD_SHOW_KEYBOARD) {
 								keyboardVisible = true;
-							else if(rMode == CMD_HIDE_KEYBOARD) {
+								forceRefresh = true;
+							} else if(rMode == CMD_HIDE_KEYBOARD) {
 								keyboardVisible = false;
+								forceRefresh = true;
 							}
 							else 
 								curMode = rMode;
-							plBrowser.draw(forceRefresh);
+							plBrowser.draw(forceRefresh, timePerFrame, overlayVisible||keyboardVisible);
 							}
 							break;
 						case 3:
 							rMode = bookmarks.processCommand(command, guiPos);
-							if(rMode == CMD_SHOW_KEYBOARD)
+							if(rMode == CMD_SHOW_KEYBOARD) {
 								keyboardVisible = true;
-							else if(rMode == CMD_HIDE_KEYBOARD) {
+								forceRefresh = true;
+							} else if(rMode == CMD_HIDE_KEYBOARD) {
 								keyboardVisible = false;
+								forceRefresh = true;
 							} else 
 								curMode = rMode;
-							bookmarks.draw(forceRefresh);
+							bookmarks.draw(forceRefresh, timePerFrame, overlayVisible||keyboardVisible);
+							break;
+						case 4:
+							
+							menu.draw(forceRefresh, timePerFrame, overlayVisible||keyboardVisible);
 							break;
 						default: 
-							playlist.processCommand(command, rtmpdStatusChanged, rtmpdStatus, repeatDelay, volume, delayTime, guiPos);
-							playlist.draw(forceRefresh);
+							playlist.processCommand(command, rtmpdStatusChanged, rtmpdStatus, repeatDelay, volume, commandFactory.getHoldTime(), guiPos);
+							playlist.draw(forceRefresh, timePerFrame,  overlayVisible||keyboardVisible);
 							break;
 					}
-					helpBar.draw(curMode, forceRefresh);
+					buttonManager.updateStatus(threadParms.mpdStatusChanged, 
+											  threadParms.mpdStatus,
+											  rtmpdStatusChanged, 
+											  rtmpdStatus, 
+											  forceRefresh);
+					buttonManager.draw(forceRefresh, timePerFrame, overlayVisible||keyboardVisible);
 
 					if(popupVisible)
 						popup.draw();
 					if(keyboardVisible) {
-						keyboard.draw();
-						forceRefresh = true;
+						forceRefresh = keyboard.draw(forceRefresh);
 					} else if(overlayVisible) {
 						overlay.draw(forceRefresh);	
-						forceRefresh = true;
+						forceRefresh = false;
 					} else {
 						forceRefresh = false;
 					}
@@ -923,6 +951,7 @@ int main ( int argc, char** argv )
 							rtmpdStatus = NULL;
 						}
 					}
+					prevCommand = command;
 					command = 0;
 
 					if(done) {
@@ -948,26 +977,30 @@ int main ( int argc, char** argv )
 					SDL_mutexV(threadParms.lockConnection);
 					
 					if(!gp2xRegs.screenIsOff())  {
-						SDL_Flip(screen);
-						SDL_Delay(75);
+				 		SDL_Flip(screen);
 					} else {
-						SDL_Delay(165);
+					//	SDL_Delay(165);
 					}
-/*
+
 					++frame;
-					if(timer.check() > 50000000) //5minutes
+					if(timer2.check() > 5000000) //5minutes
 					{
-						timer.stop();
-						int elapsed = limiter.check()/1000000;
+						timer2.stop();
+						int elapsed = timer2.check()/1000000;
 							
-						out << elapsed << " secs." << endl;
-						sync();
-						//fps = frame/elapsed;
-						//cout << "fps " << fps << endl;
+						//cout << elapsed << " secs." << endl;
+						fps = frame/elapsed;
+						//cout << "*******************fps " << fps << endl;
 						frame = 0;
-						timer.start();
+						timer2.start();
 					}
-*/
+
+					diffTime = nextFrame-timer.check();
+					if(diffTime > 0) {
+						usleep(diffTime);
+					}
+					timePerFrame = timer.check() - now;	
+					
 				//} else {
 				//	SDL_mutexV(threadParms.lockConnection);
 				//	SDL_Delay(150);

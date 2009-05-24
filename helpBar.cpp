@@ -134,7 +134,7 @@ void HelpBar::draw(int curMode, bool forceUpdate)
 		for(vector<string>::iterator vvIter = m_modeCmdText[curMode].begin();
 				vvIter != m_modeCmdText[curMode].end();
 				++vvIter) {
-			sText = TTF_RenderText_Blended(m_font, (*vvIter).c_str(), m_itemColor);
+			sText = TTF_RenderUTF8_Blended(m_font, (*vvIter).c_str(), m_itemColor);
 			SDL_BlitSurface(sText, NULL, m_screen, &m_destRect );
 			if(m_clearRect.h < 20) {
 				m_destRect.x += sText->w+3;

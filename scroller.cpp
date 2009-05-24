@@ -44,6 +44,9 @@ Scroller::Scroller(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* bg, TT
 	, m_prevX(0)
 	, m_prevY(0)
 	, m_skipFirstMouse(true)
+	, m_refresh(true)
+	, m_delay(0)
+	, m_delayCnt(0)
 {
 	m_destRect.x = rect.x;
 	m_destRect.y = rect.y;
@@ -121,6 +124,7 @@ cout << m_skipVal << endl;
 		SDL_FreeSurface(tmpSurface);
 	}
 	
+	//updateDisplayList();
 
 
 }
@@ -151,6 +155,7 @@ bool Scroller::processCommand(int& command)
 
 	switch(command) {
 		case CMD_DOWN:
+		case CMD_MOUSE_DOWN:
 			++m_curItemNum;
 			if(m_curItemNum > m_lastItemNum) {
 				m_topItemNum = m_curItemNum = 0;
@@ -160,6 +165,7 @@ bool Scroller::processCommand(int& command)
 			done = true;
 			break;
 		case CMD_UP:
+		case CMD_MOUSE_UP:
 			if(m_curItemNum > 0) {
 				--m_curItemNum;
 				if(m_curItemNum <= m_topItemNum && m_topItemNum >0)
@@ -190,6 +196,8 @@ bool Scroller::processCommand(int& command)
 			done = true;
 			break;
 	}	
+	//if(done)
+		//updateDisplayList();
 	return done;
 }
 
@@ -198,8 +206,113 @@ int Scroller::skipVal()
 	return m_skipVal;
 }
 	
+void Scroller::updateDisplayList()
+{
+	int numProcessed = 0;
+	int numDisplayed = 0;
+	int type;
+	for(displayList_t::iterator dlIter = m_displayList.begin();
+		dlIter != m_displayList.end(); 
+		++dlIter) {
+		SDL_FreeSurface((*dlIter).first);
+	}
+	m_displayList.clear();
+	for(listing_t::iterator vIter = m_listing.begin();
+		vIter != m_listing.end() && (numDisplayed <= m_numPerScreen);
+		++vIter) {
+		if(numProcessed >= m_topItemNum) {
+			if(numProcessed == m_topItemNum) 
+				m_displayListOffset = numProcessed;
+			if(numProcessed == m_curItemNum) {
+				m_curItemName = (*vIter).first;
+				m_curItemType = (*vIter).second;
+				m_displayList.push_back(make_pair(TTF_RenderUTF8_Blended(m_font, (*vIter).first.c_str(), m_curItemColor), (*vIter).second));
+			} else {
+				m_displayList.push_back(make_pair(TTF_RenderUTF8_Blended(m_font, (*vIter).first.c_str(), m_itemColor), (*vIter).second));
+			}
+			++numDisplayed;
+		}
+		++numProcessed;
+	}
+}
+/*
 void Scroller::draw(bool drawIcons, int nowPlaying, int lastQueued) 
 {
+	int numProcessed = 0;
+	int numDisplayed = m_displayList.size();
+	int curItemNum = m_curItemNum - m_displayListOffset;
+	int type;
+	for(displayList_t::iterator dlIter = m_displayList.begin();
+		dlIter != m_displayList.end(); 
+		++dlIter) {
+
+		if(numProcessed == m_curItemNum) {
+cout << "m_curitem " << m_curItemNum << "  disploff  " << m_displayListOffset << endl;
+			m_curItemClearRect.w = m_clearRect.w;
+			m_curItemClearRect.h = (*dlIter).first->h;
+			SDL_SetClipRect(m_screen, &m_curItemClearRect);
+			SDL_BlitSurface(m_bgCurItem, NULL, m_screen, &m_curItemClearRect );
+		} else if(numProcessed == nowPlaying || (lastQueued != -1 && numProcessed >= nowPlaying && numProcessed <= lastQueued)) {
+			m_curItemClearRect.w = m_clearRect.w;
+			m_curItemClearRect.h = (*dlIter).first->h;
+			SDL_SetClipRect(m_screen, &m_curItemClearRect);
+			SDL_BlitSurface(m_bgNowPlaying, NULL, m_screen, &m_curItemClearRect );
+		} else {
+			m_curItemClearRect.w = m_clearRect.w;
+			m_curItemClearRect.h = (*dlIter).first->h;
+		}
+
+		SDL_SetClipRect(m_screen, &m_curItemClearRect);
+		if(drawIcons) {
+			type = (*dlIter).second;
+			if(type == 0 || type == 2 || type == 3) {
+				SDL_BlitSurface(m_iconFolder, NULL, m_screen, &m_curItemIconRect );
+			} else if (type == 4) {
+				SDL_BlitSurface(m_iconFilter, NULL, m_screen, &m_curItemIconRect );
+			}
+			else if(type == 1)
+				SDL_BlitSurface(m_iconFile, NULL, m_screen, &m_curItemIconRect );
+		}	
+		SDL_BlitSurface((*dlIter).first,NULL, m_screen, &m_destRect );
+		m_destRect.y += m_skipVal;
+		m_curItemClearRect.y += m_skipVal;
+		m_curItemIconRect.y += m_skipVal;
+		++numProcessed;
+	}
+	m_destRect.y = m_origY;
+	m_curItemClearRect.y = m_origY;
+	m_curItemIconRect.y = m_origY;
+
+	if(numDisplayed < m_listing.size()) {	
+		if(m_topItemNum != 0) {
+			SDL_SetClipRect(m_screen, &m_upClearRect);
+			SDL_BlitSurface(m_upBtn, NULL, m_screen, &m_upClearRect );
+		}
+		if(m_topItemNum <= m_lastItemNum - numDisplayed) {
+			SDL_SetClipRect(m_screen, &m_downClearRect);
+			SDL_BlitSurface(m_downBtn, NULL, m_screen, &m_downClearRect );	
+		}
+	}	
+	if(m_curState == MPD_STATUS_STATE_PAUSE) {
+		SDL_Rect dstrect;
+		dstrect.x = (m_screen->w - m_pauseBtn->w) / 2;
+		dstrect.y = (m_screen->h - m_pauseBtn->h) / 2;
+		dstrect.w = m_pauseBtn->w;
+		dstrect.h = m_pauseBtn->h;
+
+		SDL_SetClipRect(m_screen, &dstrect);
+		SDL_BlitSurface(m_pauseBtn, NULL, m_screen, &dstrect );
+	}
+}
+*/
+
+void Scroller::draw(long timePerFrame, bool drawIcons, int nowPlaying, int lastQueued) 
+{
+	if(timePerFrame > 0) 
+		m_delay = 1000000 /(15 * timePerFrame) ;
+
+//	if(m_delayCnt > m_delay) {
+
 	SDL_Surface *sText;
 	int numProcessed = 0;
 	int numDisplayed = 0;
@@ -212,7 +325,7 @@ void Scroller::draw(bool drawIcons, int nowPlaying, int lastQueued)
 			str = (*vIter).first;
 
 			if(numProcessed == m_curItemNum) {
-				sText = TTF_RenderText_Blended(m_font, str.c_str(), m_curItemColor);
+				sText = TTF_RenderUTF8_Blended(m_font, str.c_str(), m_curItemColor);
 				m_curItemClearRect.w = m_clearRect.w;
 				m_curItemClearRect.h = sText->h;
 				SDL_SetClipRect(m_screen, &m_curItemClearRect);
@@ -220,13 +333,13 @@ void Scroller::draw(bool drawIcons, int nowPlaying, int lastQueued)
 				m_curItemName = (*vIter).first;
 				m_curItemType = (*vIter).second;
 			} else if(numProcessed == nowPlaying || (lastQueued != -1 && numProcessed >= nowPlaying && numProcessed <= lastQueued)) {
-				sText = TTF_RenderText_Blended(m_font, str.c_str(), m_itemColor);
+				sText = TTF_RenderUTF8_Blended(m_font, str.c_str(), m_itemColor);
 				m_curItemClearRect.w = m_clearRect.w;
 				m_curItemClearRect.h = sText->h;
 				SDL_SetClipRect(m_screen, &m_curItemClearRect);
 				SDL_BlitSurface(m_bgNowPlaying, NULL, m_screen, &m_curItemClearRect );
 			} else {
-				sText = TTF_RenderText_Blended(m_font, str.c_str(), m_itemColor);
+				sText = TTF_RenderUTF8_Blended(m_font, str.c_str(), m_itemColor);
 				
 				m_curItemClearRect.w = m_clearRect.w;
 				m_curItemClearRect.h = sText->h;
@@ -276,6 +389,11 @@ void Scroller::draw(bool drawIcons, int nowPlaying, int lastQueued)
 		SDL_SetClipRect(m_screen, &dstrect);
 		SDL_BlitSurface(m_pauseBtn, NULL, m_screen, &dstrect );
 	}
+	m_delayCnt = 0;
+	m_refresh = true;
+//	}
+	++m_delayCnt;
+	m_refresh = true;
 }
 
 void Scroller::draw(vector<string>& selectedOptions) 
@@ -290,7 +408,7 @@ void Scroller::draw(vector<string>& selectedOptions)
 		if(numProcessed >= m_topItemNum) {
 			string str = (*vIter).first;
 			if(numProcessed == m_curItemNum) {
-				sText = TTF_RenderText_Blended(m_font, str.c_str(), m_curItemColor);
+				sText = TTF_RenderUTF8_Blended(m_font, str.c_str(), m_curItemColor);
 				m_curItemClearRect.w = m_clearRect.w;
 				m_curItemClearRect.h = sText->h;
 				SDL_SetClipRect(m_screen, &m_curItemClearRect);
@@ -298,7 +416,7 @@ void Scroller::draw(vector<string>& selectedOptions)
 				m_curItemName = (*vIter).first;
 				m_curItemType = (*vIter).second;
 			} else {
-				sText = TTF_RenderText_Blended(m_font, str.c_str(), m_itemColor);
+				sText = TTF_RenderUTF8_Blended(m_font, str.c_str(), m_itemColor);
 				m_curItemClearRect.w = sText->w;
 				m_curItemClearRect.h = sText->h;
 			}
@@ -309,9 +427,9 @@ void Scroller::draw(vector<string>& selectedOptions)
 			SDL_FreeSurface(sText);
 			if(numDisplayed < selectedOptions.size()) {
 			if(numProcessed == m_curItemNum)
-				sText = TTF_RenderText_Blended(m_font, selectedOptions[numDisplayed].c_str(), m_curItemColor);
+				sText = TTF_RenderUTF8_Blended(m_font, selectedOptions[numDisplayed].c_str(), m_curItemColor);
 			else
-				sText = TTF_RenderText_Blended(m_font, selectedOptions[numDisplayed].c_str(), m_itemColor);
+				sText = TTF_RenderUTF8_Blended(m_font, selectedOptions[numDisplayed].c_str(), m_itemColor);
 				m_destRect.x += amount;	
 				m_destRect.w = sText->w;
 				m_destRect.h = sText->h;

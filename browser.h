@@ -43,7 +43,7 @@ public:
  	enum {TYPE_FOLDER, TYPE_FILE, TYPE_BACK, TYPE_ALL, TYPE_FILTER};
  	enum {VIEW_ROOT, VIEW_FILES, VIEW_ARTISTS, VIEW_ALBUMS, VIEW_SONGS, VIEW_GENRES};
 	typedef std::vector<std::pair<std::string, int> > prevItems_t;
-    Browser(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* screen, TTF_Font* font, SDL_Rect& rect, Config& config, int skipVal, int numPerScreen, SongDb& songdb, Keyboard& kb, Playlist& pl);
+    Browser(mpd_Connection* mpd, SDL_Surface* bg, SDL_Surface* screen, TTF_Font* font, SDL_Rect& rect, Config& config, int skipVal, int numPerScreen, SongDb& songdb, Keyboard& kb, Playlist& pl);
     void ls(std::string dir="");
 	
 	void browseRoot();
@@ -59,7 +59,7 @@ public:
 	void browseSongsByArtist(std::string artist);
 	void updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus, bool updatingSongDb);
 	int processCommand(int command, GuiPos& guiPos);
-	void draw(bool forceRefresh);
+	void draw(bool forceRefresh, long timePerFrame, bool inBack);
 	std::string currentItemName();
 	std::string currentItemPath();
 
@@ -79,7 +79,6 @@ protected:
 	int m_nowPlaying;
 	bool m_updatingDb;
 	bool m_updatingSongDb;
-	bool m_refresh;
 	int m_pageType;
 	std::vector<std::string> m_filters;
 	SDL_Surface* m_dbMsg;

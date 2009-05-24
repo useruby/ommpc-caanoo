@@ -46,7 +46,7 @@ public:
 	void updateListing();
 	void updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus);
 	int processCommand(int command, GuiPos& guiPos);
-	void draw(bool forceRefresh);
+	void draw(bool forceRefresh, long timePerFrame, bool inBack);
 	std::string currentItemName();
 	std::string currentItemPath();
 
@@ -55,7 +55,6 @@ protected:
 	std::string m_curDir;
 
 	int m_nowPlaying;
-	int m_refresh;
 	Playlist& m_playlist;
 	StatsBar& m_sb;
 	Keyboard& m_keyboard;

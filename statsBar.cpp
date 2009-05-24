@@ -132,9 +132,11 @@ void StatsBar::updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus,
 				}
 				int scaledVol;
 				if(m_f200) {
+/*
 					if(status->volume > 75 && !m_softVol)
 						scaledVol = 20;
 					else
+*/
 						scaledVol = m_volLookup[status->volume];
 				} else {
 					scaledVol = m_volLookup[status->volume];

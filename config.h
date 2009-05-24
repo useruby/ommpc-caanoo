@@ -37,6 +37,7 @@ public:
 	void init();
     std::string getItem(std::string item);
     int getItemAsNum(std::string item);
+   	bool getItemAsBool(std::string item);
     float getItemAsFloat(std::string item);
 	void setItem(std::string itemName, std::string value);
 	void getItemAsColor(std::string name, Uint8& red, Uint8& green, Uint8& blue);
@@ -46,6 +47,7 @@ public:
 	bool verifyClientPaths();
 protected:
 	void readConfigFile(std::ifstream& file);
+	void readLangFile(std::string lang);
     void trimStr(std::string & inStr);
     std::map<std::string, std::string> m_configItems;
 };

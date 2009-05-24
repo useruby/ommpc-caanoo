@@ -41,35 +41,38 @@ public:
 	void updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus,
 					  int rtmpdStatusChanged, mpd_Status* rtmpdStatus);
 	int processCommand(int command, GuiPos& guiPos);
-	void draw(bool forceRefresh);
+	void draw(bool forceRefresh, long timePerFrame, bool atBack);
+	void songChange();
 protected:
 	
 	mpd_Connection* m_mpd;
 	SDL_mutex* m_lock;
 	SDL_Surface* m_screen;
+	SDL_Rect m_srcRect;
 	SDL_Rect m_destRect;
 	SDL_Rect m_artistRect;
-	SDL_Rect& m_clearRect;
 	SDL_Rect m_scrollClearRect;
 	SDL_Rect m_artistClearRect;
-	SDL_Rect m_clickRect;
 	Config& m_config;
 	TTF_Font* m_font;
 	TTF_Font* m_fontSmall;
 	Playlist& m_playlist;
 	std::string m_title;
 	std::string m_artist;
-	std::string m_scrollingText;
+	std::string m_scrollText;
+	SDL_Surface* m_scrollTextSurface;
+	SDL_Surface* m_artistTextSurface;;
 
-	std::string m_lastScrollText;
-	std::string m_lastArtistText;
 	int m_format;
 	int m_skipVal;
-	int m_pos;
 	int m_inc;
+	int m_incArtist;
 	int m_origY;
+	int m_delay;
 	int m_delayCnt;
 	int m_delayCnt2;
+	int m_srcX;
+	int m_srcArtistX;
 
 	bool m_artistNoScroll;
 	bool m_noScroll;

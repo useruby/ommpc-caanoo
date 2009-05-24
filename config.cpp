@@ -24,6 +24,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <iostream>
 #include <stdexcept>
 #include <sys/stat.h>
+#include "utf8.h"
+
 using namespace std;
 
 Config::Config()
@@ -38,7 +40,6 @@ Config::Config(string file)
 		std::string msg = "CONFIG: Unable to open config file: " + file;
         throw runtime_error(msg.c_str());
 	}
-	
 	readConfigFile(configFile);
 }
 
@@ -66,6 +67,11 @@ void Config::init()
         throw runtime_error(msg.c_str());
 	}
 	readConfigFile(skinFile);
+	
+	if(getItem("language").length() > 0) 
+		readLangFile(getItem("language"));
+	else 
+		readLangFile("us-en");
 
 }
 
@@ -85,6 +91,52 @@ void Config::readConfigFile(ifstream& configFile)
 	}
 }
 
+void Config::readLangFile(string lang)
+{
+	lang = "languages/"+lang;
+	// Open the test file (must be UTF-8 encoded)
+	ifstream fs8(lang.c_str());
+	if (!fs8.is_open()) {
+		cout << "Could not open " << lang << endl;
+	}
+    // Read the first line of the file
+    unsigned line_count = 1;
+    string line;
+    if (!getline(fs8, line)) 
+        cout << "empty lang file" << endl;
+    // Look for utf-8 byte-order mark at the beginning
+    if (line.size() > 2) {
+        if (utf8::is_bom(line.c_str()))
+            cout << "There is a byte order mark at the beginning of the file\n";
+    }
+    // Play with all the lines in the file
+    do {
+       // check for invalid utf-8 (for a simple yes/no check, there is also utf8::is_valid function)
+        string::iterator endIter= utf8::find_invalid(line.begin(), line.end());
+        if (endIter != line.end()) {
+            cout << "Invalid UTF-8 encoding detected at line " << line_count << "\n";
+            cout << "This part is fine: " << string(line.begin(), endIter) << "\n";
+        }
+        // Get the line length (at least for the valid part)
+        int length = utf8::distance(line.begin(), endIter);
+        //cout << "Length of line " << line_count << " is " << length <<  "\n";
+            
+		int pos = line.find('=');
+
+		if(pos != string::npos) {	
+			std::string itemName = line.substr(0, pos);
+			std::string itemValue = line.substr(pos+1);
+			trimStr(itemName);
+			trimStr(itemValue);
+			m_configItems.insert(make_pair(itemName, itemValue));
+		}
+
+        getline(fs8, line);
+        line_count++;
+    } while (!fs8.eof());
+
+}
+
 void Config::saveConfigFile()
 {
 	ofstream configFile("ommpc.conf", ios::out|ios::trunc);
@@ -97,7 +149,7 @@ void Config::saveConfigFile()
 	for(std::map<std::string, std::string>::iterator cIter =  m_configItems.begin();
 	cIter != m_configItems.end();
 	++cIter) {
-		if((*cIter).first.substr(0,3) != "sk_") {
+		if((*cIter).first.substr(0,3) != "sk_" && (*cIter).first.substr(0,4) != "LANG") {
 			configFile << (*cIter).first << "=" << (*cIter).second << endl;
 		}
 	}
@@ -136,6 +188,22 @@ int Config::getItemAsNum(std::string itemName)
     }
 
 	return atoi(value.c_str());
+}
+
+bool Config::getItemAsBool(std::string itemName)
+{
+	std::string value;
+    std::map<std::string, std::string>::iterator mIter = m_configItems.find(itemName);
+
+    if(mIter != m_configItems.end()) {
+        value = (*mIter).second;
+    } else {
+        value = "";
+    }
+	if(value == "true")
+		return true;
+	else 
+		return false;
 }
 
 float Config::getItemAsFloat(std::string itemName)

@@ -37,6 +37,9 @@ Keyboard::Keyboard(SDL_Surface* screen, Config& config)
 , m_shift(0)
 , m_curRow(4)
 , m_curCol(3)
+, m_refresh(true)
+, m_foundKey(false)
+, m_counter(0)
 {
 	SDL_Surface* tmpSurface = NULL;	
 	string keyboardName = m_config.getItem("sk_keyboard");
@@ -155,7 +158,9 @@ void Keyboard::initKeys()
 	}
 
 	m_font = TTF_OpenFont(m_config.getItem("sk_font_main").c_str(),
-										  m_config.getItemAsNum("sk_font_main_size"));
+										  10);
+	m_fontBig = TTF_OpenFont(m_config.getItem("sk_font_main").c_str(),
+										  16);
 
 	SDL_Surface *sText;
 	SDL_Rect pos2 = {110,10,42,28};
@@ -403,6 +408,7 @@ int Keyboard::processCommand(int command, GuiPos& guiPos)
 		}
 
 		if(foundKey) {
+			m_foundKey = foundKey;	
 			if(m_keyStrings[i-1] == "Enter") {
 				rCommand = m_returnCmd;	
 			} else if(m_keyStrings[i-1] == "Back") {
@@ -422,6 +428,7 @@ int Keyboard::processCommand(int command, GuiPos& guiPos)
 			} else if(m_keyStrings[i-1] == "Cancel") {
 				rCommand = CMD_HIDE_KEYBOARD;
 			} else {
+				m_lastKey = m_keyStrings[i-1];
 				m_text += m_keyStrings[i-1];
 				if(m_shift == SHIFT) {
 					m_shift = NONE;
@@ -435,144 +442,171 @@ int Keyboard::processCommand(int command, GuiPos& guiPos)
 	
 }
 
-void Keyboard::draw()
+bool Keyboard::draw(bool forceRefresh)
 {
-	keyPositions_t::iterator pIter = m_keyPositions.begin();
-	SDL_Rect entryRect;
-	entryRect.w = 260;
-	entryRect.h = 16;
-	entryRect.x = (m_screen->w - entryRect.w) / 2;
-	entryRect.y = 50;
-	SDL_Rect letterRect = entryRect;
-	SDL_SetClipRect(m_screen, &entryRect);
-	SDL_BlitSurface(m_keyboardEntry, NULL, m_screen, &entryRect );
-	SDL_Surface *sText;
-	sText = TTF_RenderText_Blended(m_font, m_text.c_str(), m_itemColor);
-	SDL_BlitSurface(sText, NULL, m_screen, &letterRect );
-	SDL_FreeSurface(sText);
-	int col = 0;
-	for(keys_t::iterator kIter = m_top.begin();
-		kIter != m_top.end();
-		++kIter) {
-		SDL_Rect letterRect = (*pIter);
-		letterRect.x += 2;
-		letterRect.y += 2;
-		SDL_SetClipRect(m_screen, &(*pIter));
-		if(m_curRow == 0 && m_curCol == col)
-			SDL_BlitSurface(m_curMediumKey, NULL, m_screen, &(*pIter) );
-		else
-			SDL_BlitSurface(m_mediumKey, NULL, m_screen, &(*pIter) );
-		SDL_BlitSurface((*kIter), NULL, m_screen, &letterRect );
-		++pIter;
-		++col;
-	}
-	col = 0;
-	for(keys_t::iterator kIter = m_nums.begin();
-		kIter != m_nums.end();
-		++kIter) {
-		SDL_Rect letterRect = (*pIter);
-		letterRect.x += 4;
-		letterRect.y += 2;
-		SDL_SetClipRect(m_screen, &(*pIter));
-		if(m_curRow == 1 && m_curCol == col)
-			SDL_BlitSurface(m_curKeyBack, NULL, m_screen, &(*pIter) );
-		else
-			SDL_BlitSurface(m_keyBack, NULL, m_screen, &(*pIter) );
-		SDL_BlitSurface((*kIter), NULL, m_screen, &letterRect );
-		++pIter;
-		++col;
-	}
-	col = 0;
-	for(keys_t::iterator kIter = m_qwerty.begin();
-		kIter != m_qwerty.end();
-		++kIter) {
-		SDL_Rect letterRect = (*pIter);
-		letterRect.x += 4;
-		letterRect.y += 2;
-		SDL_SetClipRect(m_screen, &(*pIter));
-		if(m_curRow == 2 && m_curCol == col)
-			SDL_BlitSurface(m_curKeyBack, NULL, m_screen, &(*pIter) );
-		else
-			SDL_BlitSurface(m_keyBack, NULL, m_screen, &(*pIter) );
-		SDL_BlitSurface((*kIter), NULL, m_screen, &letterRect );
-		++pIter;
-		++col;
-	}
-	col = 0;
-	for(keys_t::iterator kIter = m_asdf.begin();
-		kIter != m_asdf.end();
-		++kIter) {
-		SDL_Rect letterRect = (*pIter);
-		letterRect.x += 4;
-		letterRect.y += 2;
-		SDL_SetClipRect(m_screen, &(*pIter));
-		if(m_curRow == 3 && m_curCol == col)
-			SDL_BlitSurface(m_curKeyBack, NULL, m_screen, &(*pIter) );
-		else
-			SDL_BlitSurface(m_keyBack, NULL, m_screen, &(*pIter) );
-		SDL_BlitSurface((*kIter), NULL, m_screen, &letterRect );
-		++pIter;
-		++col;
-	}
-	col = 0;
-	for(keys_t::iterator kIter = m_zxcv.begin();
-		kIter != m_zxcv.end();
-		++kIter) {
-		SDL_Rect letterRect = (*pIter);
-		letterRect.x += 4;
-		letterRect.y += 2;
-		SDL_SetClipRect(m_screen, &(*pIter));
-		if(m_curRow == 4 && m_curCol == col) {
-			if(kIter == m_zxcv.begin()) 
-				SDL_BlitSurface(m_curMediumKey, NULL, m_screen, &(*pIter) );
-			else if(kIter == m_zxcv.end()-1) 
-				SDL_BlitSurface(m_curMediumKey, NULL, m_screen, &(*pIter) );
-			else 
-				SDL_BlitSurface(m_curKeyBack, NULL, m_screen, &(*pIter) );
-		} else {
-			if(kIter == m_zxcv.begin()) 
-				SDL_BlitSurface(m_mediumKey, NULL, m_screen, &(*pIter) );
-			else if(kIter == m_zxcv.end()-1) 
-				SDL_BlitSurface(m_mediumKey, NULL, m_screen, &(*pIter) );
-			else 
-				SDL_BlitSurface(m_keyBack, NULL, m_screen, &(*pIter) );
-		}
-		SDL_BlitSurface((*kIter), NULL, m_screen, &letterRect );
+	bool refreshRet = false;
+	if(forceRefresh || m_refresh) {
+		keyPositions_t::iterator pIter = m_keyPositions.begin();
+		SDL_Rect entryRect;
+		SDL_Surface *sText;
+		cout << "keyboard " << forceRefresh << m_refresh  << m_foundKey<< endl;
+		if(m_counter < 10) {
+			entryRect.w = 28;
+			entryRect.h = 28;
+			entryRect.x = 0;
+			entryRect.y = 0;
+			SDL_SetClipRect(m_screen, &entryRect);
+			SDL_Rect letterRect = entryRect;
+			SDL_BlitSurface(m_keyBack, NULL, m_screen, &entryRect );
 
-		++pIter;
-		++col;
-	}
-	col = 0;
-	for(keys_t::iterator kIter = m_bottomRow.begin();
-		kIter != m_bottomRow.end();
-		++kIter) {
-		SDL_Rect letterRect = (*pIter);
-		letterRect.x += 4;
-		letterRect.y += 2;
-		SDL_SetClipRect(m_screen, &(*pIter));
-		if(m_curRow == 5 && m_curCol == col) {
-			if(kIter == m_bottomRow.begin()) 
-				SDL_BlitSurface(m_curMediumKey, NULL, m_screen, &(*pIter) );
-			else if(kIter == m_bottomRow.end()-1) 
-				SDL_BlitSurface(m_curMediumKey, NULL, m_screen, &(*pIter) );
-			else if(kIter == m_bottomRow.begin()+3) 
-				SDL_BlitSurface(m_curLargeKey, NULL, m_screen, &(*pIter) );
-			else 
-				SDL_BlitSurface(m_curKeyBack, NULL, m_screen, &(*pIter) );
+			sText = TTF_RenderText_Blended(m_fontBig, m_lastKey.c_str(), m_itemColor);
+			SDL_BlitSurface(sText, NULL, m_screen, &letterRect );
+			SDL_FreeSurface(sText);
+			m_foundKey = false;
+			++m_counter;
+			refreshRet = true;
 		} else {
-			if(kIter == m_bottomRow.begin()) 
-				SDL_BlitSurface(m_mediumKey, NULL, m_screen, &(*pIter) );
-			else if(kIter == m_bottomRow.end()-1) 
-				SDL_BlitSurface(m_mediumKey, NULL, m_screen, &(*pIter) );
-			else if(kIter == m_bottomRow.begin()+3) 
-				SDL_BlitSurface(m_largeKey, NULL, m_screen, &(*pIter) );
-			else 
-				SDL_BlitSurface(m_keyBack, NULL, m_screen, &(*pIter) );
+			m_counter = 0;
 		}
-		SDL_BlitSurface((*kIter), NULL, m_screen, &letterRect );
-		++pIter;
-		++col;
+		
+
+		entryRect.w = 260;
+		entryRect.h = 16;
+		entryRect.x = (m_screen->w - entryRect.w) / 2;
+		entryRect.y = 50;
+		SDL_Rect letterRect = entryRect;
+		SDL_SetClipRect(m_screen, &entryRect);
+		SDL_BlitSurface(m_keyboardEntry, NULL, m_screen, &entryRect );
+		sText = TTF_RenderText_Blended(m_font, m_text.c_str(), m_itemColor);
+		SDL_BlitSurface(sText, NULL, m_screen, &letterRect );
+		SDL_FreeSurface(sText);
+		int col = 0;
+		for(keys_t::iterator kIter = m_top.begin();
+				kIter != m_top.end();
+				++kIter) {
+			SDL_Rect letterRect = (*pIter);
+			letterRect.x += 2;
+			letterRect.y += 2;
+			SDL_SetClipRect(m_screen, &(*pIter));
+			if(m_curRow == 0 && m_curCol == col)
+				SDL_BlitSurface(m_curMediumKey, NULL, m_screen, &(*pIter) );
+			else
+				SDL_BlitSurface(m_mediumKey, NULL, m_screen, &(*pIter) );
+			SDL_BlitSurface((*kIter), NULL, m_screen, &letterRect );
+			++pIter;
+			++col;
+		}
+		col = 0;
+		for(keys_t::iterator kIter = m_nums.begin();
+				kIter != m_nums.end();
+				++kIter) {
+			SDL_Rect letterRect = (*pIter);
+			letterRect.x += 4;
+			letterRect.y += 2;
+			SDL_SetClipRect(m_screen, &(*pIter));
+			if(m_curRow == 1 && m_curCol == col)
+				SDL_BlitSurface(m_curKeyBack, NULL, m_screen, &(*pIter) );
+			else
+				SDL_BlitSurface(m_keyBack, NULL, m_screen, &(*pIter) );
+			SDL_BlitSurface((*kIter), NULL, m_screen, &letterRect );
+			++pIter;
+			++col;
+		}
+		col = 0;
+		for(keys_t::iterator kIter = m_qwerty.begin();
+				kIter != m_qwerty.end();
+				++kIter) {
+			SDL_Rect letterRect = (*pIter);
+			letterRect.x += 4;
+			letterRect.y += 2;
+			SDL_SetClipRect(m_screen, &(*pIter));
+			if(m_curRow == 2 && m_curCol == col)
+				SDL_BlitSurface(m_curKeyBack, NULL, m_screen, &(*pIter) );
+			else
+				SDL_BlitSurface(m_keyBack, NULL, m_screen, &(*pIter) );
+			SDL_BlitSurface((*kIter), NULL, m_screen, &letterRect );
+			++pIter;
+			++col;
+		}
+		col = 0;
+		for(keys_t::iterator kIter = m_asdf.begin();
+				kIter != m_asdf.end();
+				++kIter) {
+			SDL_Rect letterRect = (*pIter);
+			letterRect.x += 4;
+			letterRect.y += 2;
+			SDL_SetClipRect(m_screen, &(*pIter));
+			if(m_curRow == 3 && m_curCol == col)
+				SDL_BlitSurface(m_curKeyBack, NULL, m_screen, &(*pIter) );
+			else
+				SDL_BlitSurface(m_keyBack, NULL, m_screen, &(*pIter) );
+			SDL_BlitSurface((*kIter), NULL, m_screen, &letterRect );
+			++pIter;
+			++col;
+		}
+		col = 0;
+		for(keys_t::iterator kIter = m_zxcv.begin();
+				kIter != m_zxcv.end();
+				++kIter) {
+			SDL_Rect letterRect = (*pIter);
+			letterRect.x += 4;
+			letterRect.y += 2;
+			SDL_SetClipRect(m_screen, &(*pIter));
+			if(m_curRow == 4 && m_curCol == col) {
+				if(kIter == m_zxcv.begin()) 
+					SDL_BlitSurface(m_curMediumKey, NULL, m_screen, &(*pIter) );
+				else if(kIter == m_zxcv.end()-1) 
+					SDL_BlitSurface(m_curMediumKey, NULL, m_screen, &(*pIter) );
+				else 
+					SDL_BlitSurface(m_curKeyBack, NULL, m_screen, &(*pIter) );
+			} else {
+				if(kIter == m_zxcv.begin()) 
+					SDL_BlitSurface(m_mediumKey, NULL, m_screen, &(*pIter) );
+				else if(kIter == m_zxcv.end()-1) 
+					SDL_BlitSurface(m_mediumKey, NULL, m_screen, &(*pIter) );
+				else 
+					SDL_BlitSurface(m_keyBack, NULL, m_screen, &(*pIter) );
+			}
+			SDL_BlitSurface((*kIter), NULL, m_screen, &letterRect );
+
+			++pIter;
+			++col;
+		}
+		col = 0;
+		for(keys_t::iterator kIter = m_bottomRow.begin();
+				kIter != m_bottomRow.end();
+				++kIter) {
+			SDL_Rect letterRect = (*pIter);
+			letterRect.x += 4;
+			letterRect.y += 2;
+			SDL_SetClipRect(m_screen, &(*pIter));
+			if(m_curRow == 5 && m_curCol == col) {
+				if(kIter == m_bottomRow.begin()) 
+					SDL_BlitSurface(m_curMediumKey, NULL, m_screen, &(*pIter) );
+				else if(kIter == m_bottomRow.end()-1) 
+					SDL_BlitSurface(m_curMediumKey, NULL, m_screen, &(*pIter) );
+				else if(kIter == m_bottomRow.begin()+3) 
+					SDL_BlitSurface(m_curLargeKey, NULL, m_screen, &(*pIter) );
+				else 
+					SDL_BlitSurface(m_curKeyBack, NULL, m_screen, &(*pIter) );
+			} else {
+				if(kIter == m_bottomRow.begin()) 
+					SDL_BlitSurface(m_mediumKey, NULL, m_screen, &(*pIter) );
+				else if(kIter == m_bottomRow.end()-1) 
+					SDL_BlitSurface(m_mediumKey, NULL, m_screen, &(*pIter) );
+				else if(kIter == m_bottomRow.begin()+3) 
+					SDL_BlitSurface(m_largeKey, NULL, m_screen, &(*pIter) );
+				else 
+					SDL_BlitSurface(m_keyBack, NULL, m_screen, &(*pIter) );
+			}
+			SDL_BlitSurface((*kIter), NULL, m_screen, &letterRect );
+			++pIter;
+			++col;
+		}
+		m_refresh = false;
 	}
+
+	return refreshRet;
 }
 
 

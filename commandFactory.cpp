@@ -22,38 +22,592 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "commandFactory.h"
 #include "threadParms.h"
+#include <stdexcept>
 #include <SDL.h>
 #include <iostream>
 
 #define DELAY 800000
 using namespace std;
 CommandFactory::CommandFactory(mpd_Connection* mpd, vector<int>& volScale)
-: m_timer(0)
-, m_next(false)
-, m_prev(false)
-, m_start(false)
-, m_select(false)
-, m_play(false)
-, m_prevDir(false)
-, m_rand(false)
-, m_append(false)
-, m_move(false)
-, m_addAsPl(false)
-, m_mpd(mpd)
-, m_setVol(false)
-, m_delayCommand(false)
+: m_keyDown(-1)
 , m_volScale(volScale)
+, m_mouseMove(false)
+, m_repeating(false)
+, m_infiniteRepeat(false)
+, m_prevX(0)
+, m_prevY(0)
 {
+	m_delayTimer.stop();
+    ifstream configFile("keys", ios::in);
+    if(configFile.fail()) {
+		std::string msg = "CONFIG: Unable to open key config file: keys";
+        throw runtime_error(msg.c_str());
+	}
+	readKeyConfigFile(configFile);
 }
 
-/*CMD_PLAY_PAUSE=1, CMD_STOP, CMD_PREV, CMD_NEXT, CMD_FF, CMD_RW,
-  CMD_UP, CMD_DOWN, CMD_VOL_UP, CMD_VOL_DOWN,  
-  CMD_ADD_TO_PL, CMD_APPEND_PL, CMD_NEW_PL, CMD_LOAD_PL, CMD_DEL_FROM_PL, CMD_IMMEDIATE_PLAY, 
-  CMD_SELECT_MODE, CMD_TOGGLE_VIEW, CMD_SHOW_MENU
-  CMD_MODE_RANDOM, CMD_MODE_REPEAT, CMD_QUIT */
+long CommandFactory::getHoldTime()
+{
+	if(m_delayTimer.active())
+		return m_delayTimer.check();
+	else 
+		return 0;
+}
+
+int CommandFactory::keyDown(int key, int curMode)
+{
+	int command = 0;
+	if(m_keyDown == -1) {
+		m_keyDown = key;
+		m_delayTimer.start();
+		command = processKeyDown(curMode);			
+	} else if (m_keyDown != key) {
+		//do processing for key combo
+		command = processKeyCombo(key, curMode);
+		m_keyDown = -1;
+		m_delayTimer.stop();
+	} else { //same key still down
+	}
+
+	return command;
+}
+
+int CommandFactory::mouseDown(int curMode, int guiX, int guiY)
+{
+	int command = 0;
+	if(m_keyDown == -1) {
+		m_keyDown = 9999;
+		m_prevX = guiX;
+		m_prevY = guiY;
+		m_delayTimer.start();
+	}
+
+	return command;
+}
+
+
+int CommandFactory::checkRepeat(int command, int prevCommand, int curMode, int& guiX, int& guiY)
+{
+	int rc = command;
+	if(m_keyDown != -1 && m_delayTimer.active()) {
+		long delayTime = m_delayTimer.check();
+		if(m_keyDown == 9999) {
+			SDL_GetMouseState(&guiX, &guiY);
+			if(delayTime > DELAY && !m_mouseMove) {	
+				rc = processDelayKey(curMode);
+				m_repeating = true;
+				if(prevCommand != CMD_RIGHT && prevCommand != CMD_LEFT 
+						&& prevCommand != CMD_UP && prevCommand != CMD_DOWN
+						&& prevCommand != CMD_VOL_UP && prevCommand != CMD_VOL_DOWN) {
+					m_infiniteRepeat = false;
+					if(!m_infiniteRepeat) 
+						m_delayTimer.stop();
+				}
+			} else {
+				rc = processMouseMove(command, curMode, guiX, guiY);
+			}
+		} 
+		else if(delayTime > DELAY) {
+			//do processing for delaykey
+			rc = processDelayKey(curMode);
+			m_repeating = true;
+			if(!m_infiniteRepeat) 
+				m_delayTimer.stop();
+		}
+
+	}
+	
+	return rc;
+}
+
+int CommandFactory::keyUp(int key, int curMode)
+{
+	int command = 0;
+	if(m_keyDown == key && !m_repeating) {
+		//do processing for key
+		command = processKeyUp(curMode);
+	}
+	m_keyDown = -1;
+	m_repeating = false;
+	m_mouseMove = false;
+	m_delayTimer.stop();
+	return command;
+}
+
+int CommandFactory::mouseUp(int curMode, int guiX, int guiY)
+{
+	int command = 0;
+	if(m_keyDown == 9999 && !m_repeating && !m_mouseMove) {
+		//do processing for key
+		command = CMD_CLICK;
+	}
+	m_keyDown = -1;
+	m_repeating = false;
+	m_mouseMove = false;
+	m_delayTimer.stop();
+	return command;
+}
+/*
+		cout << "guix x y " << guiX << "x" << guiY << endl;
+		cout << "prex x y " << m_prevX << "x" << m_prevY << endl;
+	//} else if(guiX == m_prevX && guiY == m_prevY){
+		command = CMD_CLICK;
+*/
+int CommandFactory::processMouseMove(int preCommand, int curMode, int guiX, int guiY)
+{
+	int command = preCommand;
+
+	if(guiX < m_prevX-30) {
+		m_mouseMove = true;
+		command = CMD_MOUSE_RIGHT;
+		m_prevX = guiX;
+	}else if(guiX > m_prevX+30) {
+		m_mouseMove = true;
+		m_prevX = guiX;
+		command = CMD_MOUSE_LEFT;
+	}else if(guiY < m_prevY-30) {
+		m_mouseMove = true;
+		command = CMD_MOUSE_UP;
+	}else if(guiY > m_prevY+30) {
+		m_mouseMove = true;
+		command = CMD_MOUSE_DOWN;
+	}else if(guiX < m_prevX-11) {
+		m_mouseMove = true;
+	}else if(guiX > m_prevX+11) {
+		m_mouseMove = true;
+	}else if(guiY < m_prevY-11) {
+		m_mouseMove = true;
+	}else if(guiY > m_prevY+11) {
+		m_mouseMove = true;
+	}
+	return command;
+}
+
+
+int CommandFactory::processKeyDown(int curMode)
+{
+	int command = 0;
+	if(checkKey("RIGHT")) {
+		command = CMD_RIGHT;
+	} else if(checkKey("LEFT")) {
+		command = CMD_LEFT;
+	} else if(checkKey("UP")) {
+		command = CMD_UP;
+	} else if(checkKey("DOWN")) {
+		command = CMD_DOWN;
+	} else if(checkKey("VOL_UP")) {
+		command = CMD_VOL_UP;
+	} else if(checkKey("VOL_DOWN")) {
+		command = CMD_VOL_DOWN;
+	}	
+	return command;
+	
+}
+
+int CommandFactory::processKeyUp(int curMode)
+{
+	int command = 0;
+	if(checkKey("SHOW_CONTROLS")) {
+		command = CMD_SHOW_OVERLAY;
+	} else if(checkKey("DETACH_CLIENT")) {
+		command = CMD_DETACH;
+	} else if(checkKey("SHOW_MENU")) {
+		command = CMD_SHOW_MENU;
+	} else if(checkKey("LOCK")) {
+		command = CMD_TOGGLE_SCREEN;
+	} else if(checkKey("TOGGLE_MODE")) {
+		command = CMD_TOGGLE_MODE;
+	} else if(checkKey("TOGGLE_VIEW")) {
+		command = CMD_TOGGLE_VIEW;
+	} else if(checkKey("MENU_SELECT")) {
+		command = CMD_POP_SELECT;
+	} else if(checkKey("MENU_CANCEL")) {
+		command = CMD_POP_CANCEL;
+	}
+	switch(curMode) {
+		case 0: //Library
+			if(checkKey("LIB_SELECT")) {
+				command = CMD_IMMEDIATE_PLAY;
+			} else if(checkKey("LIB_PLAY_PAUSE")) {
+				command = CMD_PLAY_PAUSE;
+			} else if(checkKey("LIB_PREV_DIR")) {
+				command = CMD_PREV_DIR;
+			} else if(checkKey("LIB_STOP")) {
+				command = CMD_STOP;
+			} else if(checkKey("LIB_ADD_TO_PL")) {
+				command = CMD_ADD_TO_PL;
+			} else if(checkKey("LIB_ADD_AS_PL")) {
+				command = CMD_ADD_AS_PL;
+			} else if(checkKey("LIB_QUEUE")) {
+				command = CMD_QUEUE;
+			}
+		break;
+		case 1: //Playlist
+			if(checkKey("PL_PLAY_PAUSE")) {
+				command = CMD_PLAY_PAUSE;
+			} else if(checkKey("PL_STOP")) {
+				command = CMD_STOP;
+			} else if(checkKey("PL_NEXT")) {
+				command = CMD_NEXT;
+			} else if(checkKey("PL_FF")) {
+				command = CMD_FF;
+			} else if(checkKey("PL_PREV")) {
+				command = CMD_PREV;
+			} else if(checkKey("PL_REW")) {
+				command = CMD_RW;
+			} else if(checkKey("PL_TOGGLE_RND_RPT")) {
+				command = CMD_RAND_RPT ;
+			} else if(checkKey("PL_RND")) {
+				command = CMD_MODE_RANDOM;
+			} else if(checkKey("PL_RPT")) {
+				command = CMD_MODE_REPEAT;
+			} else if(checkKey("PL_REMOVE_FROM_PL")) {
+				command = CMD_DEL_FROM_PL;
+			} else if(checkKey("PL_MOVE_IN_PL")) {
+				command = CMD_MOVE_IN_PL;
+			} else if(checkKey("PL_QUEUE_NEXT")) {
+				command = CMD_QUEUE;
+			}
+		break;
+		case 2: //PL browser
+			if(checkKey("PLBROWSE_SELECT")) {
+				command = CMD_LOAD_PL;
+			} else if(checkKey("PLBROWSE_PLAY_PAUSE")) {
+				command = CMD_PLAY_PAUSE;
+			} else if(checkKey("PLBROWSE_STOP")) {
+				command = CMD_STOP;
+			} else if(checkKey("PLBROWSE_APPEND")) {
+				command = CMD_APPEND_PL;
+			} else if(checkKey("PLBROWSE_DEL")) {
+				command = CMD_DEL_PL;
+			}
+		break;
+		case 3: //Bookmarks
+			if(checkKey("BOOKMRK_SELECT")) {
+				command = CMD_LOAD_BKMRK;
+			} else if(checkKey("BOOKMRK_PLAY_PAUSE")) {
+				command = CMD_PLAY_PAUSE;
+			} else if(checkKey("BOOKMRK_STOP")) {
+				command = CMD_STOP;
+			} else if(checkKey("PLBROWSE_DEL")) {
+				command = CMD_DEL_BKMRK;
+			}
+		break;
+		case 4: //menu
+			if(checkDelayKey("MENU_SELECT")) {
+				command = CMD_MENU_SELECT;
+			}
+		break;
+	}	
+	return command;
+	
+}
+
+int CommandFactory::processDelayKey(int curMode)
+{
+	int command = 0;
+	if(m_keyDown == 9999) {
+		command = CMD_HOLD_CLICK;
+		m_infiniteRepeat = true;
+	} else if(checkDelayKey("RIGHT")) {
+		command = CMD_RIGHT;
+		m_infiniteRepeat = true;
+	} else if(checkDelayKey("LEFT")) {
+		command = CMD_LEFT;
+		m_infiniteRepeat = true;
+	} else if(checkDelayKey("UP")) {
+		command = CMD_UP;
+		m_infiniteRepeat = true;
+	} else if(checkDelayKey("DOWN")) {
+		command = CMD_DOWN;
+		m_infiniteRepeat = true;
+	} else if(checkDelayKey("VOL_UP")) {
+		command = CMD_VOL_UP;
+		m_infiniteRepeat = true;
+	} else if(checkDelayKey("VOL_DOWN")) {
+		command = CMD_VOL_DOWN;
+		m_infiniteRepeat = true;
+	} else if(checkDelayKey("SHOW_CONTROLS")) {
+		command = CMD_SHOW_OVERLAY;
+	} else if(checkDelayKey("DETACH_CLIENT")) {
+		command = CMD_DETACH;
+	} else if(checkDelayKey("SHOW_MENU")) {
+		command = CMD_SHOW_MENU;
+	} else if(checkDelayKey("LOCK")) {
+		command = CMD_TOGGLE_SCREEN;
+	} else if(checkDelayKey("TOGGLE_MODE")) {
+		command = CMD_TOGGLE_MODE;
+	} else if(checkDelayKey("TOGGLE_VIEW")) {
+		command = CMD_TOGGLE_VIEW;
+	} else if(checkDelayKey("MENU_SELECT")) {
+		command = CMD_POP_SELECT;
+	} else if(checkDelayKey("MENU_CANCEL")) {
+		command = CMD_POP_CANCEL;
+	}
+	switch(curMode) {
+		case 0: //Library
+			if(checkDelayKey("LIB_SELECT")) {
+				command = CMD_IMMEDIATE_PLAY;
+			} else if(checkDelayKey("LIB_PLAY_PAUSE")) {
+				command = CMD_PLAY_PAUSE;
+			} else if(checkDelayKey("LIB_PREV_DIR")) {
+				command = CMD_PREV_DIR;
+			} else if(checkDelayKey("LIB_STOP")) {
+				command = CMD_STOP;
+			} else if(checkDelayKey("LIB_ADD_TO_PL")) {
+				command = CMD_ADD_TO_PL;
+			} else if(checkDelayKey("LIB_ADD_AS_PL")) {
+				command = CMD_ADD_AS_PL;
+			} else if(checkDelayKey("LIB_QUEUE")) {
+				command = CMD_QUEUE;
+			}
+		break;
+		case 1: //Playlist
+			if(checkDelayKey("PL_PLAY_PAUSE")) {
+				command = CMD_PLAY_PAUSE;
+			} else if(checkDelayKey("PL_STOP")) {
+				command = CMD_STOP;
+			} else if(checkDelayKey("PL_NEXT")) {
+				command = CMD_NEXT;
+			} else if(checkDelayKey("PL_FF")) {
+				command = CMD_FF;
+				m_infiniteRepeat = true;
+			} else if(checkDelayKey("PL_PREV")) {
+				command = CMD_PREV;
+			} else if(checkDelayKey("PL_REW")) {
+				command = CMD_RW;
+				m_infiniteRepeat = true;
+			} else if(checkDelayKey("PL_TOGGLE_RND_RPT")) {
+				command = CMD_RAND_RPT ;
+			} else if(checkDelayKey("PL_RND")) {
+				command = CMD_MODE_RANDOM;
+			} else if(checkDelayKey("PL_RPT")) {
+				command = CMD_MODE_REPEAT;
+			} else if(checkDelayKey("PL_REMOVE_FROM_PL")) {
+				command = CMD_DEL_FROM_PL;
+			} else if(checkDelayKey("PL_MOVE_IN_PL")) {
+				command = CMD_MOVE_IN_PL;
+			} else if(checkDelayKey("PL_QUEUE_NEXT")) {
+				command = CMD_QUEUE;
+			}
+		break;
+		case 2: //PL browser
+			if(checkDelayKey("PLBROWSE_SELECT")) {
+				command = CMD_LOAD_PL;
+			} else if(checkDelayKey("PLBROWSE_PLAY_PAUSE")) {
+				command = CMD_PLAY_PAUSE;
+			} else if(checkDelayKey("PLBROWSE_STOP")) {
+				command = CMD_STOP;
+			} else if(checkDelayKey("PLBROWSE_APPEND")) {
+				command = CMD_APPEND_PL;
+			} else if(checkDelayKey("PLBROWSE_DEL")) {
+				command = CMD_DEL_PL;
+			}
+		break;
+		case 3: //Bookmarks
+			if(checkDelayKey("BOOKMRK_SELECT")) {
+				command = CMD_LOAD_BKMRK;
+			} else if(checkDelayKey("BOOKMRK_PLAY_PAUSE")) {
+				command = CMD_PLAY_PAUSE;
+			} else if(checkDelayKey("BOOKMRK_STOP")) {
+				command = CMD_STOP;
+			} else if(checkDelayKey("PLBROWSE_DEL")) {
+				command = CMD_DEL_BKMRK;
+			}
+		break;
+		case 4: //menu
+			if(checkDelayKey("MENU_SELECT")) {
+				command = CMD_MENU_SELECT;
+			}
+		break;
+		
+	}	
+	return command;
+}
+
+int CommandFactory::processKeyCombo(int key, int curMode)
+{
+
+}
+
+bool CommandFactory::checkDelayKey(string keyName)
+{
+	bool rc = false;
+	map<string, vector<int> >::iterator findIter;
+	findIter = m_holdKeys.find(keyName);
+	if(findIter != m_holdKeys.end()) {
+		for(vector<int>::iterator vIter = (*findIter).second.begin();
+				vIter != (*findIter).second.end();
+				++vIter) {
+			if((*vIter) == m_keyDown)
+				rc = true;
+		}
+	}
+	return rc;
+}
+
+bool CommandFactory::checkKey(string keyName)
+{
+	bool rc = false;
+	map<string, vector<int> >::iterator findIter;
+	findIter = m_keys.find(keyName);
+	if(findIter != m_keys.end()) {
+		for(vector<int>::iterator vIter = (*findIter).second.begin();
+				vIter != (*findIter).second.end();
+				++vIter) {
+			if((*vIter) == m_keyDown)
+				rc = true;
+		}
+	}
+	return rc;
+}
+
+void CommandFactory::processValue(string item, string value)
+{
+	bool holdValue = false;
+	bool both = false;
+	size_t lastPos = 0;
+	size_t pos;
+	pos = value.find(',', lastPos);
+	int pass = 1;
+	while(pos != string::npos || pass == 1) {
+		string curValue; 
+		if(pos == string::npos)
+			curValue = value;
+		else	
+			curValue = value.substr(lastPos,  pos-lastPos);
+		int insertVal = 0;	
+		if(curValue.substr(0, 5) == "HOLD_") {
+			curValue = curValue.substr(5);
+			holdValue = true;
+		}
+		if(item == "RIGHT" || item == "LEFT" || item == "UP" || item == "DOWN"
+			|| item == "VOL_UP" || item == "VOL_DOWN") {
+			both = true;
+		}
+		if(curValue == "GAME_B") {
+#ifdef GP2X
+			insertVal = GP2X_VK_FB;
+#endif
+		} else if(curValue == "GAME_A") {
+#ifdef GP2X
+			insertVal = GP2X_VK_FA;
+#endif
+		} else if(curValue == "GAME_X") {
+#ifdef GP2X
+			insertVal = GP2X_VK_FX;
+#endif
+		} else if(curValue == "GAME_Y") {
+#ifdef GP2X
+			insertVal = GP2X_VK_FY;
+#endif
+		} else if(curValue == "GAME_L") {
+#ifdef GP2X
+			insertVal = GP2X_VK_FL;
+#endif
+		} else if(curValue == "GAME_R") {
+#ifdef GP2X
+			insertVal = GP2X_VK_FR;
+#endif
+		} else if(curValue == "GAME_START") {
+#ifdef GP2X
+			insertVal = GP2X_VK_START;
+#endif
+		} else if(curValue == "GAME_SELECT") {
+#ifdef GP2X
+			insertVal = GP2X_VK_SELECT;
+#endif
+		} else if(curValue == "GAME_VOL_UP") {
+#ifdef GP2X
+			insertVal = GP2X_VK_VOL_UP;
+#endif
+		} else if(curValue == "GAME_VOL_DOWN") {
+#ifdef GP2X
+			insertVal = GP2X_VK_VOL_DOWN;
+#endif
+		} else if(curValue == "GAME_UP") {
+#ifdef GP2X
+			insertVal = GP2X_VK_UP;
+#endif
+		} else if(curValue == "GAME_DOWN") {
+#ifdef GP2X
+			insertVal = GP2X_VK_DOWN;
+#endif
+		} else if(curValue == "GAME_LEFT") {
+#ifdef GP2X
+			insertVal = GP2X_VK_LEFT;
+#endif
+		} else if(curValue == "GAME_RIGHT") {
+#ifdef GP2X
+			insertVal = GP2X_VK_RIGHT;
+#endif
+		} 
+		else if(curValue == "Escape")
+			insertVal = SDLK_ESCAPE;
+		else if(curValue == "Right")
+			insertVal = SDLK_RIGHT;
+		else if(curValue == "Left")
+			insertVal = SDLK_LEFT;
+		else if(curValue == "Up")
+			insertVal = SDLK_UP;
+		else if(curValue == "Down")
+			insertVal = SDLK_DOWN;
+		else if(curValue == "Space")
+			insertVal = SDLK_SPACE;
+		else
+			insertVal = curValue[0];
+
+		if(pass == 1) {
+			vector<int> tmp;
+			tmp.push_back(insertVal);
+			if(holdValue || both) {
+				m_holdKeys.insert(make_pair(item, tmp));
+			}
+			if(!holdValue || both)
+				m_keys.insert(make_pair(item, tmp));
+		}
+		else {
+			map<string, vector<int> >::iterator findIter;
+		
+			if(holdValue || both) {
+				findIter = m_holdKeys.find(item);
+				if(findIter != m_holdKeys.end())
+					(*findIter).second.push_back(insertVal);
+			}
+			if(!holdValue || both){
+				findIter = m_keys.find(item);
+				if(findIter != m_keys.end())
+					(*findIter).second.push_back(insertVal);
+			}
+		}
+		++pass;	
+		lastPos = pos+1;
+		pos = value.find(',', lastPos);
+	}
+
+
+}
+
+void CommandFactory::readKeyConfigFile(ifstream& configFile)
+{
+    std::string curItem;
+    while(!configFile.eof()) {
+        getline(configFile, curItem);
+        if(!curItem.empty() && curItem[0] != '#') {
+            int pos = curItem.find('=');
+            std::string itemName = curItem.substr(0, pos);
+            std::string itemValue = curItem.substr(pos+1);
+            trimStr(itemName);
+            trimStr(itemValue);
+          	processValue(itemName, itemValue); 
+        }
+	}
+}
+
 int CommandFactory::getCommand(bool keysHeld[], int curMode, int& repeatDelay, bool popupVisible, bool overlayVisible, int volume, long delayTime)
 {
 	int command = 0;
+/*
 	if(repeatDelay == 1 || delayTime > DELAY) {
 		//common commands
 		if (keysHeld[400]) {
@@ -406,6 +960,7 @@ int CommandFactory::getCommand(bool keysHeld[], int curMode, int& repeatDelay, b
 			}
 		}
 	}
+*/
 	return command;
 }
 
@@ -413,7 +968,7 @@ int CommandFactory::getCommand(bool keysHeld[], int curMode, int& repeatDelay, b
 int CommandFactory::getCommandWhileLocked(bool keysHeld[], int curMode, int& repeatDelay, bool popupVisible, long delayTime)
 {
 	int command = 0;
-	
+/*	
 	if(repeatDelay == 1 || delayTime > DELAY) {
 		if (keysHeld[GP2X_VK_VOL_UP] && keysHeld[GP2X_VK_FB])
 			command = CMD_VOL_UP;
@@ -442,6 +997,19 @@ int CommandFactory::getCommandWhileLocked(bool keysHeld[], int curMode, int& rep
 			}
 		}
 	}
-
+*/
 	return command;
 }
+
+void CommandFactory::trimStr(std::string & inStr)
+{
+    while(inStr[0] == ' ' || inStr[0] == '\t' || inStr[0] == '\n')
+        inStr = inStr.substr(1);
+
+    while(inStr[inStr.length()-1] == ' '
+            || inStr[inStr.length()-1] == '\t'
+            || inStr[inStr.length()-1] == '\n')
+        inStr = inStr.substr(0, inStr.length()-1);
+
+}
+

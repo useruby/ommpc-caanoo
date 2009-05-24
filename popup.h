@@ -42,8 +42,8 @@ class Popup : public Scroller
 public:
 	typedef std::vector<std::vector<std::string> > optionsText_t;
 	typedef std::vector<std::vector<std::string>::iterator > optionsTextIters_t;
-	typedef enum {POPUP_LIST, POPUP_CONFIRM, POPUP_MENU, POPUP_OPTIONS}; // popup types
-	typedef enum {POPUP_CANCEL, POPUP_SAVE_PL, POPUP_LAUNCH, POPUP_DETACH, 
+	enum {POPUP_LIST, POPUP_CONFIRM, POPUP_MENU, POPUP_OPTIONS}; // popup types
+	enum {POPUP_CANCEL, POPUP_SAVE_PL, POPUP_LAUNCH, POPUP_DETACH, 
 				  POPUP_EXIT, POPUP_DO_SAVE_PL, POPUP_DO_LAUNCH, POPUP_SHOW_OPTIONS, 
 				  POPUP_SAVE_OPTIONS, POPUP_MPD_UPDATE, POPUP_BKMRK, POPUP_MPD_ADD_ALL}; //popup action
 	Popup(mpd_Connection* mpd, SDL_Surface* screen, Config& config, SDL_Rect& rect,

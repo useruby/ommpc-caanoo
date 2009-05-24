@@ -91,7 +91,6 @@ Overlay::Overlay(mpd_Connection* mpd, SDL_Surface* screen, Config& config, SDL_R
 	if (!tmpSurface)
 		tmpSurface = IMG_Load(string("overlays/default/play.png").c_str());
 	m_play = SDL_DisplayFormatAlpha(tmpSurface);
-	
 	tmpSurface = IMG_Load(string("overlays/"+overlayName+"/pause.png").c_str());
 	if (!tmpSurface)
 		tmpSurface = IMG_Load(string("overlays/default/pause.png").c_str());
@@ -190,6 +189,8 @@ int Overlay::processCommand(int command, GuiPos& guiPos, bool visible)
 
 void Overlay::draw(bool forceUpdate)
 {
+	if(forceUpdate) {
+		cout << "should be after " << endl;
 		SDL_SetClipRect(m_screen, &m_prevRect);
 		SDL_BlitSurface(m_prev, NULL, m_screen, &m_prevRect );
 		
@@ -203,6 +204,7 @@ void Overlay::draw(bool forceUpdate)
 		SDL_BlitSurface(m_ff, NULL, m_screen, &m_ffRect );
 	
 		SDL_SetClipRect(m_screen, &m_playRect);
+		cout << "ps " << m_playlist.getPlayingState() << endl;
 		if(m_playlist.getPlayingState() == MPD_STATUS_STATE_PLAY)
 			SDL_BlitSurface(m_pause, NULL, m_screen, &m_playRect );
 		else
@@ -216,5 +218,5 @@ void Overlay::draw(bool forceUpdate)
 		
 		SDL_SetClipRect(m_screen, &m_exitRect);
 		SDL_BlitSurface(m_exit, NULL, m_screen, &m_exitRect );
-		
+	}	
 }

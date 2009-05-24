@@ -41,7 +41,6 @@ Browser::Browser(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* bg, TTF_
 , m_view(0)
 , m_updatingDb(false)
 , m_updatingSongDb(false)
-, m_refresh(true)
 , m_songDb(songdb)
 , m_keyboard(kb)
 , m_pl(pl)
@@ -102,15 +101,15 @@ void Browser::ls(std::string item)
 	string dir;
 	if(item == "")
 		m_view = VIEW_ROOT;
-	else if(item == "Filesystem")
+	else if(item == m_config.getItem("LANG_FILESYSTEM"))
 		m_view = VIEW_FILES;
-	else if(item == "Artists")
+	else if(item == m_config.getItem("LANG_ARTISTS"))
 		m_view = VIEW_ARTISTS;
-	else if(item == "Albums")
+	else if(item == m_config.getItem("LANG_ALBUMS"))
 		m_view = VIEW_ALBUMS;
-	else if(item == "All Songs")
+	else if(item == m_config.getItem("LANG_ALL_SONGS"))
 		m_view = VIEW_SONGS;
-	else if(item == "Genres")
+	else if(item == m_config.getItem("LANG_GENRES"))
 		m_view = VIEW_GENRES;
 	
 	switch(m_view) {
@@ -134,7 +133,7 @@ void Browser::ls(std::string item)
 					browseRoot();
 					break;
 				}
-			} else if(item == "Filesystem") {
+			} else if(item == m_config.getItem("LANG_FILESYSTEM")) {
 				m_curItemNum = 0;
 				m_topItemNum = 0;
 				m_curItemName = "";
@@ -154,7 +153,7 @@ void Browser::ls(std::string item)
 			browseFileSystem(dir);
 			break;
 		case VIEW_ARTISTS:
-			if(item == "Artists") {
+			if(item == m_config.getItem("LANG_ARTISTS")) {
 				m_curItemNum = 0;
 				m_topItemNum = 0;
 				m_curItemName = "";
@@ -189,7 +188,7 @@ void Browser::ls(std::string item)
 			}
 			break;
 		case VIEW_ALBUMS:
-			if(item == "Albums") {
+			if(item == m_config.getItem("LANG_ALBUMS")) {
 				m_curItemNum = 0;
 				m_topItemNum = 0;
 				m_curItemName = "";
@@ -216,7 +215,7 @@ void Browser::ls(std::string item)
 			}
 			break;
 		case VIEW_SONGS:
-			if(item == "All Songs") {
+			if(item == m_config.getItem("LANG_ALL_SONGS")) {
 				m_curItemNum = 0;
 				m_topItemNum = 0;
 				m_curItemName = "";
@@ -243,7 +242,7 @@ void Browser::ls(std::string item)
 			}
 			break;
 		case VIEW_GENRES:
-			if(item == "Genres") {
+			if(item == m_config.getItem("LANG_GENRES")) {
 				m_curItemNum = 0;
 				m_topItemNum = 0;
 				m_curItemName = "";
@@ -281,11 +280,11 @@ void Browser::ls(std::string item)
 
 void Browser::browseRoot() {
 	m_listing.clear();
-	m_listing.push_back(make_pair("Artists", 0));
-	m_listing.push_back(make_pair("Albums", 0));
-	m_listing.push_back(make_pair("Genres", 0));
-	m_listing.push_back(make_pair("Filesystem", 0));
-	m_listing.push_back(make_pair("All Songs", 0));
+	m_listing.push_back(make_pair(m_config.getItem("LANG_ARTISTS"), 0));
+	m_listing.push_back(make_pair(m_config.getItem("LANG_ALBUMS"), 0));
+	m_listing.push_back(make_pair(m_config.getItem("LANG_GENRES"), 0));
+	m_listing.push_back(make_pair(m_config.getItem("LANG_FILESYSTEM"), 0));
+	m_listing.push_back(make_pair(m_config.getItem("LANG_ALL_SONGS"), 0));
 	m_lastItemNum = m_listing.size()-1;
 }
 
@@ -326,18 +325,18 @@ void Browser::browseArtists() {
 	string massagedFilter = replaceWildcard(m_filters[m_view]);
 	SongDb::artists_t artists = m_songDb.getArtists(massagedFilter);
 	m_listing.clear();
-	m_listing.push_back(make_pair("Artist Filter: " + m_filters[m_view], (int)TYPE_FILTER));
+	m_listing.push_back(make_pair(m_config.getItem("LANG_ARTIST_FILTER")+": " + m_filters[m_view], (int)TYPE_FILTER));
 	m_listing.push_back(make_pair("..", (int)TYPE_BACK));
 	bool hasUnknown = false;
 	for(SongDb::artists_t::iterator aIter = artists.begin();
 		aIter != artists.end();
 		++aIter) {
-		if((*aIter) != "--Unknown--")
+		if((*aIter) != m_config.getItem("LANG_UNKNOWN"))
 			m_listing.push_back(make_pair((*aIter), (int)TYPE_FOLDER));
 		else 
 			hasUnknown = true;
 	}
-	m_listing.push_back(make_pair("--Unknown--", (int)TYPE_FOLDER));
+	m_listing.push_back(make_pair(m_config.getItem("LANG_UNKNOWN"), (int)TYPE_FOLDER));
 	m_lastItemNum = m_listing.size()-1;
 /*
 	mpd_sendListCommand(m_mpd, MPD_TAG_ITEM_ARTIST, NULL);
@@ -367,7 +366,7 @@ cout << "here" << artist << endl;
 		album = mpd_getNextAlbum(m_mpd);	
 	}
 	if(m_listing.size() > 2 || m_listing.size() == 1)
-		m_listing.insert(m_listing.begin()+1, make_pair("All Songs for Artist", (int)TYPE_ALL));
+		m_listing.insert(m_listing.begin()+1, make_pair(m_config.getItem("LANG_ALL_SONGS_ARTIST"), (int)TYPE_ALL));
 		
 	m_lastItemNum = m_listing.size()-1;
 }
@@ -376,18 +375,18 @@ void Browser::browseAlbums() {
 	string massagedFilter = replaceWildcard(m_filters[m_view]);
 	SongDb::albums_t albums = m_songDb.getAlbums(massagedFilter);
 	m_listing.clear();
-	m_listing.push_back(make_pair("Albums Filter: " + m_filters[m_view], (int)TYPE_FILTER));
+	m_listing.push_back(make_pair(m_config.getItem("LANG_ALBUMS_FILTER")+": " + m_filters[m_view], (int)TYPE_FILTER));
 	m_listing.push_back(make_pair("..", (int)TYPE_BACK));
 	bool hasUnknown = false;
 	for(SongDb::albums_t::iterator aIter = albums.begin();
 		aIter != albums.end();
 		++aIter) {
-		if((*aIter) != "--Unknown--")
+		if((*aIter) != m_config.getItem("LANG_UNKNOWN"))
 			m_listing.push_back(make_pair((*aIter), (int)TYPE_FOLDER));
 		else 
 			hasUnknown = true;
 	}
-	m_listing.push_back(make_pair("--Unknown--", (int)TYPE_FOLDER));
+	m_listing.push_back(make_pair(m_config.getItem("LANG_UNKNOWN"), (int)TYPE_FOLDER));
 	m_lastItemNum = m_listing.size()-1;
 }
 
@@ -400,19 +399,19 @@ void Browser::browseAlbumsByGenre(string genre)
 	for(SongDb::albums_t::iterator aIter = albums.begin();
 		aIter != albums.end();
 		++aIter) {
-		if((*aIter) != "--Unknown--")
+		if((*aIter) != m_config.getItem("LANG_UNKNOWN"))
 			m_listing.push_back(make_pair((*aIter), (int)TYPE_FOLDER));
 		else 
 			hasUnknown = true;
 	}
 	if(hasUnknown)
-		m_listing.push_back(make_pair("--Unknown--", (int)TYPE_FOLDER));
+		m_listing.push_back(make_pair(m_config.getItem("LANG_UNKNOWN"), (int)TYPE_FOLDER));
 	m_lastItemNum = m_listing.size()-1;
 }
 
 void Browser::browseSongsByGenre(string genre, string album)
 {
-	if(album == "All Songs in Genre")
+	if(album == m_config.getItem("LANG_ALL_SONGS_GENRE"))
 		album.clear();
 	SongDb::songsAndPaths_t songsAndPaths = m_songDb.getSongsInGenre(genre, album);
 	m_listing.clear();
@@ -433,18 +432,18 @@ void Browser::browseGenres() {
 	string massagedFilter = replaceWildcard(m_filters[m_view]);
 	SongDb::genres_t genres = m_songDb.getGenres(massagedFilter);
 	m_listing.clear();
-	m_listing.push_back(make_pair("Genre Filter: " + m_filters[m_view], (int)TYPE_FILTER));
+	m_listing.push_back(make_pair(m_config.getItem("LANG_GENRE_FILTER")+": " + m_filters[m_view], (int)TYPE_FILTER));
 	m_listing.push_back(make_pair("..", (int)TYPE_BACK));
 	bool hasUnknown = false;
 	for(SongDb::genres_t::iterator gIter = genres.begin();
 		gIter != genres.end();
 		++gIter) {
-		if((*gIter) != "--Unknown--")
+		if((*gIter) != m_config.getItem("LANG_UNKNOWN"))
 			m_listing.push_back(make_pair((*gIter), (int)TYPE_FOLDER));
 		else 
 			hasUnknown = true;
 	}
-	m_listing.push_back(make_pair("--Unknown--", (int)TYPE_FOLDER));
+	m_listing.push_back(make_pair(m_config.getItem("LANG_UNKNOWN"), (int)TYPE_FOLDER));
 	m_lastItemNum = m_listing.size()-1;
 }
 
@@ -467,7 +466,7 @@ void Browser::browseSongs() {
 }
 
 void Browser::browseSongsByAlbum(string album, string artist) {
-	if(artist == "--Unknown--")
+	if(artist == m_config.getItem("LANG_UNKNOWN"))
 		artist.clear();
 	SongDb::songsAndPaths_t songsAndPaths = m_songDb.getSongsInAlbum(album, artist);
 	m_listing.clear();
@@ -574,6 +573,7 @@ int Browser::processCommand(int command, GuiPos& guiPos)
 			int pos;
 			switch (command) {
 				case CMD_IMMEDIATE_PLAY:
+				case CMD_MOUSE_LEFT:
 					if(m_curItemType == (int)TYPE_FOLDER || m_curItemType == (int)TYPE_BACK
 							|| m_curItemType == (int)TYPE_ALL) { //directory
 						ls(m_curItemName);
@@ -637,6 +637,7 @@ int Browser::processCommand(int command, GuiPos& guiPos)
 					}
 					break;
 				case CMD_PREV_DIR:
+				case CMD_MOUSE_RIGHT:
 /*
 					pos = m_curDir.rfind("/");;
 					if(pos == string::npos || pos == 0) 
@@ -671,7 +672,6 @@ int Browser::processCommand(int command, GuiPos& guiPos)
 					ls("..");
 					break;
 				case CMD_ADD_TO_PL: 
-					cout << "here " << endl;
 					if(m_curItemType == (int)TYPE_FILE) {
 						std::string song = "";
 						if(m_view == VIEW_FILES) {
@@ -730,13 +730,13 @@ int Browser::processCommand(int command, GuiPos& guiPos)
 					std::string item;
 					switch(m_view) {
 						case VIEW_ARTISTS:
-							item = "Artists";	
+							item = m_config.getItem("LANG_ARTISTS");	
 						break;
 						case VIEW_ALBUMS:
-							item = "Albums";	
+							item = m_config.getItem("LANG_ALBUMS");	
 						break;
 						case VIEW_GENRES:
-							item = "Genres";	
+							item = m_config.getItem("LANG_GENRES");	
 						break;
 					
 					}
@@ -749,40 +749,41 @@ int Browser::processCommand(int command, GuiPos& guiPos)
 	return newMode;
 }
 
-void Browser::draw(bool forceRefresh)
+void Browser::draw(bool forceRefresh, long timePerFrame, bool inBack)
 {
-	if(forceRefresh || m_refresh || m_queued || m_appended) {
+	if(forceRefresh || (!inBack && m_refresh) || m_queued || m_appended) {
 		//clear this portion of the screen 
 		SDL_SetClipRect(m_screen, &m_clearRect);
 		SDL_BlitSurface(m_bg, &m_clearRect, m_screen, &m_clearRect );
 
 		SDL_Surface *sText;
-		if(m_listing[0].first != "Artists" || m_listing[4].first != "All Songs") {
+		if(m_listing[0].first != m_config.getItem("LANG_ARTISTS") 
+				|| m_listing[4].first != m_config.getItem("LANG_ALL_SONGS")) {
 			switch(m_view) {
 				case VIEW_ARTISTS:
-					sText = TTF_RenderText_Blended(m_font, "Browse Artists", m_itemColor);
+					sText = TTF_RenderUTF8_Blended(m_font, m_config.getItem("LANG_BROWSE_ARTISTS").c_str(), m_itemColor);
 					break;
 				case VIEW_ALBUMS:
-					sText = TTF_RenderText_Blended(m_font, "Browse Albums", m_itemColor);
+					sText = TTF_RenderUTF8_Blended(m_font, m_config.getItem("LANG_BROWSE_ALBUMS").c_str(), m_itemColor);
 					break;
 				case VIEW_GENRES:
-					sText = TTF_RenderText_Blended(m_font, "Browse Genres", m_itemColor);
+					sText = TTF_RenderUTF8_Blended(m_font, m_config.getItem("LANG_BROWSE_GENRES").c_str(), m_itemColor);
 					break;
 				case VIEW_FILES:
-					sText = TTF_RenderText_Blended(m_font, m_curDir.c_str(), m_itemColor);
+					sText = TTF_RenderUTF8_Blended(m_font, m_curDir.c_str(), m_itemColor);
 					break;
 				case VIEW_SONGS:
-					sText = TTF_RenderText_Blended(m_font, "", m_itemColor);
+					sText = TTF_RenderUTF8_Blended(m_font, "", m_itemColor);
 					break;
 				case VIEW_ROOT:
-					sText = TTF_RenderText_Blended(m_font, "Browse Media", m_itemColor);
+					sText = TTF_RenderUTF8_Blended(m_font, m_config.getItem("LANG_BROWSE_MEDIA").c_str(), m_itemColor);
 					break;
 				default:
-					sText = TTF_RenderText_Blended(m_font, m_curDir.c_str(), m_itemColor);
+					sText = TTF_RenderUTF8_Blended(m_font, m_curDir.c_str(), m_itemColor);
 
 			}
 		} else {
-			sText = TTF_RenderText_Blended(m_font, "Browse Media", m_itemColor);
+			sText = TTF_RenderUTF8_Blended(m_font, m_config.getItem("LANG_BROWSE_MEDIA").c_str(), m_itemColor);
 		}
 		if(m_drawIcons) {
 			m_destRect.x = m_curItemIconRect.x + 12;
@@ -790,7 +791,7 @@ void Browser::draw(bool forceRefresh)
 		}
 
 		if(m_listing.size() == 1) {
-			sText = TTF_RenderText_Blended(m_font, "No songs in database, update from Main Menu", m_itemColor);
+			sText = TTF_RenderUTF8_Blended(m_font, m_config.getItem("LANG_NO_SONGS").c_str(), m_itemColor);
 		}
 		SDL_BlitSurface(sText,NULL, m_screen, &m_destRect );
 		SDL_FreeSurface(sText);
@@ -799,7 +800,7 @@ void Browser::draw(bool forceRefresh)
 		m_curItemClearRect.y += m_skipVal*2;
 		m_curItemIconRect.y += m_skipVal*2;
 
-		Scroller::draw(m_drawIcons);	
+		Scroller::draw(timePerFrame, m_drawIcons);	
 
 		if(m_showTime == 10) {
 			m_showTime =0;

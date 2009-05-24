@@ -38,14 +38,21 @@ PLBrowser::PLBrowser(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface * bg,
 : Scroller(mpd, screen, bg, font, rect, config, skipVal, numPerScreen)
 , m_playlist(pl)
 , m_keyboard(keyboard)
+, m_plSurfaceText(NULL)
 {
 	m_config.getItemAsColor("sk_main_itemColor", m_itemColor.r, m_itemColor.g, m_itemColor.b);
 	m_config.getItemAsColor("sk_main_curItemColor", m_curItemColor.r, m_curItemColor.g, m_curItemColor.b);
 
 	initItemIndexLookup();	
     ls("");
+		
+	m_plSurfaceText = TTF_RenderUTF8_Blended(m_font, m_config.getItem("LANG_PL").c_str(), m_itemColor);
 }
 
+PLBrowser::~PLBrowser()
+{
+	SDL_FreeSurface(m_plSurfaceText);
+}
 
 void PLBrowser::ls(std::string dir)
 { 
@@ -54,10 +61,10 @@ void PLBrowser::ls(std::string dir)
 
 		m_curDir = dir;
 		m_listing.clear();
-		m_listing.push_back(make_pair("Save Playlist", 5));	
-		m_listing.push_back(make_pair("New Playlist", 3));	
-		m_listing.push_back(make_pair("Random Playlist", 4));	
-		m_listing.push_back(make_pair("Add All Songs", 6));	
+		m_listing.push_back(make_pair(m_config.getItem("LANG_SAVE_PL"), 5));	
+		m_listing.push_back(make_pair(m_config.getItem("LANG_NEW_PL"), 3));	
+		m_listing.push_back(make_pair(m_config.getItem("LANG_RAND_PL"), 4));	
+		m_listing.push_back(make_pair(m_config.getItem("LANG_ADD_ALL_SONGS"), 6));	
 		mpd_InfoEntity* mpdItem = mpd_getNextInfoEntity(m_mpd);
 		while(mpdItem != NULL) {
 			std::string item = "";
@@ -135,7 +142,7 @@ int PLBrowser::processCommand(int command, int curMode, GuiPos& guiPos)
 						int num = m_config.getItemAsNum("nextPlaylistNum");
 						ostringstream numStr;
 						numStr << num;
-						string selText = "playlist_" + numStr.str(); 
+						string selText = m_config.getItem("LANG_DEFAULT_PL_PREFIX") + numStr.str(); 
 						mpd_sendSaveCommand(m_mpd, m_keyboard.getText().c_str());
 						mpd_finishCommand(m_mpd);
 						updateListing();
@@ -170,7 +177,7 @@ int PLBrowser::processCommand(int command, int curMode, GuiPos& guiPos)
 						int num = m_config.getItemAsNum("nextPlaylistNum");
 						ostringstream numStr;
 						numStr << num;
-						string selText = "playlist_" + numStr.str(); 
+						string selText = m_config.getItem("LANG_DEFAULT_PL_PREFIX") + numStr.str(); 
 						m_keyboard.init(CMD_SAVE_PL_FROM_BROWSER, selText);
 						newMode = CMD_SHOW_KEYBOARD;	
 					} else if(m_curItemType == 6) {
@@ -214,22 +221,19 @@ int PLBrowser::processCommand(int command, int curMode, GuiPos& guiPos)
 	return newMode; 
 }
 
-void PLBrowser::draw(bool forceRefresh)
+void PLBrowser::draw(bool forceRefresh, long timePerFrame, bool inBack)
 {
-	if(forceRefresh || m_refresh) {
+	if(forceRefresh || (!inBack && m_refresh)) {
 //		ls("");
 		//clear this portion of the screen 
 		SDL_SetClipRect(m_screen, &m_clearRect);
 		SDL_BlitSurface(m_bg, &m_clearRect, m_screen, &m_clearRect );
 
-		SDL_Surface *sText;
-		sText = TTF_RenderText_Blended(m_font, "Playlists", m_itemColor);
-		SDL_BlitSurface(sText,NULL, m_screen, &m_destRect );
-		SDL_FreeSurface(sText);
+		SDL_BlitSurface(m_plSurfaceText, NULL, m_screen, &m_destRect );
 		m_destRect.y += m_skipVal*2;
 		m_curItemClearRect.y += m_skipVal*2;
 
-		Scroller::draw();	
+		Scroller::draw(timePerFrame);	
 		m_refresh = false;
 	}
 }

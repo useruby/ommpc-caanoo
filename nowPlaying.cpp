@@ -35,11 +35,8 @@ NowPlaying::NowPlaying(mpd_Connection* mpd, SDL_mutex* lock, SDL_Surface* screen
 , m_lock(lock)
 , m_screen(screen)
 , m_config(config)
-, m_clearRect(rect)
-, m_clickRect(rect)
-, m_pos(0)
 , m_playlist(pl)
-, m_inc(true) 
+, m_inc(false) 
 , m_delayCnt(0)
 , m_delayCnt2(0)
 , m_nowPlaying(0)
@@ -47,6 +44,12 @@ NowPlaying::NowPlaying(mpd_Connection* mpd, SDL_mutex* lock, SDL_Surface* screen
 , m_noScroll(false)
 , m_refresh(true)
 , m_bg(bg)
+, m_srcX(0)
+, m_srcArtistX(0)
+, m_scrollTextSurface(NULL)
+, m_artistTextSurface(NULL)
+, m_delay(0)
+, m_scrollText("")
 {
 
 	//m_origY = m_destRect.y;
@@ -56,7 +59,7 @@ NowPlaying::NowPlaying(mpd_Connection* mpd, SDL_mutex* lock, SDL_Surface* screen
 	m_destRect.x = rect.x;
 	m_destRect.y = rect.y;
 	m_scrollClearRect = m_destRect;
-    m_scrollClearRect.w = m_clearRect.w;
+    m_scrollClearRect.w = rect.w;
 	m_scrollClearRect.h = m_skipVal;
 		
 	m_fontSmall = TTF_OpenFont(config.getItem("sk_font_playing_sm").c_str(),
@@ -64,13 +67,10 @@ NowPlaying::NowPlaying(mpd_Connection* mpd, SDL_mutex* lock, SDL_Surface* screen
 	m_artistRect.x = rect.x;
 	m_artistRect.y = rect.y + m_skipVal;	
 	m_artistClearRect = m_artistRect;
-	m_artistClearRect.w = m_clearRect.w;
+	m_artistClearRect.w = rect.w;
 	int artistSkipVal = TTF_FontLineSkip( m_fontSmall ) * config.getItemAsFloat("sk_font_playing_lrg_extra_spacing");
-	m_artistClearRect.h = artistSkipVal;
+	m_artistClearRect.h = rect.h - m_scrollClearRect.h;
 
-	m_clearRect.y = m_artistRect.y + artistSkipVal;
-	m_clearRect.h = m_clearRect.h - m_clearRect.y;
-	
 	m_config.getItemAsColor("sk_nP_itemColor", m_itemColor.r, m_itemColor.g, m_itemColor.b);
 	m_config.getItemAsColor("sk_nP_curItemColor", m_curItemColor.r, m_curItemColor.g, m_curItemColor.b);
 	m_format = m_config.getItemAsNum("sk_nP_format");
@@ -95,18 +95,32 @@ void NowPlaying::updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus,
 		m_title = m_playlist.nowPlayingTitle(m_nowPlaying);
 		m_artist = m_playlist.nowPlayingArtist(m_nowPlaying);
 		if(m_format == 0)  {
-			m_scrollingText = m_artist + " - " + m_title;
+			m_scrollText = m_artist + " - " + m_title;
 		} else if(m_format == 1) {
-			m_scrollingText = m_title;
+			m_scrollText = m_title;
 		} else {
-			m_scrollingText = m_artist + " - " + m_title;
+			m_scrollText = m_artist + " - " + m_title;
 		}
-		m_pos = 0;
-		m_inc = true;
+		m_srcX = 0;
+		m_srcArtistX = 0;
+		m_inc = false;
+		m_incArtist = false;
 		m_noScroll = false;
 		m_artistNoScroll = false;
 		m_refresh = true;	
+		if(m_scrollTextSurface != NULL)
+			SDL_FreeSurface(m_scrollTextSurface);
+		m_scrollTextSurface = TTF_RenderUTF8_Blended(m_font, m_scrollText.c_str(), m_itemColor);
+		if(m_artistTextSurface != NULL)
+			SDL_FreeSurface(m_artistTextSurface);
+		m_artistTextSurface = TTF_RenderUTF8_Blended(m_font, m_artist.c_str(), m_itemColor);
 	}
+
+}
+
+void NowPlaying::songChange()
+{
+
 
 }
 
@@ -116,145 +130,114 @@ int NowPlaying::processCommand(int command, GuiPos& guiPos)
 	int rCommand = command;
 	if(command > 0) {
 		m_refresh = true;
-/*
-		cout << m_clickRect.x << endl;
-		cout << m_clickRect.y << endl;
-		cout << m_clickRect.w << endl;
-		cout << m_clickRect.h << endl;
-		
-		cout << "curx " << guiPos.curX << endl;
-		cout << "cury " << guiPos.curY << endl;
-		if(command == CMD_CLICK) {
-			if(guiPos.curY > m_clickRect.y && (guiPos.curY < m_clickRect.y + m_clickRect.h)
-				&& guiPos.curX > m_clickRect.x && (guiPos.curX < m_clickRect.x + m_clickRect.w)) {
-					rCommand = CMD_SHOW_OVERLAY;
-			}
-		}
-*/
 	}
 	return rCommand;
 }
 
-void NowPlaying::draw(bool forceRefresh)
+void NowPlaying::draw(bool forceRefresh, long timePerFrame, bool inBack)
 {
+	//unit to move(1px) * us/frame / 1000 / 1000 
+	int m_repeatFrame = 1;
+	if(timePerFrame > 0)  {
+		if(15*timePerFrame < 1000000)
+		m_delay = 1000000 /(15 * timePerFrame) ;
+		else  {
+			m_repeatFrame = (15*timePerFrame) / 1000000;
+			m_delay = 0;
+		}
+	}
+
+
+//	cout << "delay " << m_delay << "  delaycnt  " << m_delayCnt << endl;;
+//	cout << "us/f " << timePerFrame << endl;
+//	cout << "frames to delay " <<  m_delay << endl;
 	if(m_mpd == NULL) 
-		m_scrollingText = "MPD not started, edit configuration and restart.";
-	if(m_refresh || forceRefresh) {
-		SDL_SetClipRect(m_screen, &m_clearRect);
-		SDL_BlitSurface(m_bg, &m_clearRect, m_screen, &m_clearRect );
-		
-		SDL_Surface *sText;
+		m_scrollText = m_config.getItem("LANG_MPD_NOT_STARTED");
+	if((m_refresh && !inBack) || forceRefresh) {
+		if(inBack)
+			m_noScroll = true;
 		if(m_noScroll) {
 			SDL_SetClipRect(m_screen, &m_scrollClearRect);
 			SDL_BlitSurface(m_bg, &m_scrollClearRect, m_screen, &m_destRect );
-			sText = TTF_RenderText_Blended(m_font, m_lastScrollText.c_str(), m_itemColor);
-			SDL_BlitSurface(sText, &m_scrollClearRect, m_screen, &m_destRect );
-			SDL_FreeSurface(sText);
+			SDL_BlitSurface(m_scrollTextSurface, NULL, m_screen, &m_destRect );
 			m_refresh = false;
-		}
-		if(m_artistNoScroll) {
-			SDL_SetClipRect(m_screen, &m_artistClearRect);
-			SDL_BlitSurface(m_bg, &m_artistClearRect, m_screen, &m_artistRect );
-			sText = TTF_RenderText_Blended(m_fontSmall, m_lastArtistText.c_str(), m_itemColor);
-			SDL_BlitSurface(sText, NULL, m_screen, &m_artistRect );
-			SDL_FreeSurface(sText);
-			m_refresh = false;
-		}
-		if((m_delayCnt > 2 || forceRefresh) && !m_noScroll) {
+		} else if((m_delayCnt > m_delay ) && !m_noScroll) {
+			for(int i=0; i < m_repeatFrame; ++i) {
 			//clear this portion of the screen 
 			SDL_SetClipRect(m_screen, &m_scrollClearRect);
 			SDL_BlitSurface(m_bg, &m_scrollClearRect, m_screen, &m_destRect );
 
-			if(!m_scrollingText.empty()) {	
-				sText = TTF_RenderText_Solid(m_font, m_scrollingText.c_str(), m_itemColor);
-				m_lastScrollText = m_scrollingText;
-				if(sText->w > m_clearRect.w) {
-					std::string name = m_scrollingText;
-					if(m_inc) {
-						if(m_pos < name.length()) {
-							name = name.substr(m_pos);
-						}
-						else {
-							m_inc = false;
-							name = name.substr(m_pos-1);
-						}
-					} else {
-						if(m_pos >= 0)
-							name = name.substr(m_pos);
-						else 
-							m_inc = true;
-					}
-					SDL_FreeSurface(sText);
-					sText = TTF_RenderText_Solid(m_font, name.c_str(), m_itemColor);
-					m_lastScrollText = name;
+			if(!m_scrollText.empty()) {
+				if(m_scrollTextSurface == NULL)
+					m_scrollTextSurface = TTF_RenderUTF8_Blended(m_font, m_scrollText.c_str(), m_itemColor);
+				if(m_scrollTextSurface->w > m_scrollClearRect.w) {
+					m_srcRect.x=m_srcX; 
+					m_srcRect.y=0;
+					m_srcRect.w = m_scrollTextSurface->w;
+					m_srcRect.h = m_scrollTextSurface->h;
+				
+					if(m_inc)	
+						--m_srcX;
+					else
+						++m_srcX;
+					
+					if(m_srcX == 0 || m_srcX == (m_scrollTextSurface->w - m_scrollClearRect.w))
+						m_inc = !m_inc;
+					SDL_BlitSurface(m_scrollTextSurface, &m_srcRect,  m_screen, &m_destRect );
 				} else {
 					m_noScroll = true;
+					m_refresh = true;
 				} 
-				SDL_BlitSurface(sText, NULL, m_screen, &m_destRect );
-				SDL_FreeSurface(sText);
-				if(!forceRefresh) {
-					if(m_inc)
-						++m_pos;
-					else
-						--m_pos;
-				}
 			}
 			m_delayCnt = 0;
 			m_refresh = true;
+			}
 		} else {
 			++m_delayCnt;
 			m_refresh = true;
 		}
-		if(m_format == 1) {
-			if((m_delayCnt2 > 2 || forceRefresh) && !m_artistNoScroll) {
-				//clear this portion of the screen 
-				SDL_SetClipRect(m_screen, &m_artistClearRect);
-				SDL_BlitSurface(m_bg, &m_artistClearRect, m_screen, &m_artistRect );
+		if(m_artistNoScroll) {
+			SDL_SetClipRect(m_screen, &m_artistClearRect);
+			SDL_BlitSurface(m_bg, &m_artistClearRect, m_screen, &m_artistRect );
+			SDL_BlitSurface(m_artistTextSurface, NULL, m_screen, &m_artistRect );
+			m_refresh = m_refresh || false;
+		} else if(m_format == 1 && (m_delayCnt2 > m_delay) && !m_artistNoScroll) {
+			//clear this portion of the screen 
+			SDL_SetClipRect(m_screen, &m_artistClearRect);
+			SDL_BlitSurface(m_bg, &m_artistClearRect, m_screen, &m_artistRect );
 
-				if(!m_artist.empty()) {	
-					sText = TTF_RenderText_Blended(m_fontSmall, m_artist.c_str(), m_itemColor);
-					m_lastArtistText = m_artist;
-					if(sText->w > m_clearRect.w) {
-						std::string name = m_artist;
-						if(m_inc) {
-							if(m_pos < name.length())
-								name = name.substr(m_pos);
-							else {
-								m_inc = false;
-								name = name.substr(m_pos-1);
-							}
-						} else {
-							if(m_pos >= 0)
-								name = name.substr(m_pos);
-							else 
-								m_inc = true;
-						}
-						SDL_FreeSurface(sText);
-						sText = TTF_RenderText_Blended(m_fontSmall, name.c_str(), m_itemColor);
-						m_lastArtistText = name;
-					} else {
-						m_artistNoScroll = true;
-					}
-					SDL_BlitSurface(sText, NULL, m_screen, &m_artistRect );
-					SDL_FreeSurface(sText);
-					if(!forceRefresh) {
-						if(m_inc)
-							++m_pos;
-						else
-							--m_pos;
-					}
+			if(!m_artist.empty()) {	
+				if(m_artistTextSurface == NULL)
+					m_artistTextSurface = TTF_RenderUTF8_Blended(m_font, m_artist.c_str(), m_itemColor);
+				if(m_artistTextSurface->w > m_artistClearRect.w) {
+					m_srcRect.x=m_srcArtistX; 
+					m_srcRect.y=0;
+					m_srcRect.w = m_artistTextSurface->w;
+					m_srcRect.h = m_artistTextSurface->h;
+
+					if(m_incArtist)	
+						--m_srcArtistX;
+					else
+						++m_srcArtistX;
+
+					if(m_srcArtistX == 0 || m_srcArtistX == (m_artistTextSurface->w - m_artistClearRect.w))
+						m_incArtist = !m_incArtist;
+
+					SDL_BlitSurface(m_artistTextSurface, &m_srcRect,  m_screen, &m_artistRect );
+				} else {
+					m_artistNoScroll = true;
+					m_refresh = true;
 				}
-				m_delayCnt2 = 0;
-				m_refresh = true;
-			} else {
-				++m_delayCnt2;
-				m_refresh = true;
 			}
+			m_delayCnt2 = 0;
+			m_refresh = true;
+		} else if(m_format == 1) {
+			++m_delayCnt2;
+			m_refresh = true;
 		} else {
-				//do this to clear the little area left even whent not using it
-				SDL_SetClipRect(m_screen, &m_artistClearRect);
-				SDL_BlitSurface(m_bg, &m_artistClearRect, m_screen, &m_artistRect );
-
+		//do this to clear the little area left even whent not using it
+		SDL_SetClipRect(m_screen, &m_artistClearRect);
+		SDL_BlitSurface(m_bg, &m_artistClearRect, m_screen, &m_artistRect );
 		}
 	}
 }

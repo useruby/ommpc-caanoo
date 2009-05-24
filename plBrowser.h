@@ -41,12 +41,13 @@ public:
 	typedef std::vector<std::pair<std::string, int> >listing_t;
 	PLBrowser(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface * bg, TTF_Font* font,
 			SDL_Rect& rect, Config& config, int skipVal, int numPerScreen, Playlist& pl, Keyboard& kb);
+	~PLBrowser();
     void ls(std::string dir="");
 
 	void updateListing();
 	void updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus);
 	int processCommand(int command, int curMode, GuiPos& guiPos);
-	void draw(bool forceRefresh);
+    void draw(bool force, long timePerFrame, bool inBack);
 	std::string currentItemName();
 	std::string currentItemPath();
 
@@ -55,7 +56,7 @@ protected:
 
 	Playlist& m_playlist;
 	Keyboard& m_keyboard;
-	bool m_refresh;
+	SDL_Surface *m_plSurfaceText;
 };
 
 #endif

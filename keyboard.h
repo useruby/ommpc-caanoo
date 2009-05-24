@@ -43,7 +43,7 @@ public:
 
 	int processCommand(int command, GuiPos& guiPos);
 	std::string getText();
-	void draw();
+	bool draw(bool forceRefresh);
 protected:
 	bool inRect(int x, int y, SDL_Rect& rect);
 	void initKeys();
@@ -54,7 +54,7 @@ private:
 	Config& m_config;
 	SDL_Surface* m_screen;
 	std::string m_text;
-
+	bool m_refresh;
 	bool m_viewMore;
 	int m_shift;	
 	SDL_Surface* m_keyBack;
@@ -65,11 +65,14 @@ private:
 	SDL_Surface* m_curMediumKey;
 	SDL_Surface* m_curLargeKey;
 	TTF_Font * m_font;
+	TTF_Font * m_fontBig;
+	bool m_foundKey;
+	std::string m_lastKey;
 	SDL_Color m_itemColor;
 	keyPositions_t m_keyPositions;
 	keyStrings_t m_keyStrings;
 	keyPositions_t m_moreKeyPositions;
-
+	int m_counter;
 	keys_t m_top;
 	keys_t m_nums;
 	keys_t m_qwerty;

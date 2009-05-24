@@ -40,7 +40,6 @@ Bookmarks::Bookmarks(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* bg, 
 : Scroller(mpd, screen, bg, font, rect, config, skipVal, numPerScreen)
 , m_playlist(pl)
 , m_sb(sb)
-, m_refresh(true)
 , m_keyboard(kb)
 {
 	char pwd[129];
@@ -66,7 +65,7 @@ Bookmarks::Bookmarks(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* bg, 
 void Bookmarks::ls(std::string dir)
 {
 	m_listing.clear();
-	m_listing.push_back(make_pair("Create Bookmark", 7));	
+	m_listing.push_back(make_pair(m_config.getItem("LANG_CREATE_BKMRK"), 7));	
 
 	DIR * udir = opendir(m_curDir.c_str());
 
@@ -170,7 +169,7 @@ int Bookmarks::processCommand(int command, GuiPos& guiPos)
 			} else {
 				switch(command) {
 					case CMD_LOAD_BKMRK:
-						if(m_curItemName == "Create Bookmark") {
+						if(m_curItemName == m_config.getItem("LANG_CREATE_BKMRK")) {
 							string curTitle = m_playlist.nowPlayingTitle();
 							string formattedTime = m_sb.formattedElapsedTime();
 							int curTime = m_sb.elapsedTime();
@@ -229,23 +228,23 @@ int Bookmarks::processCommand(int command, GuiPos& guiPos)
 	return newMode;
 }
 
-void Bookmarks::draw(bool forceRefresh)
+void Bookmarks::draw(bool forceRefresh, long timePerFrame, bool inBack)
 {
-	if(forceRefresh || m_refresh) {
+	if(forceRefresh || (!inBack && m_refresh)) {
 		//ls(m_curDir);
 		//clear this portion of the screen 
 		SDL_SetClipRect(m_screen, &m_clearRect);
 		SDL_BlitSurface(m_bg, &m_clearRect, m_screen, &m_clearRect );
 
 		SDL_Surface *sText;
-		sText = TTF_RenderText_Blended(m_font, "Bookmarks", m_itemColor);
+		sText = TTF_RenderUTF8_Blended(m_font, m_config.getItem("LANG_BKMRKS").c_str(), m_itemColor);
 		SDL_BlitSurface(sText,NULL, m_screen, &m_destRect );
 		SDL_FreeSurface(sText);
 		
 		m_destRect.y += m_skipVal*2;
 		m_curItemClearRect.y += m_skipVal*2;
 
-		Scroller::draw();		
+		Scroller::draw(timePerFrame);		
 		m_refresh = false;
 	}
 }

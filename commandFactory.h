@@ -24,6 +24,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define __COMMANDS_H__
 
 #include "libmpdclient.h"
+#include "timer.h"
+#include "config.h"
 #include <vector>
 
 
@@ -40,29 +42,46 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 					CMD_MPD_ADD_ALL, CMD_SHOW_OVERLAY, CMD_CLICK, CMD_LAUNCH_PROCESS,
 					CMD_SAVE_PL_KEYBOARD, CMD_SAVE_BKMRK_KEYBOARD, CMD_SAVE_PL_FROM_BROWSER,
 					CMD_SHOW_KEYBOARD, CMD_HIDE_KEYBOARD, CMD_POP_KEYBOARD, CMD_POP_CHG_OPTION,
-					CMD_FILTER_KEYBOARD, CMD_ADD_AS_PL, CMD_QUEUE} cmdTypes_t;
+					CMD_FILTER_KEYBOARD, CMD_ADD_AS_PL, CMD_QUEUE, CMD_MOUSE_UP, CMD_MOUSE_DOWN, CMD_MOUSE_LEFT, CMD_MOUSE_RIGHT, CMD_HOLD_CLICK, CMD_SHOW_NP, CMD_SHOW_LIB, CMD_SHOW_PL, CMD_SHOW_PLS, CMD_SHOW_BKMRKS, CMD_MENU_SETTINGS, CMD_MENU_SELECT} cmdTypes_t;
 
 class CommandFactory
 {
 public:
-					
 	CommandFactory(mpd_Connection* mpd, std::vector<int>& volScale);
 	int getCommand(bool keysHeld[], int curMode, int& timer, bool popupVisible, bool overlayVisible, int vol, long delayTime);
 	int getCommandWhileLocked(bool keysHeld[], int curMode, int& timer, bool popupVisible, long delayTime);
 
+	int keyDown(int key, int curMode);
+	int keyUp(int key, int curMode);
+	int mouseDown(int curMode, int guiX=0, int guiY=0);
+	int mouseUp(int curMode, int guiX=0, int guiY=0);
+	int checkRepeat(int command, int prevCommand, int curMode, int& guiX, int& guiY);
+	long getHoldTime();
+
 protected:
-	int m_timer;	
-	bool m_next;
-	bool m_prev;
-	bool m_start;
-	bool m_select;
-	bool m_play;
-	bool m_prevDir;
-	bool m_rand;
-	bool m_append;
-	bool m_move;
-	bool m_addAsPl;
+	int processKeyDown(int curMode);
+	int processKeyUp(int curMode);
+	int processDelayKey(int curMode);
+	int processKeyCombo(int key, int curMode);
+	int processMouseMove(int command, int curMode, int guiX, int guiY);
+
+	void processValue(std::string item, std::string value);
+	void readKeyConfigFile(std::ifstream& configFile);
+	bool checkKey(std::string keyName);
+	bool checkDelayKey(std::string keyName);
+	void trimStr(std::string & inStr);
+
 	mpd_Connection* m_mpd;
+
+	int m_keyDown;
+	Timer m_delayTimer;
+	std::map<std::string, std::vector<int> > m_keys;
+	std::map<std::string, std::vector<int> > m_holdKeys;
+	bool m_repeating;
+	bool m_infiniteRepeat;
+	int m_prevX;
+	int m_prevY;
+	bool m_mouseMove;
 
 	int m_volume;
 	bool m_setVol;

@@ -510,7 +510,7 @@ void Popup::drawSelectList()
 	SDL_FillRect(m_screen, &m_clearRect, SDL_MapRGB(m_screen->format, m_backColor.r, m_backColor.g, m_backColor.b));
 
 	SDL_Surface *sText;
-	sText = TTF_RenderText_Blended(m_font, m_name.c_str(), m_itemColor);
+	sText = TTF_RenderUTF8_Blended(m_font, m_name.c_str(), m_itemColor);
 	SDL_BlitSurface(sText,NULL, m_screen, &m_destRect );
 	SDL_FreeSurface(sText);
 	m_destRect.y += m_skipVal*2;
@@ -531,5 +531,5 @@ void Popup::drawSelectList()
 		Scroller::draw(m_selectedOptions);
 	}
 	else 
-		Scroller::draw();
+		Scroller::draw(0);
 }

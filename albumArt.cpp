@@ -83,7 +83,6 @@ void AlbumArt::draw(bool forceUpdate)
 		//clear this portion of the screen 
 		SDL_SetClipRect(m_screen, &m_clearRect);
 		SDL_BlitSurface(m_bg, &m_clearRect, m_screen, &m_clearRect );
-
 		SDL_BlitSurface(m_artParms.artSurface, NULL, m_screen, &m_destRect );
 		m_artParms.doArtLoad = false;
 		m_update = false;

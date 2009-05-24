@@ -30,6 +30,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
+#include <algorithm>
 #include <time.h>
 #include <SDL_image.h>
 
@@ -51,7 +52,6 @@ Playlist::Playlist(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* bg, TT
 , m_name("")
 , m_moveTo(-1)
 , m_moveFrom(-1)
-, m_refresh(true)
 , m_lastQueued(-1)
 {
 	m_origY = m_destRect.y;
@@ -61,7 +61,6 @@ Playlist::Playlist(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* bg, TT
 	initItemIndexLookup();
 	// centre the bitmap on screen
 	load("");
-	m_timer.stop();
 }
 
 void Playlist::initItemIndexLookup() {
@@ -154,7 +153,7 @@ bool Playlist::showSaveDialog(Popup& popup, string name)
 		items.push_back(make_pair(m_name, type));	
 			
 	items.push_back(make_pair("  "+name, (int)Popup::POPUP_DO_SAVE_PL)); 
-	items.push_back(make_pair("  Cancel", (int)Popup::POPUP_CANCEL)); 
+	items.push_back(make_pair("  "+m_config.getItem("LANG_CANCEL"), (int)Popup::POPUP_CANCEL)); 
 	popup.setItemsText(items, type);
 	SDL_Rect popRect;
 	popRect.w = 180;
@@ -162,7 +161,7 @@ bool Playlist::showSaveDialog(Popup& popup, string name)
 	popRect.x = (m_screen->w - popRect.w) / 2;
 	popRect.y = (m_screen->h - popRect.h) / 2;
 	popup.setSize(popRect);
-	popup.setTitle("  Save Playlist As...");
+	popup.setTitle("  "+m_config.getItem("LANG_SAVE_PL_AS"));
 	show = true;
 
 	return show;
@@ -402,6 +401,15 @@ void Playlist::processCommand(int command, int& rtmpdStatusChanged, mpd_Status* 
 				}
 			}
 		}
+		if(command == CMD_HOLD_CLICK) {
+			if(guiPos.curX > (m_clearRect.w-40)) {
+				if(guiPos.curY < m_clearRect.y+40) {
+					command = CMD_LEFT;
+				} else if(guiPos.curY > m_clearRect.y + m_clearRect.h -40) {
+						command = CMD_RIGHT;
+				}
+			}
+		}
 		if(m_moveFrom >= 0 && command != 0 && command != CMD_UP && command != CMD_DOWN && command != CMD_MOVE_IN_PL && command != CMD_RIGHT && command != CMD_LEFT) {
 			m_moveFrom = -1;
 		}	
@@ -421,6 +429,7 @@ void Playlist::processCommand(int command, int& rtmpdStatusChanged, mpd_Status* 
 						mpd_sendPauseCommand(m_mpd, 1);
 						mpd_finishCommand(m_mpd);
 					} else {
+						m_curState = MPD_STATUS_STATE_PLAY;	
 						mpd_sendPlayCommand(m_mpd, m_curItemNum);
 						mpd_finishCommand(m_mpd);
 		//				SDL_Delay(100);
@@ -449,8 +458,7 @@ void Playlist::processCommand(int command, int& rtmpdStatusChanged, mpd_Status* 
 				mpd_finishCommand(m_mpd);
 				break;
 				case CMD_FF:
-				if(repeatDelay > 0) {
-					m_timer.start();
+				{ //if(repeatDelay > 0) {
 					int jump = 0;
 					if(delayTime > X2DELAY) {
 						if(delayTime > X32DELAY)
@@ -467,17 +475,15 @@ void Playlist::processCommand(int command, int& rtmpdStatusChanged, mpd_Status* 
 					else 	
 						jump = 2;
 
-					if(jump > 0 && (m_timer.check() > FFWAIT)) {	
+					if(jump > 0) {	
 						mpd_sendSeekCommand(m_mpd, m_curItemNum, m_curElapsed + jump);
 						mpd_finishCommand(m_mpd);
 						m_curElapsed += jump;
-						m_timer.stop();
-						m_timer.start();
 					}
 				}
 				break; 
 				case CMD_RW:
-				if(repeatDelay > 0) {
+				{ //	if(repeatDelay > 0) {
 					int jump = 0;
 					if(delayTime > X2DELAY) {
 						if(delayTime > X32DELAY)
@@ -494,12 +500,10 @@ void Playlist::processCommand(int command, int& rtmpdStatusChanged, mpd_Status* 
 					else 	
 						jump = 2;
 
-					if(jump > 0 && (m_timer.check() > FFWAIT)) {	
+					if(jump > 0) {	
 						mpd_sendSeekCommand(m_mpd, m_curItemNum, m_curElapsed - jump);
 						mpd_finishCommand(m_mpd);
 						m_curElapsed -= jump;
-						m_timer.stop();
-						m_timer.start();
 					}
 				}
 				break;
@@ -514,9 +518,9 @@ void Playlist::processCommand(int command, int& rtmpdStatusChanged, mpd_Status* 
 				case CMD_DEL_FROM_PL:
 				mpd_sendDeleteCommand(m_mpd, m_curItemNum);
 				mpd_finishCommand(m_mpd);
-				rtmpdStatusChanged += PL_CHG;
-				mpd_sendStatusCommand(m_mpd);
-				rtmpdStatus = mpd_getStatus(m_mpd);
+				//rtmpdStatusChanged += PL_CHG;
+			//	mpd_sendStatusCommand(m_mpd);
+				//rtmpdStatus = mpd_getStatus(m_mpd);
 				break;
 				case CMD_MOVE_IN_PL:
 				if(m_moveFrom >= 0) {
@@ -524,9 +528,9 @@ void Playlist::processCommand(int command, int& rtmpdStatusChanged, mpd_Status* 
 					mpd_sendMoveCommand(m_mpd, m_moveFrom, m_moveTo);
 					mpd_finishCommand(m_mpd);
 					m_moveFrom = -1;
-					rtmpdStatusChanged += PL_CHG;
-					mpd_sendStatusCommand(m_mpd);
-					rtmpdStatus = mpd_getStatus(m_mpd);
+			//		rtmpdStatusChanged += PL_CHG;
+			//		mpd_sendStatusCommand(m_mpd);
+			//		rtmpdStatus = mpd_getStatus(m_mpd);
 				} else {
 					m_moveFrom = m_curItemNum;
 				}
@@ -555,21 +559,21 @@ void Playlist::processCommand(int command, int& rtmpdStatusChanged, mpd_Status* 
 	}
 }
 
-void Playlist::draw(bool forceRefresh)
+void Playlist::draw(bool forceRefresh, long timePerFrame, bool inBack)
 {
-	if(forceRefresh || m_refresh) {
+	if(forceRefresh || (!inBack && m_refresh)) {
 		//clear this portion of the screen 
 		SDL_SetClipRect(m_screen, &m_clearRect);
 		SDL_BlitSurface(m_bg, &m_clearRect, m_screen, &m_clearRect );
 	
 		if(m_listing.size() == 0) {
 			SDL_Surface *sText;
-			sText = TTF_RenderText_Blended(m_font, "No songs in playlist...", m_itemColor);
+			sText = TTF_RenderUTF8_Blended(m_font, m_config.getItem("LANG_NO_SONGS_PL").c_str(), m_itemColor);
 			SDL_BlitSurface(sText,NULL, m_screen, &m_destRect );
 			SDL_FreeSurface(sText);
 		}
 		
-		Scroller::draw(false, m_nowPlaying, m_lastQueued);
+		Scroller::draw(timePerFrame, false, m_nowPlaying, m_lastQueued);
 
 		m_refresh = false;
 	}
