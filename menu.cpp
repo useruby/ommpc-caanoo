@@ -46,7 +46,21 @@ Menu::Menu(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* bg, TTF_Font* 
 {
 	m_config.getItemAsColor("sk_main_itemColor", m_itemColor.r, m_itemColor.g, m_itemColor.b);
 	m_config.getItemAsColor("sk_main_curItemColor", m_curItemColor.r, m_curItemColor.g, m_curItemColor.b);
-    
+   
+	int width = m_config.getItemAsNum("sk_main_width"); 
+	int height = m_config.getItemAsNum("sk_main_height");
+	m_numPerRow = m_config.getItemAsNum("sk_menu_numPerRow");
+	m_rowHeight = m_config.getItemAsNum("sk_menu_rowHeight");
+	m_colWidth = m_config.getItemAsNum("sk_menu_colWidth");
+
+
+	//CHANGE HERE WHEN ADDING ITEMS, right now it's 2 items
+	m_2ndRowOffset = (width-(m_colWidth*2))/2;
+	m_1stRowOffset2 = (width-(m_colWidth*3))/2;
+
+	m_ySize1 = (height-(m_rowHeight*2))/2;
+	m_ySize2 = (height-(m_rowHeight))/2;
+ 
 	string skinName = m_config.getItem("skin");
 	m_drawIcons =  m_config.getItemAsNum("drawIcons");
 
@@ -61,35 +75,36 @@ void Menu::initItems(int command)
 			{
 				m_view = 0;
 				int xOffset = 0;
-				int yOffset = 12;
+				int yOffset = m_ySize1;
 				MenuButton butt0("Now Playing");
-				butt0.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, "np", CMD_SHOW_NP);
+				butt0.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, "np", CMD_SHOW_NP, m_colWidth, m_rowHeight);
 				m_buttons.push_back(butt0);
 
 				MenuButton butt1("Current Playlist");
-				xOffset += 64;
-				butt1.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, "np", CMD_SHOW_PL);
+				xOffset += m_colWidth;
+				butt1.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, "np", CMD_SHOW_PL, m_colWidth, m_rowHeight);
 				m_buttons.push_back(butt1);
 
 				MenuButton butt2("Music Library");
-				xOffset += 64;
-				butt2.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, "np", CMD_SHOW_LIB);
+				xOffset += m_colWidth;
+				butt2.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, "np", CMD_SHOW_LIB, m_colWidth, m_rowHeight);
 				m_buttons.push_back(butt2);
 
 				MenuButton butt3("Playlists");
-				xOffset += 64;
-				butt3.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, "np", CMD_SHOW_PLS);
+				xOffset += m_colWidth;
+				butt3.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, "np", CMD_SHOW_PLS, m_colWidth, m_rowHeight);
 				m_buttons.push_back(butt3);
+				
+
+				xOffset = m_2ndRowOffset;
+				yOffset += m_rowHeight;
 				MenuButton butt4("Bookmarks");
-				xOffset += 64;
-				butt4.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, "np", CMD_SHOW_BKMRKS);
+				butt4.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, "np", CMD_SHOW_BKMRKS, m_colWidth, m_rowHeight);
 				m_buttons.push_back(butt4);
 
-				m_numPerRow = 5;
-				xOffset = 0;
-				yOffset += 64;
+				xOffset += m_colWidth;
 				MenuButton butt5("Settings");
-				butt5.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, "np", CMD_MENU_SETTINGS);
+				butt5.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, "np", CMD_MENU_SETTINGS, m_colWidth, m_rowHeight);
 				m_buttons.push_back(butt5);
 
 				m_buttons[m_menu1Active].active(true);
@@ -98,20 +113,20 @@ void Menu::initItems(int command)
 		case CMD_MENU_SETTINGS:
 			{
 				m_view = 1;
-				int xOffset = 0;
-				int yOffset = 12;
+				int xOffset = m_1stRowOffset2;
+				int yOffset = m_ySize2;
 				MenuButton butt0("Main Menu");
-				butt0.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, "np", CMD_SHOW_MENU);
+				butt0.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, "np", CMD_SHOW_MENU, m_colWidth, m_rowHeight);
 				m_buttons.push_back(butt0);
 
-				xOffset += 64;
-				MenuButton butt1("Update MPD Db");
-				butt1.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, "np", CMD_MPD_UPDATE);
+				xOffset += m_colWidth;
+				MenuButton butt1("Update Db");
+				butt1.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, "np", CMD_MPD_UPDATE, m_colWidth, m_rowHeight);
 				m_buttons.push_back(butt1);
 
 				MenuButton butt2("Options");
-				xOffset += 64;
-				butt2.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, "np", CMD_SHOW_OPTIONS);
+				xOffset += m_colWidth;
+				butt2.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, "np", CMD_SHOW_OPTIONS, m_colWidth, m_rowHeight);
 				m_buttons.push_back(butt2);
 
 				m_buttons[m_menu2Active].active(true);
@@ -153,40 +168,46 @@ int Menu::processCommand(int command, GuiPos& guiPos)
 			}
 			++curItem;
 		}
+		
+		if(m_view == 0) 
+			curItem = m_menu1Active;
+		else
+			curItem = m_menu2Active;	
+	
 		switch(command) {
 			case CMD_DOWN:
-				m_buttons[m_menu1Active].active(false);
-				if(m_menu1Active + m_numPerRow < m_buttons.size())
-					m_menu1Active += m_numPerRow;
-				else if(m_buttons.size() > m_numPerRow)
-					m_menu1Active = m_buttons.size() -1;
-				m_buttons[m_menu1Active].active(true);
+				m_buttons[curItem].active(false);
+				if(curItem < m_numPerRow && m_buttons.size() > m_numPerRow)
+					curItem = m_numPerRow;
+				m_buttons[curItem].active(true);
 				m_refresh = true;
 				break;
 			case CMD_UP:
-				m_buttons[m_menu1Active].active(false);
-				if(m_menu1Active - m_numPerRow > 0)
-					m_menu1Active -= m_numPerRow;
-				else
-					m_menu1Active = 0;
-				m_buttons[m_menu1Active].active(true);
+				m_buttons[curItem].active(false);
+				if(curItem >= m_numPerRow)
+					curItem = 0;
+				m_buttons[curItem].active(true);
 				m_refresh = true;
 				break;
 			case CMD_LEFT:
-				m_buttons[m_menu1Active].active(false);
-				if(m_menu1Active -1 >= 0)
-					m_menu1Active--;
-				m_buttons[m_menu1Active].active(true);
+				m_buttons[curItem].active(false);
+				if(curItem -1 >= 0)
+					curItem--;
+				m_buttons[curItem].active(true);
 				m_refresh = true;
 				break;
 			case CMD_RIGHT:
-				m_buttons[m_menu1Active].active(false);
-				if(m_menu1Active+1 < m_buttons.size())
-					m_menu1Active++;
-				m_buttons[m_menu1Active].active(true);
+				m_buttons[curItem].active(false);
+				if(curItem+1 < m_buttons.size())
+					curItem++;
+				m_buttons[curItem].active(true);
 				m_refresh = true;
 				break;
 		}	
+		if(m_view == 0) 
+			m_menu1Active = curItem;
+		else
+			m_menu2Active = curItem;
 
 		
 		switch(rCommand) {

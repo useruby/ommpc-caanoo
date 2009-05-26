@@ -584,6 +584,9 @@ int main ( int argc, char** argv )
 							SDL_GetMouseState(&guiPos.curX, &guiPos.curY);
 							command = commandFactory.mouseUp(curMode, guiPos.curX, guiPos.curY);
 						break;
+						case SDL_QUIT:
+							command = CMD_DETACH;
+						break;
 						default:
 							processedEvent = false;
 					}

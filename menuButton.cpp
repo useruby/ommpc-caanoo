@@ -41,30 +41,30 @@ MenuButton::MenuButton(string label)
 , m_label(label)
 , m_sText(NULL)
 {
-	m_font = TTF_OpenFont("Vera.ttf",
-						  8);
+	m_font = TTF_OpenFont("Vera.ttf", 10);
 }
 
-void MenuButton::init(Config& config, int x, int y, string type, int command)
+void MenuButton::init(Config& config, int x, int y, string type, int command, int xSize, int ySize)
 {
 	config.getItemAsColor("sk_seek_textColor", m_textColor.r, m_textColor.g, m_textColor.b);
 	string btnName = "sk_"+m_name;
 	m_clearRect.x = x;
 	m_clearRect.y = y;
-	m_clearRect.w = 64;
-	m_clearRect.h = 64;
+	m_clearRect.w = xSize;
+	m_clearRect.h = ySize;
 	
 	SDL_Surface * tmpBack = IMG_Load(string("skins/"+config.getItem("skin")+"/bg_menuItem.png").c_str());
 	m_destRect = m_clearRect;
-	m_destRect.x += 8;
+	m_destRectB = m_clearRect;
 	if (!tmpBack) {
 		printf("Unable to load button image: %s\n", SDL_GetError());
 		m_showBack = false;
 	} else {
 		m_showBack = true;
 		m_backImage = SDL_DisplayFormatAlpha(tmpBack);
-		m_destRect.w = m_backImage->w;
-		m_destRect.h = m_backImage->h;
+		m_destRectB.x += (xSize-m_backImage->w)/2;
+		m_destRectB.w = m_backImage->w;
+		m_destRectB.h = m_backImage->h;
 	}
 
 	tmpBack = IMG_Load(string("skins/"+config.getItem("skin")+"/blank.png").c_str());
@@ -74,6 +74,7 @@ void MenuButton::init(Config& config, int x, int y, string type, int command)
 	} else {
 		m_showFore = true;
 		m_foreImage = SDL_DisplayFormatAlpha(tmpBack);
+		m_destRect.x += (xSize-m_foreImage->w)/2;
 		if(!m_showBack) {
 			m_destRect.w = m_foreImage->w;
 			m_destRect.h = m_foreImage->h;
@@ -138,7 +139,7 @@ void MenuButton::draw(SDL_Surface* screen, SDL_Surface* bg, bool forceRefresh)
 		SDL_SetClipRect(screen, &m_clearRect);
 		SDL_BlitSurface(bg, &m_clearRect, screen, &m_clearRect);
 		if(m_showBack && m_active)		
-			SDL_BlitSurface(m_backImage, NULL, screen, &m_clearRect );
+			SDL_BlitSurface(m_backImage, NULL, screen, &m_destRectB );
 		if(m_showFore)		
 			SDL_BlitSurface(m_foreImage, NULL, screen, &m_destRect );
 		int x = m_destRect.x;

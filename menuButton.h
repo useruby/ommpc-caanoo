@@ -39,7 +39,7 @@ class MenuButton : public Button
 {
 public:
 	MenuButton(std::string label);
-	void init(Config& config, int x, int y, std::string type, int command);
+	void init(Config& config, int x, int y, std::string type, int command, int xSize, int ySize);
 
 	void updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus,
 					  int rtmpdStatusChanged, mpd_Status* rtmpdStatus, 
@@ -58,6 +58,7 @@ protected:
 	SDL_Color m_textColor;
 	SDL_Surface* m_sText;
 	SDL_Rect m_mouseRect;
+	SDL_Rect m_destRectB;
 };
 
 #endif

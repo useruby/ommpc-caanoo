@@ -49,7 +49,7 @@ OBJ = $(SRC:.cpp=.o) libmpdclient.o
 #-------------------------------------------------------------------------------
 # Libraries being linked with the application
 #-------------------------------------------------------------------------------
-LIBS = -pthread -lSDL -lSDLmain -lSDL_ttf -lSDL_image -lSDL_gfx pc/libsqlite3.a -ldl 
+LIBS = -pthread -lSDL -lSDLmain -lSDL_ttf -lSDL_image -lSDL_gfx /usr/lib/libsqlite3.so.0 -ldl 
 
 #-------------------------------------------------------------------------------
 # Target for creating simple client

@@ -59,6 +59,13 @@ protected:
 	int m_menu1Active;
 	int m_menu2Active;
 	int m_numPerRow;
+	int m_rowHeight;
+	int m_colWidth;
+	int m_2ndRowOffset;
+	int m_1stRowOffset2;
+	int m_ySize1;
+	int m_ySize2;
+	
 };
 
 #endif
