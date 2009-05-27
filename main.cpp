@@ -350,10 +350,9 @@ int main ( int argc, char** argv )
 				config.getItemAsNum("sk_main_width"),
 				config.getItemAsNum("sk_main_height")
 			};
-			SDL_Rect fullRect = { config.getItemAsNum("0"),
-				config.getItemAsNum("0"),
-				config.getItemAsNum("320"),
-				config.getItemAsNum("240")
+			SDL_Rect fullRect = { 0,0,
+				config.getItemAsNum("sk_screen_width"),
+				config.getItemAsNum("sk_screen_height")
 			};
 			SDL_Rect artRect = { config.getItemAsNum("sk_art_x"),
 				config.getItemAsNum("sk_art_y"),
@@ -618,7 +617,7 @@ int main ( int argc, char** argv )
 				} else {
 					command = overlay.processCommand(command, guiPos, overlayVisible);
 				}	
-				if(curMode == 4) {
+				if(curMode == 5) {
 					command = menu.processCommand(command, guiPos);
 				}
 				if(popupVisible) {
@@ -754,7 +753,7 @@ int main ( int argc, char** argv )
 						break;
 					case CMD_TOGGLE_MODE:
 						++curMode;
-						if(curMode == 4)
+						if(curMode == 5)
 							curMode = 0;
 						forceRefresh = true;
 						break;
@@ -792,7 +791,7 @@ int main ( int argc, char** argv )
 						popupVisible = false;	
 						break;
 					case CMD_SHOW_MENU:
-						curMode = 4;
+						curMode = 5;
 						forceRefresh = true;
 						break;
 					case CMD_SHOW_OVERLAY:
@@ -822,7 +821,7 @@ int main ( int argc, char** argv )
 						}
 						break;	
 					case CMD_SHOW_NP:
-						curMode = 4;
+						curMode = 2;
 						break;
 					case CMD_SHOW_PL:
 						curMode = 1;
@@ -892,7 +891,12 @@ int main ( int argc, char** argv )
 							playlist.draw(forceRefresh, timePerFrame, overlayVisible||keyboardVisible);
 
 							break;
-						case 2:
+						case 1:
+							playlist.processCommand(command, rtmpdStatusChanged, rtmpdStatus, repeatDelay, volume, commandFactory.getHoldTime(), guiPos);
+							playlist.draw(forceRefresh, timePerFrame, overlayVisible||keyboardVisible);
+
+							break;
+						case 3:
 							{
 							rMode = plBrowser.processCommand(command, curMode, guiPos);
 							if(rMode == CMD_SHOW_KEYBOARD) {
@@ -907,7 +911,7 @@ int main ( int argc, char** argv )
 							plBrowser.draw(forceRefresh, timePerFrame, overlayVisible||keyboardVisible);
 							}
 							break;
-						case 3:
+						case 4:
 							rMode = bookmarks.processCommand(command, guiPos);
 							if(rMode == CMD_SHOW_KEYBOARD) {
 								keyboardVisible = true;
@@ -919,7 +923,7 @@ int main ( int argc, char** argv )
 								curMode = rMode;
 							bookmarks.draw(forceRefresh, timePerFrame, overlayVisible||keyboardVisible);
 							break;
-						case 4:
+						case 5:
 							
 							menu.draw(forceRefresh, timePerFrame, overlayVisible||keyboardVisible);
 							break;
