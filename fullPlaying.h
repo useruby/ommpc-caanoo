@@ -20,73 +20,35 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 *****************************************************************************************/
 
-#ifndef __NOWPLAYING_H__
-#define __NOWPLAYING_H__
+#ifndef __FULLPLAYING_H__
+#define __FULLPLAYING_H__
 
+#include <string>
+#include <vector>
 #include <SDL.h>
 #include <SDL_ttf.h>
-#include <string>
-
 #include "libmpdclient.h"
-#include "config.h"
-#include "playlist.h"
+#include "menuButton.h"
+#include "scroller.h"
 
+class Config;
 class GuiPos;
+class Keyboard;
 
-class NowPlaying
+class FullPlaying  : public Scroller
 {
 public:
-	NowPlaying(mpd_Connection* mpd, SDL_mutex* lock,  SDL_Surface* screen, SDL_Surface* bg, Config& config, SDL_Rect& rect, Playlist& playlist);
+    	FullPlaying(mpd_Connection* mpd, SDL_Surface* bg, SDL_Surface* screen, SDL_Rect& rect, Config& config, Keyboard& kb);
 	
-	void updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus,
-					  int rtmpdStatusChanged, mpd_Status* rtmpdStatus);
+	void updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus, bool updatingSongDb);
 	int processCommand(int command, GuiPos& guiPos);
-	void draw(bool forceRefresh, long timePerFrame, bool atBack);
-	void songChange();
+	void draw(bool forceRefresh, long timePerFrame, bool inBack);
+
 protected:
+	Keyboard& m_keyboard;
+	bool m_drawIcons;
+	std::vector<MenuButton> m_buttons;
 	
-	mpd_Connection* m_mpd;
-	SDL_mutex* m_lock;
-	SDL_Surface* m_screen;
-	SDL_Rect m_srcRect;
-	SDL_Rect m_destRect;
-	SDL_Rect m_artistRect;
-	SDL_Rect m_scrollClearRect;
-	SDL_Rect m_artistClearRect;
-	Config& m_config;
-	TTF_Font* m_font;
-	TTF_Font* m_fontSmall;
-	Playlist& m_playlist;
-	std::string m_title;
-	std::string m_artist;
-	std::string m_scrollText;
-	SDL_Surface* m_scrollTextSurface;
-	SDL_Surface* m_artistTextSurface;;
-
-	int m_format;
-	int m_skipVal;
-	int m_inc;
-	int m_incArtist;
-	int m_origY;
-	int m_delay;
-	int m_delayCnt;
-	int m_delayCnt2;
-	int m_srcX;
-	int m_srcArtistX;
-
-	bool m_artistNoScroll;
-	bool m_noScroll;
-	int m_nowPlaying;
-	bool m_refresh;
-	
-	//colors
-	SDL_Color m_backColor;
-	SDL_Color m_itemColor;
-	SDL_Color m_curItemBackColor;
-	SDL_Color m_curItemColor;
-	SDL_Surface * m_bg;
-	
-	artThreadParms_t& m_artParms;
 };
 
 #endif
