@@ -33,22 +33,24 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 using namespace std;
 
-Button::Button(string name)
+Button::Button(string name, string imageDir)
 : m_name(name)
 , m_refresh(true)
+, m_imageDir(imageDir)
 {
 }
 
 void Button::init(Config& config)
 {
 	string btnName = "sk_"+m_name;
+	if(m_name == "seek_big")
+		btnName = "sk_seek";
 	m_clearRect.x = config.getItemAsNum(btnName+"_x");
 	m_clearRect.y = config.getItemAsNum(btnName+"_y");
 	m_clearRect.w = config.getItemAsNum(btnName+"_width");
 	m_clearRect.h = config.getItemAsNum(btnName+"_height");
 	
-	SDL_Surface * tmpBack = IMG_Load(string("skins/"+config.getItem("skin")+"/"+
-									config.getItem(btnName+"_backImage")).c_str());
+	SDL_Surface * tmpBack = IMG_Load(string(m_imageDir+"s/"+config.getItem(m_imageDir)+"/"+m_name+"_back.png").c_str());
 	m_destRect = m_clearRect;
 	if (!tmpBack) {
 		printf("Unable to load button image: %s\n", SDL_GetError());
@@ -60,8 +62,7 @@ void Button::init(Config& config)
 		m_destRect.h = m_backImage->h;
 	}
 
-	tmpBack = IMG_Load(string("skins/"+config.getItem("skin")+"/"+
-									config.getItem(btnName+"_foreImage")).c_str());
+	tmpBack = IMG_Load(string(m_imageDir+"s/"+config.getItem(m_imageDir)+"/"+m_name+".png").c_str());
 	if (!tmpBack) {
 		printf("Unable to load alt button image: %s\n", SDL_GetError());
 		m_showFore = false;

@@ -47,7 +47,13 @@ public:
 protected:
 	Keyboard& m_keyboard;
 	bool m_drawIcons;
-	std::vector<MenuButton> m_buttons;
+	MenuButton* m_playBtn;
+	MenuButton* m_pauseBtn;
+	MenuButton* m_stopBtn;
+	MenuButton* m_rwBtn;
+	MenuButton* m_ffBtn;
+	MenuButton* m_prevBtn;
+	MenuButton* m_nextBtn;
 	
 };
 

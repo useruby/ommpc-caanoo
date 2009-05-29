@@ -35,8 +35,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 using namespace std;
 
-SeekButton::SeekButton()
-: Button("seek")
+SeekButton::SeekButton(string name)
+: Button(name)
 , m_width(0)
 , m_yOffset(0)
 , m_xOffset(0)
@@ -58,6 +58,8 @@ void SeekButton::init(Config& config)
 	Button::init(config);
 
 	string btnName = "sk_"+m_name;
+	if(m_name == "seek_big")
+		btnName = "sk_seek";
 	m_width = m_destRect.w;	
 	m_yOffset = config.getItemAsNum(btnName+"_yOffset");
 	m_destRect.y = m_destRect.y + m_yOffset;

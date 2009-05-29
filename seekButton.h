@@ -36,7 +36,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 class SeekButton : public Button
 {
 public:
-	SeekButton();
+	SeekButton(std::string name);
 	virtual void init(Config& config);
 
 	void updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus,

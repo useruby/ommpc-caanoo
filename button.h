@@ -33,7 +33,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 class Button
 {
 public:
-	Button(std::string name);
+	Button(std::string name, std::string imageDir="skin");
 	virtual void init(Config& config);
 	virtual void updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus,
 					  int rtmpdStatusChanged, mpd_Status* rtmpdStatus, 
@@ -50,6 +50,7 @@ protected:
 	SDL_Surface* m_backImage;
 	SDL_Surface* m_foreImage;
 	bool m_refresh;
+	std::string m_imageDir;
 
 };
 

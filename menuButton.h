@@ -60,6 +60,7 @@ protected:
 	SDL_Surface* m_sText;
 	SDL_Rect m_mouseRect;
 	SDL_Rect m_destRectB;
+	bool m_displayText;
 };
 
 #endif

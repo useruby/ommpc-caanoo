@@ -36,11 +36,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 using namespace std;
 
 MenuButton::MenuButton(string label, string id)
-: Button("menu")
+: Button("menu", "overlay")
 , m_active(false)
 , m_label(label)
 , m_sText(NULL)
 , m_id(id)
+, m_displayText(true)
 {
 	m_font = TTF_OpenFont("Vera.ttf", 10);
 }
@@ -90,7 +91,10 @@ void MenuButton::init(Config& config, int x, int y, string type, int command, in
 	if(m_sText != NULL)
 		SDL_FreeSurface(m_sText);
 
-	m_sText = TTF_RenderText_Blended(m_font, m_label.c_str(), m_textColor);
+	if(m_label.empty())
+		m_displayText = false;
+	else
+		m_sText = TTF_RenderText_Blended(m_font, m_label.c_str(), m_textColor);
 	m_mouseRect = m_destRect;
 }
 
@@ -147,6 +151,7 @@ void MenuButton::draw(SDL_Surface* screen, SDL_Surface* bg, bool forceRefresh)
 		int y = m_destRect.y;
 		m_destRect.x += ((m_destRect.w-m_sText->w)/2);
 		m_destRect.y += 48;
+		if(m_displayText)
 			SDL_BlitSurface(m_sText, NULL, screen, &m_destRect );
 		m_destRect.y = y;
 		m_destRect.x = x;

@@ -43,6 +43,22 @@ FullPlaying::Menu(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* bg, TTF
 {
 	m_config.getItemAsColor("sk_main_itemColor", m_itemColor.r, m_itemColor.g, m_itemColor.b);
 	m_config.getItemAsColor("sk_main_curItemColor", m_curItemColor.r, m_curItemColor.g, m_curItemColor.b);
+	m_playBtn = new MenuButton("", "play");
+	m_playBtn->init(config);
+	m_pauseBtn = new MenuButton("", "pause");
+	m_pauseBtn->init(config);
+	m_stopBtn = new MenuButton("", "stop");
+	m_stopBtn->init(config);
+	m_rwBtn = new MenuButton("", "rw");
+	m_rwBtn->init(config);
+	m_ffBtn = new MenuButton("", "ff");
+	m_ffBtn->init(config);
+	m_prevBtn = new MenuButton("", "prev");
+	m_prevBtn->init(config);
+	m_nextBtn = new MenuButton("", "next");
+	m_nextBtn->init(config);
+	
+};
    
 }
 
