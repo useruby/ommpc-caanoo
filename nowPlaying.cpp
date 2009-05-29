@@ -113,7 +113,7 @@ void NowPlaying::updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus,
 		m_scrollTextSurface = TTF_RenderUTF8_Blended(m_font, m_scrollText.c_str(), m_itemColor);
 		if(m_artistTextSurface != NULL)
 			SDL_FreeSurface(m_artistTextSurface);
-		m_artistTextSurface = TTF_RenderUTF8_Blended(m_font, m_artist.c_str(), m_itemColor);
+		m_artistTextSurface = TTF_RenderUTF8_Blended(m_fontSmall, m_artist.c_str(), m_itemColor);
 	}
 
 }

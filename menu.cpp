@@ -76,21 +76,21 @@ void Menu::initItems(int command)
 				m_view = 0;
 				int xOffset = 0;
 				int yOffset = m_ySize1;
-				MenuButton butt0("Now Playing");
+				MenuButton butt0("Now Playing", "np");
 				butt0.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, "np", CMD_SHOW_NP, m_colWidth, m_rowHeight);
 				m_buttons.push_back(butt0);
 
-				MenuButton butt1("Current Playlist");
+				MenuButton butt1("Current Playlist", "cur_pl");
 				xOffset += m_colWidth;
 				butt1.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, "np", CMD_SHOW_PL, m_colWidth, m_rowHeight);
 				m_buttons.push_back(butt1);
 
-				MenuButton butt2("Music Library");
+				MenuButton butt2("Music Library", "lib");
 				xOffset += m_colWidth;
 				butt2.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, "np", CMD_SHOW_LIB, m_colWidth, m_rowHeight);
 				m_buttons.push_back(butt2);
 
-				MenuButton butt3("Playlists");
+				MenuButton butt3("Playlists", "pls");
 				xOffset += m_colWidth;
 				butt3.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, "np", CMD_SHOW_PLS, m_colWidth, m_rowHeight);
 				m_buttons.push_back(butt3);
@@ -98,12 +98,12 @@ void Menu::initItems(int command)
 
 				xOffset = m_2ndRowOffset;
 				yOffset += m_rowHeight;
-				MenuButton butt4("Bookmarks");
+				MenuButton butt4("Bookmarks", "bkmrks");
 				butt4.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, "np", CMD_SHOW_BKMRKS, m_colWidth, m_rowHeight);
 				m_buttons.push_back(butt4);
 
 				xOffset += m_colWidth;
-				MenuButton butt5("Settings");
+				MenuButton butt5("Settings", "settings");
 				butt5.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, "np", CMD_MENU_SETTINGS, m_colWidth, m_rowHeight);
 				m_buttons.push_back(butt5);
 
@@ -115,16 +115,16 @@ void Menu::initItems(int command)
 				m_view = 1;
 				int xOffset = m_1stRowOffset2;
 				int yOffset = m_ySize2;
-				MenuButton butt0("Main Menu");
+				MenuButton butt0("Main Menu", "main");
 				butt0.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, "np", CMD_SHOW_MENU, m_colWidth, m_rowHeight);
 				m_buttons.push_back(butt0);
 
 				xOffset += m_colWidth;
-				MenuButton butt1("Update Db");
+				MenuButton butt1("Update Db", "update");
 				butt1.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, "np", CMD_MPD_UPDATE, m_colWidth, m_rowHeight);
 				m_buttons.push_back(butt1);
 
-				MenuButton butt2("Options");
+				MenuButton butt2("Options", "options");
 				xOffset += m_colWidth;
 				butt2.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, "np", CMD_SHOW_OPTIONS, m_colWidth, m_rowHeight);
 				m_buttons.push_back(butt2);

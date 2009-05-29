@@ -847,24 +847,22 @@ int main ( int argc, char** argv )
 					playlist.updateStatus(threadParms.mpdStatusChanged, 
 							threadParms.mpdStatus, 
 							rtmpdStatusChanged, rtmpdStatus, repeatDelay);
-					if(curMode != 2) {
-						playing.updateStatus(threadParms.mpdStatusChanged, threadParms.mpdStatus, 
+					playing.updateStatus(threadParms.mpdStatusChanged, threadParms.mpdStatus, 
+							rtmpdStatusChanged, rtmpdStatus);
+					playing.draw(forceRefresh, timePerFrame, overlayVisible||keyboardVisible);
+					if(classicStatsBar) {
+						statsBar.updateStatus(threadParms.mpdStatusChanged, 
+								threadParms.mpdStatus,
+								rtmpdStatusChanged, 
+								rtmpdStatus, 
+								forceRefresh);
+						statsBar.draw(forceRefresh, fps);
+					}
+					if(config.getItem("showAlbumArt") == "true") {
+						albumArt.updateStatus(threadParms.mpdStatusChanged, 
+								threadParms.mpdStatus,
 								rtmpdStatusChanged, rtmpdStatus);
-						playing.draw(forceRefresh, timePerFrame, overlayVisible||keyboardVisible);
-						if(classicStatsBar) {
-							statsBar.updateStatus(threadParms.mpdStatusChanged, 
-									threadParms.mpdStatus,
-									rtmpdStatusChanged, 
-									rtmpdStatus, 
-									forceRefresh);
-							statsBar.draw(forceRefresh, fps);
-						}
-						if(config.getItem("showAlbumArt") == "true") {
-							albumArt.updateStatus(threadParms.mpdStatusChanged, 
-									threadParms.mpdStatus,
-									rtmpdStatusChanged, rtmpdStatus);
-							albumArt.draw(forceRefresh);
-						}
+						albumArt.draw(forceRefresh);
 					}
 					browser.updateStatus(threadParms.mpdStatusChanged, 
 							threadParms.mpdStatus, songDbParms.updating);
@@ -891,7 +889,7 @@ int main ( int argc, char** argv )
 							playlist.draw(forceRefresh, timePerFrame, overlayVisible||keyboardVisible);
 
 							break;
-						case 1:
+						case 2:
 							playlist.processCommand(command, rtmpdStatusChanged, rtmpdStatus, repeatDelay, volume, commandFactory.getHoldTime(), guiPos);
 							playlist.draw(forceRefresh, timePerFrame, overlayVisible||keyboardVisible);
 

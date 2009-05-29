@@ -38,7 +38,7 @@ class GuiPos;
 class MenuButton : public Button
 {
 public:
-	MenuButton(std::string label);
+	MenuButton(std::string label, std::string id);
 	void init(Config& config, int x, int y, std::string type, int command, int xSize, int ySize);
 
 	void updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus,
@@ -53,6 +53,7 @@ protected:
 	
 	bool m_active;
 	std::string m_label;
+	std::string m_id;
 	int m_command;
 	TTF_Font* m_font;	
 	SDL_Color m_textColor;

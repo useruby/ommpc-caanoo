@@ -35,11 +35,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 using namespace std;
 
-MenuButton::MenuButton(string label)
+MenuButton::MenuButton(string label, string id)
 : Button("menu")
 , m_active(false)
 , m_label(label)
 , m_sText(NULL)
+, m_id(id)
 {
 	m_font = TTF_OpenFont("Vera.ttf", 10);
 }
@@ -66,8 +67,8 @@ void MenuButton::init(Config& config, int x, int y, string type, int command, in
 		m_destRectB.w = m_backImage->w;
 		m_destRectB.h = m_backImage->h;
 	}
-
-	tmpBack = IMG_Load(string("skins/"+config.getItem("skin")+"/blank.png").c_str());
+		tmpBack = IMG_Load(string("overlays/"+config.getItem("sk_overlay")
+													   + "/menu_"+ m_id +".png").c_str());
 	if (!tmpBack) {
 		printf("Unable to load alt button image: %s\n", SDL_GetError());
 		m_showFore = false;
