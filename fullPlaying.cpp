@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 *****************************************************************************************/
 
 #include "fullPlaying.h"
+#include "button.h"
 #include "threadParms.h"
 #include "commandFactory.h"
 #include "config.h"
@@ -31,75 +32,193 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <stdexcept>
 #include <SDL_image.h>
 
+#define X2DELAY 2000000
+#define X4DELAY 6000000
+#define X8DELAY 12000000
+#define X16DELAY 25000000
+#define X32DELAY 45000000
+#define FFWAIT 400000
+
 using namespace std;
 
-FullPlaying::Menu(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* bg, TTF_Font* font, 
-				SDL_Rect& rect,	Config& config, int skipVal, int numPerScreen, SongDb& songdb, Keyboard& kb, Playlist& pl)
+FullPlaying::FullPlaying(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* bg, TTF_Font* font, 
+				SDL_Rect& rect,	Config& config, int skipVal, int numPerScreen, Keyboard& kb, artThreadParms_t& artParms)
 : Scroller(mpd, screen, bg, font, rect, config, skipVal, numPerScreen-1)
 , m_keyboard(kb)
-, m_menu1Active(0)
-, m_menu2Active(0)
-, m_view(0)
+, m_artParms(artParms)
+, m_curElapsed(0)
 {
 	m_config.getItemAsColor("sk_main_itemColor", m_itemColor.r, m_itemColor.g, m_itemColor.b);
 	m_config.getItemAsColor("sk_main_curItemColor", m_curItemColor.r, m_curItemColor.g, m_curItemColor.b);
 	m_playBtn = new MenuButton("", "play");
-	m_playBtn->init(config);
+	m_playBtn->init(config, CMD_PLAY_PAUSE);
 	m_pauseBtn = new MenuButton("", "pause");
-	m_pauseBtn->init(config);
+	m_pauseBtn->init(config, CMD_PLAY_PAUSE);
 	m_stopBtn = new MenuButton("", "stop");
-	m_stopBtn->init(config);
+	m_stopBtn->init(config, CMD_STOP);
 	m_rwBtn = new MenuButton("", "rw");
-	m_rwBtn->init(config);
+	m_rwBtn->init(config, CMD_RW);
 	m_ffBtn = new MenuButton("", "ff");
-	m_ffBtn->init(config);
+	m_ffBtn->init(config, CMD_FF);
 	m_prevBtn = new MenuButton("", "prev");
-	m_prevBtn->init(config);
+	m_prevBtn->init(config, CMD_PREV);
 	m_nextBtn = new MenuButton("", "next");
-	m_nextBtn->init(config);
+	m_nextBtn->init(config, CMD_NEXT);
+
 	
-};
-   
+	m_artBtn = new ArtButton(artParms, "", "full_art");;
+	m_artBtn->init(config, CMD_FLIP_ART);
 }
 
-void FullPlaying::updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus, bool updatingSongDb)
+void FullPlaying::updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus,
+						int rtmpdStatusChanged, mpd_Status* rtmpdStatus, bool updatingSongDb,
+						int repeatDelay)
 {
-	if(mpdStatusChanged & STATE_CHG) { 
-		m_curState = mpdStatus->state;
+	mpd_Status * status;
+	int statusChanged;
+
+	if(rtmpdStatusChanged > 0) {
+		status = rtmpdStatus;
+		statusChanged = rtmpdStatusChanged;
+	} else {
+		status = mpdStatus;
+		statusChanged = mpdStatusChanged;
+	}
+
+
+	m_refresh = m_artBtn->updateStatus(mpdStatusChanged, mpdStatus, rtmpdStatusChanged, rtmpdStatus, updatingSongDb, m_mpd, m_config);
+	if((statusChanged & ELAPSED_CHG) && repeatDelay == 0) { 
+		m_curElapsed = status->elapsedTime;	
+	}
+	if(statusChanged & STATE_CHG) { 
+		m_curState = status->state;
 		m_refresh = true;
+	}
+	if(statusChanged & SONG_CHG) {
+		m_curItemNum = status->song;
 	}
 }
 
-int FullPlaying::processCommand(int command, GuiPos& guiPos)
+
+int FullPlaying::processCommand(int command, GuiPos& guiPos, int delayTime)
 {
 	int rCommand = command;
 	bool done = false;
 	int curItem = 0;
 	if(command > 0) {
-		for(vector<MenuButton>::iterator bIter = m_buttons.begin();
-			bIter != m_buttons.end() && !done;
-			++bIter) {
-			rCommand = (*bIter).processCommand(command, guiPos);
-			if(rCommand != command) {
-				done = true;
-				if(command == CMD_CLICK) {
-					if(m_view == 0) {
-						m_buttons[m_menu1Active].active(false);
-						m_menu1Active = curItem;
+		
+		rCommand = m_playBtn->processCommand(command, guiPos);
+		if(rCommand != command) 
+			rCommand = m_pauseBtn->processCommand(command, guiPos);
+		if(rCommand == command) 
+			rCommand = m_stopBtn->processCommand(command, guiPos);
+		if(rCommand == command) 
+			rCommand = m_rwBtn->processCommand(command, guiPos);
+		if(rCommand == command) 
+			rCommand = m_ffBtn->processCommand(command, guiPos);
+		if(rCommand == command) 
+			rCommand = m_prevBtn->processCommand(command, guiPos);
+		if(rCommand == command) 
+			rCommand = m_nextBtn->processCommand(command, guiPos);
+		if(rCommand == command) 
+			rCommand = m_artBtn->processCommand(command, guiPos);
+			
+			switch(rCommand) {
+				case CMD_PLAY_PAUSE:
+					if(m_curState == MPD_STATUS_STATE_PAUSE) {
+						m_curState = MPD_STATUS_STATE_PLAY;	
+						mpd_sendPauseCommand(m_mpd, 0);
+						mpd_finishCommand(m_mpd);
+					} else if(m_curState == MPD_STATUS_STATE_PLAY) {
+						m_curState = MPD_STATUS_STATE_PAUSE;
+						mpd_sendPauseCommand(m_mpd, 1);
+						mpd_finishCommand(m_mpd);
 					} else {
-						m_buttons[m_menu2Active].active(false);
-						m_menu2Active = curItem;
+						m_curState = MPD_STATUS_STATE_PLAY;	
+						mpd_sendPlayCommand(m_mpd, m_curItemNum);
+						mpd_finishCommand(m_mpd);
+		//				SDL_Delay(100);
+		//				mpd_sendSetvolCommand( m_mpd, volume);
+		//				mpd_finishCommand(m_mpd);
+					}
+				break;
+				case CMD_PAUSE:
+				if(m_curState == MPD_STATUS_STATE_PAUSE) {
+					m_curState = MPD_STATUS_STATE_PLAY;	
+					mpd_sendPauseCommand(m_mpd, 0);
+					mpd_finishCommand(m_mpd);
+				} else if(m_curState == MPD_STATUS_STATE_PLAY) {
+					m_curState = MPD_STATUS_STATE_PAUSE;
+					mpd_sendPauseCommand(m_mpd, 1);
+					mpd_finishCommand(m_mpd);
+				}
+				break;
+				case CMD_NEXT:
+				mpd_sendNextCommand(m_mpd);
+				mpd_finishCommand(m_mpd);
+				break;
+				case CMD_PREV:
+				mpd_sendPrevCommand(m_mpd);
+				mpd_finishCommand(m_mpd);
+				break;
+				case CMD_FF:
+				{ //if(repeatDelay > 0) {
+					int jump = 0;
+					if(delayTime > X2DELAY) {
+						if(delayTime > X32DELAY)
+							jump = 64;	
+						else if(delayTime > X16DELAY)
+							jump = 32;	
+						else if(delayTime > X8DELAY)
+							jump = 16;	
+						else if(delayTime > X4DELAY)
+							jump = 8;	
+						else
+							jump = 4;
+					}
+					else 	
+						jump = 2;
+
+					if(jump > 0) {	
+						mpd_sendSeekCommand(m_mpd, m_curItemNum, m_curElapsed + jump);
+						mpd_finishCommand(m_mpd);
+						m_curElapsed += jump;
 					}
 				}
-			}
-			++curItem;
-		}
-		
-		switch(rCommand) {
-			case CMD_SHOW_MENU:
-			case CMD_MENU_SETTINGS:
-				initItems(rCommand);
-				m_refresh = true;
+				break; 
+				case CMD_RW:
+				{ //	if(repeatDelay > 0) {
+					int jump = 0;
+					if(delayTime > X2DELAY) {
+						if(delayTime > X32DELAY)
+							jump = 64;	
+						else if(delayTime > X16DELAY)
+							jump = 32;	
+						else if(delayTime > X8DELAY)
+							jump = 16;	
+						else if(delayTime > X4DELAY)
+							jump = 8;	
+						else
+							jump = 4;
+					}
+					else 	
+						jump = 2;
+
+					if(jump > 0) {	
+						mpd_sendSeekCommand(m_mpd, m_curItemNum, m_curElapsed - jump);
+						mpd_finishCommand(m_mpd);
+						m_curElapsed -= jump;
+					}
+				}
+				break;
+					case CMD_STOP:
+						mpd_sendStopCommand(m_mpd);
+						mpd_finishCommand(m_mpd);
+						break;
+				case CMD_FLIP_ART:
+					m_refresh = true;
+				break;	
+				default:
 				break;
 		}
 	}
@@ -112,13 +231,16 @@ void FullPlaying::draw(bool forceRefresh, long timePerFrame, bool inBack)
 		//clear this portion of the screen 
 		SDL_SetClipRect(m_screen, &m_clearRect);
 		SDL_BlitSurface(m_bg, &m_clearRect, m_screen, &m_clearRect );
-		SDL_Surface *sText;
-		for(vector<FullPlayingButton>::iterator bIter = m_buttons.begin();
-			bIter != m_buttons.end();
-			++bIter) {
-			(*bIter).draw(m_screen, m_bg, forceRefresh||m_refresh);
-		}
-		m_refresh = false;
+		if(m_curState == MPD_STATUS_STATE_PLAY) 
+			m_pauseBtn->draw(m_screen, m_bg, forceRefresh||m_refresh);
+		else
+			m_playBtn->draw(m_screen, m_bg, forceRefresh||m_refresh);
+		m_stopBtn->draw(m_screen, m_bg, forceRefresh||m_refresh);
+		m_ffBtn->draw(m_screen, m_bg, forceRefresh||m_refresh);
+		m_rwBtn->draw(m_screen, m_bg, forceRefresh||m_refresh);
+		m_prevBtn->draw(m_screen, m_bg, forceRefresh||m_refresh);
+		m_nextBtn->draw(m_screen, m_bg, forceRefresh||m_refresh);
+		m_refresh = m_artBtn->draw2(m_screen, m_bg, forceRefresh||m_refresh);
 	}
 	
 }

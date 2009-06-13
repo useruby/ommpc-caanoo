@@ -42,6 +42,10 @@ Button::Button(string name, string imageDir)
 
 void Button::init(Config& config)
 {
+	string configItem = m_imageDir;
+	if(m_imageDir == "overlay")
+		configItem = "sk_"+m_imageDir;;
+
 	string btnName = "sk_"+m_name;
 	if(m_name == "seek_big")
 		btnName = "sk_seek";
@@ -50,7 +54,7 @@ void Button::init(Config& config)
 	m_clearRect.w = config.getItemAsNum(btnName+"_width");
 	m_clearRect.h = config.getItemAsNum(btnName+"_height");
 	
-	SDL_Surface * tmpBack = IMG_Load(string(m_imageDir+"s/"+config.getItem(m_imageDir)+"/"+m_name+"_back.png").c_str());
+	SDL_Surface * tmpBack = IMG_Load(string(m_imageDir+"s/"+config.getItem(configItem)+"/"+m_name+"_back.png").c_str());
 	m_destRect = m_clearRect;
 	if (!tmpBack) {
 		printf("Unable to load button image: %s\n", SDL_GetError());
@@ -61,8 +65,7 @@ void Button::init(Config& config)
 		m_destRect.w = m_backImage->w;
 		m_destRect.h = m_backImage->h;
 	}
-
-	tmpBack = IMG_Load(string(m_imageDir+"s/"+config.getItem(m_imageDir)+"/"+m_name+".png").c_str());
+	tmpBack = IMG_Load(string(m_imageDir+"s/"+config.getItem(configItem)+"/"+m_name+".png").c_str());
 	if (!tmpBack) {
 		printf("Unable to load alt button image: %s\n", SDL_GetError());
 		m_showFore = false;

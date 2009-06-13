@@ -140,7 +140,7 @@ void Bookmarks::doSave()
 
 int Bookmarks::processCommand(int command, GuiPos& guiPos)
 {
-	int newMode = 3;
+	int newMode = 4;
 	if(command > 0) {
 		m_refresh = true;
 		if(command == CMD_CLICK) {

@@ -228,9 +228,9 @@ int loadAlbumArt(void* data)
 
 			double zoomx = 1;
 			double zoomy = 1;	
-			if(tmp->w > artParms->destWidth)
+		//	if(tmp->w > artParms->destWidth)
 				zoomx = (double)artParms->destWidth/(double)tmp->w;
-			if(tmp->h > artParms->destHeight)
+		//	if(tmp->h > artParms->destHeight)
 				zoomy = (double)artParms->destHeight/(double)tmp->h;
 			
 			artParms->artSurface = SDL_DisplayFormat(zoomSurface(tmp, zoomx,zoomy,1));

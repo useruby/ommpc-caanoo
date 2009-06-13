@@ -36,7 +36,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 using namespace std;
 
 MenuButton::MenuButton(string label, string id)
-: Button("menu", "overlay")
+: Button(id, "overlay")
 , m_active(false)
 , m_label(label)
 , m_sText(NULL)
@@ -44,8 +44,16 @@ MenuButton::MenuButton(string label, string id)
 , m_displayText(true)
 {
 	m_font = TTF_OpenFont("Vera.ttf", 10);
+	if(m_label.empty())
+		m_displayText = false;
 }
 
+void MenuButton::init(Config& config, int command)
+{
+	m_command = command;
+	Button::init(config);
+	m_mouseRect = m_destRect;
+}
 void MenuButton::init(Config& config, int x, int y, string type, int command, int xSize, int ySize)
 {
 	config.getItemAsColor("sk_seek_textColor", m_textColor.r, m_textColor.g, m_textColor.b);
@@ -91,9 +99,7 @@ void MenuButton::init(Config& config, int x, int y, string type, int command, in
 	if(m_sText != NULL)
 		SDL_FreeSurface(m_sText);
 
-	if(m_label.empty())
-		m_displayText = false;
-	else
+	if(!m_label.empty())
 		m_sText = TTF_RenderText_Blended(m_font, m_label.c_str(), m_textColor);
 	m_mouseRect = m_destRect;
 }
@@ -121,7 +127,7 @@ int MenuButton::processCommand(int command, GuiPos& guiPos)
 {
 	int rCommand = command;
 	if(command > 0) {
-		if(command == CMD_CLICK) {
+		if(command == CMD_CLICK || (command == CMD_HOLD_CLICK && (m_command == CMD_FF || m_command == CMD_RW))) {
 			if(guiPos.curX > m_mouseRect.x 
 				&& guiPos.curX < m_mouseRect.x + m_mouseRect.w
 				&& guiPos.curY > m_mouseRect.y 
@@ -145,16 +151,23 @@ void MenuButton::draw(SDL_Surface* screen, SDL_Surface* bg, bool forceRefresh)
 		SDL_BlitSurface(bg, &m_clearRect, screen, &m_clearRect);
 		if(m_showBack && m_active)		
 			SDL_BlitSurface(m_backImage, NULL, screen, &m_destRectB );
-		if(m_showFore)		
+		if(m_showFore)		{
 			SDL_BlitSurface(m_foreImage, NULL, screen, &m_destRect );
-		int x = m_destRect.x;
-		int y = m_destRect.y;
-		m_destRect.x += ((m_destRect.w-m_sText->w)/2);
-		m_destRect.y += 48;
-		if(m_displayText)
+/*			cout << "blitx " << m_destRect.x << endl;
+			cout << "blity " << m_destRect.y << endl;
+			cout << "blitw " << m_destRect.w << endl;
+			cout << "blith " << m_destRect.h << endl;
+*/
+		}
+		if(m_displayText) {
+			int x = m_destRect.x;
+			int y = m_destRect.y;
+			m_destRect.x += ((m_destRect.w-m_sText->w)/2);
+			m_destRect.y += 48;
 			SDL_BlitSurface(m_sText, NULL, screen, &m_destRect );
-		m_destRect.y = y;
-		m_destRect.x = x;
+			m_destRect.y = y;
+			m_destRect.x = x;
+		}
 		m_refresh = false;
 	}
 }

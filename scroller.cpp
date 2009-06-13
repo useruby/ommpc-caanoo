@@ -401,12 +401,15 @@ void Scroller::draw(vector<string>& selectedOptions)
 	SDL_Surface *sText;
 	int numProcessed = 0;
 	int numDisplayed = 0;
-	int amount = 180;
+	int amount = 50;	
+	int width = m_curItemClearRect.w;
 	for(listing_t::iterator vIter = m_listing.begin();
 		vIter != m_listing.end() && (numDisplayed <= m_numPerScreen);
 		++vIter) {
 		if(numProcessed >= m_topItemNum) {
 			string str = (*vIter).first;
+			if(numProcessed < selectedOptions.size()) 
+				str +=":";
 			if(numProcessed == m_curItemNum) {
 				sText = TTF_RenderUTF8_Blended(m_font, str.c_str(), m_curItemColor);
 				m_curItemClearRect.w = m_clearRect.w;
@@ -423,13 +426,38 @@ void Scroller::draw(vector<string>& selectedOptions)
 
 			SDL_SetClipRect(m_screen, &m_curItemClearRect);
 			SDL_BlitSurface(sText,NULL, m_screen, &m_curItemClearRect );
+			m_curItemClearRect.w = width;
 
+			
 			SDL_FreeSurface(sText);
-			if(numDisplayed < selectedOptions.size()) {
-			if(numProcessed == m_curItemNum)
-				sText = TTF_RenderUTF8_Blended(m_font, selectedOptions[numDisplayed].c_str(), m_curItemColor);
-			else
-				sText = TTF_RenderUTF8_Blended(m_font, selectedOptions[numDisplayed].c_str(), m_itemColor);
+			if(numProcessed < selectedOptions.size()) {
+				m_destRect.y += m_skipVal;
+				m_curItemClearRect.y += m_skipVal;
+				if(numProcessed == m_curItemNum) {
+				SDL_SetClipRect(m_screen, &m_curItemClearRect);
+				SDL_BlitSurface(m_bgCurItem, NULL, m_screen, &m_curItemClearRect );
+					sText = TTF_RenderUTF8_Blended(m_font, selectedOptions[numProcessed].c_str(), m_curItemColor);
+				}
+				else
+					sText = TTF_RenderUTF8_Blended(m_font, selectedOptions[numProcessed].c_str(), m_itemColor);
+				m_destRect.x += amount;	
+				m_destRect.w = sText->w;
+				m_destRect.h = sText->h;
+				SDL_SetClipRect(m_screen, &m_destRect);
+				SDL_BlitSurface(sText,NULL, m_screen, &m_destRect );
+
+				m_destRect.x -= amount;	
+				SDL_FreeSurface(sText);
+			} else if(numProcessed < selectedOptions.size()+3) {
+				m_destRect.y += m_skipVal;
+				m_curItemClearRect.y += m_skipVal;
+				if(numProcessed == m_curItemNum) {
+				SDL_SetClipRect(m_screen, &m_curItemClearRect);
+				SDL_BlitSurface(m_bgCurItem, NULL, m_screen, &m_curItemClearRect );
+					sText = TTF_RenderUTF8_Blended(m_font, " ", m_curItemColor);
+				}
+				else
+					sText = TTF_RenderUTF8_Blended(m_font, " ", m_itemColor);
 				m_destRect.x += amount;	
 				m_destRect.w = sText->w;
 				m_destRect.h = sText->h;

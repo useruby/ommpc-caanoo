@@ -63,8 +63,10 @@ protected:
 	int m_colWidth;
 	int m_2ndRowOffset;
 	int m_1stRowOffset2;
+	int m_1stRowOffset3;
 	int m_ySize1;
 	int m_ySize2;
+	int m_ySize3;
 	
 };
 

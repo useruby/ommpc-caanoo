@@ -43,7 +43,7 @@ CXXFLAGS      = $(OPTIMIZATION_FLAG) $(INCDIR) $(LIB)
 .cpp:
 	$(CXX) $(CXXFLAGS) $< -o pc/$@
 
-SRC     = plBrowser.cpp browser.cpp playlist.cpp main.cpp config.cpp nowPlaying.cpp statsBar.cpp commandFactory.cpp popup.cpp scroller.cpp timestamp.cpp helpBar.cpp albumArt.cpp threadFunctions.cpp bookmarks.cpp gp2xregs.cpp overlay.cpp songDb.cpp keyboard.cpp button.cpp volButton.cpp buttonManager.cpp seekButton.cpp rndButton.cpp rptButton.cpp rndRptButton.cpp menu.cpp menuButton.cpp
+SRC     = plBrowser.cpp browser.cpp playlist.cpp main.cpp config.cpp nowPlaying.cpp statsBar.cpp commandFactory.cpp popup.cpp scroller.cpp timestamp.cpp helpBar.cpp albumArt.cpp threadFunctions.cpp bookmarks.cpp gp2xregs.cpp overlay.cpp songDb.cpp keyboard.cpp button.cpp volButton.cpp buttonManager.cpp seekButton.cpp rndButton.cpp rptButton.cpp rndRptButton.cpp menu.cpp menuButton.cpp fullPlaying.cpp artButton.cpp settings.cpp
 
 OBJ = $(SRC:.cpp=.o) libmpdclient.o
 #-------------------------------------------------------------------------------
@@ -151,11 +151,11 @@ main.o: /usr/include/SDL/SDL_quit.h /usr/include/SDL/SDL_loadso.h
 main.o: /usr/include/SDL/SDL_timer.h /usr/include/SDL/SDL_version.h
 main.o: /usr/include/SDL/SDL_ttf.h /usr/include/SDL/SDL_image.h config.h
 main.o: browser.h libmpdclient.h scroller.h plBrowser.h bookmarks.h
-main.o: playlist.h timer.h albumArt.h threadParms.h songDb.h sqlite3.h
-main.o: overlay.h nowPlaying.h buttonManager.h volButton.h button.h
-main.o: rndRptButton.h rndButton.h rptButton.h seekButton.h threadFunctions.h
-main.o: commandFactory.h statsBar.h menu.h menuButton.h popup.h gp2xregs.h
-main.o: guiPos.h keyboard.h
+main.o: playlist.h timer.h settings.h albumArt.h threadParms.h songDb.h
+main.o: sqlite3.h overlay.h nowPlaying.h fullPlaying.h menuButton.h button.h
+main.o: artButton.h buttonManager.h volButton.h rndRptButton.h rndButton.h
+main.o: rptButton.h seekButton.h threadFunctions.h commandFactory.h
+main.o: statsBar.h menu.h popup.h gp2xregs.h guiPos.h keyboard.h
 config.o: config.h /usr/include/SDL/SDL.h /usr/include/SDL/SDL_main.h
 config.o: /usr/include/SDL/SDL_stdinc.h /usr/include/SDL/SDL_config.h
 config.o: /usr/include/SDL/SDL_platform.h /usr/include/SDL/begin_code.h
@@ -508,3 +508,55 @@ menuButton.o: /usr/include/SDL/SDL_ttf.h libmpdclient.h config.h playlist.h
 menuButton.o: scroller.h timer.h threadParms.h songDb.h sqlite3.h
 menuButton.o: commandFactory.h menuButton.h /usr/include/SDL/SDL_image.h
 menuButton.o: button.h guiPos.h rptButton.h
+fullPlaying.o: fullPlaying.h /usr/include/SDL/SDL.h
+fullPlaying.o: /usr/include/SDL/SDL_main.h /usr/include/SDL/SDL_stdinc.h
+fullPlaying.o: /usr/include/SDL/SDL_config.h /usr/include/SDL/SDL_platform.h
+fullPlaying.o: /usr/include/SDL/begin_code.h /usr/include/SDL/close_code.h
+fullPlaying.o: /usr/include/SDL/SDL_audio.h /usr/include/SDL/SDL_error.h
+fullPlaying.o: /usr/include/SDL/SDL_endian.h /usr/include/SDL/SDL_mutex.h
+fullPlaying.o: /usr/include/SDL/SDL_thread.h /usr/include/SDL/SDL_rwops.h
+fullPlaying.o: /usr/include/SDL/SDL_cdrom.h /usr/include/SDL/SDL_cpuinfo.h
+fullPlaying.o: /usr/include/SDL/SDL_events.h /usr/include/SDL/SDL_active.h
+fullPlaying.o: /usr/include/SDL/SDL_keyboard.h /usr/include/SDL/SDL_keysym.h
+fullPlaying.o: /usr/include/SDL/SDL_mouse.h /usr/include/SDL/SDL_video.h
+fullPlaying.o: /usr/include/SDL/SDL_joystick.h /usr/include/SDL/SDL_quit.h
+fullPlaying.o: /usr/include/SDL/SDL_loadso.h /usr/include/SDL/SDL_timer.h
+fullPlaying.o: /usr/include/SDL/SDL_version.h /usr/include/SDL/SDL_ttf.h
+fullPlaying.o: libmpdclient.h menuButton.h /usr/include/SDL/SDL_image.h
+fullPlaying.o: config.h button.h artButton.h threadParms.h songDb.h sqlite3.h
+fullPlaying.o: scroller.h commandFactory.h timer.h guiPos.h keyboard.h
+fullPlaying.o: playlist.h
+artButton.o: statsBar.h /usr/include/SDL/SDL.h /usr/include/SDL/SDL_main.h
+artButton.o: /usr/include/SDL/SDL_stdinc.h /usr/include/SDL/SDL_config.h
+artButton.o: /usr/include/SDL/SDL_platform.h /usr/include/SDL/begin_code.h
+artButton.o: /usr/include/SDL/close_code.h /usr/include/SDL/SDL_audio.h
+artButton.o: /usr/include/SDL/SDL_error.h /usr/include/SDL/SDL_endian.h
+artButton.o: /usr/include/SDL/SDL_mutex.h /usr/include/SDL/SDL_thread.h
+artButton.o: /usr/include/SDL/SDL_rwops.h /usr/include/SDL/SDL_cdrom.h
+artButton.o: /usr/include/SDL/SDL_cpuinfo.h /usr/include/SDL/SDL_events.h
+artButton.o: /usr/include/SDL/SDL_active.h /usr/include/SDL/SDL_keyboard.h
+artButton.o: /usr/include/SDL/SDL_keysym.h /usr/include/SDL/SDL_mouse.h
+artButton.o: /usr/include/SDL/SDL_video.h /usr/include/SDL/SDL_joystick.h
+artButton.o: /usr/include/SDL/SDL_quit.h /usr/include/SDL/SDL_loadso.h
+artButton.o: /usr/include/SDL/SDL_timer.h /usr/include/SDL/SDL_version.h
+artButton.o: /usr/include/SDL/SDL_ttf.h libmpdclient.h config.h playlist.h
+artButton.o: scroller.h timer.h threadParms.h songDb.h sqlite3.h
+artButton.o: commandFactory.h artButton.h /usr/include/SDL/SDL_image.h
+artButton.o: button.h guiPos.h rptButton.h
+settings.o: settings.h /usr/include/SDL/SDL.h /usr/include/SDL/SDL_main.h
+settings.o: /usr/include/SDL/SDL_stdinc.h /usr/include/SDL/SDL_config.h
+settings.o: /usr/include/SDL/SDL_platform.h /usr/include/SDL/begin_code.h
+settings.o: /usr/include/SDL/close_code.h /usr/include/SDL/SDL_audio.h
+settings.o: /usr/include/SDL/SDL_error.h /usr/include/SDL/SDL_endian.h
+settings.o: /usr/include/SDL/SDL_mutex.h /usr/include/SDL/SDL_thread.h
+settings.o: /usr/include/SDL/SDL_rwops.h /usr/include/SDL/SDL_cdrom.h
+settings.o: /usr/include/SDL/SDL_cpuinfo.h /usr/include/SDL/SDL_events.h
+settings.o: /usr/include/SDL/SDL_active.h /usr/include/SDL/SDL_keyboard.h
+settings.o: /usr/include/SDL/SDL_keysym.h /usr/include/SDL/SDL_mouse.h
+settings.o: /usr/include/SDL/SDL_video.h /usr/include/SDL/SDL_joystick.h
+settings.o: /usr/include/SDL/SDL_quit.h /usr/include/SDL/SDL_loadso.h
+settings.o: /usr/include/SDL/SDL_timer.h /usr/include/SDL/SDL_version.h
+settings.o: /usr/include/SDL/SDL_ttf.h libmpdclient.h scroller.h
+settings.o: threadParms.h songDb.h sqlite3.h commandFactory.h timer.h
+settings.o: config.h gp2xregs.h playlist.h keyboard.h guiPos.h
+settings.o: /usr/include/SDL/SDL_image.h

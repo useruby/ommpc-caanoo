@@ -20,8 +20,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 *****************************************************************************************/
 
-#ifndef __MENUBUTTON_H__
-#define __MENUBUTTON_H__
+#ifndef __ARTBUTTON_H__
+#define __ARTBUTTON_H__
 
 #include <SDL.h>
 #include <SDL_ttf.h>
@@ -30,23 +30,24 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "libmpdclient.h"
 #include "config.h"
+#include "threadParms.h"
 #include <vector>
 #include "button.h"
 
 class GuiPos;
+class Config;
 
-class MenuButton : public Button
+class ArtButton : public Button
 {
 public:
-	MenuButton(std::string label, std::string id);
-	void init(Config& config, int x, int y, std::string type, int command, int xSize, int ySize);
-	void init(Config& config, int command);
+	ArtButton(artThreadParms_t& artParms, std::string label, std::string id);
+	virtual void init(Config& config, int command);
 
-	void updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus,
+	bool updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus,
 					  int rtmpdStatusChanged, mpd_Status* rtmpdStatus, 
-					  bool forceRefresh);
+					  bool forceRefresh, mpd_Connection* mpd, Config& config);
 	int processCommand(int command, GuiPos& guiPos);
-	virtual void draw(SDL_Surface* screen, SDL_Surface* bg, bool forceRefresh);
+	bool draw2(SDL_Surface* screen, SDL_Surface* bg, bool forceRefresh);
 	std::string testCall() { return m_label; };
 	void active(bool act) {m_active = act;};
 	bool active() {return m_active;};
@@ -58,10 +59,26 @@ protected:
 	int m_command;
 	TTF_Font* m_font;	
 	SDL_Color m_textColor;
+	SDL_Color m_itemColor;
 	SDL_Surface* m_sText;
 	SDL_Rect m_mouseRect;
 	SDL_Rect m_destRectB;
 	bool m_displayText;
+	artThreadParms_t& m_artParms;
+	std::string m_artist;
+	std::string m_album;
+	std::string m_type;
+	std::string m_genre;
+	std::string m_track;
+	bool m_showInfo;
+	int m_counter;
+	SDL_Rect m_moveRect;
+	SDL_Surface* m_artistSurface;
+	SDL_Surface* m_albumSurface;
+	SDL_Surface* m_typeSurface;
+	SDL_Surface* m_genreSurface;
+	SDL_Surface* m_trackSurface;
+	int m_skipVal;
 };
 
 #endif

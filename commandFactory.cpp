@@ -94,14 +94,15 @@ int CommandFactory::checkRepeat(int command, int prevCommand, int curMode, int& 
 		if(m_keyDown == 9999) {
 			SDL_GetMouseState(&guiX, &guiY);
 			if(delayTime > DELAY && !m_mouseMove) {	
+cout << "here" << endl;
 				rc = processDelayKey(curMode);
 				m_repeating = true;
 				if(prevCommand != CMD_RIGHT && prevCommand != CMD_LEFT 
 						&& prevCommand != CMD_UP && prevCommand != CMD_DOWN
 						&& prevCommand != CMD_VOL_UP && prevCommand != CMD_VOL_DOWN) {
 					m_infiniteRepeat = false;
-					if(!m_infiniteRepeat) 
-						m_delayTimer.stop();
+					//if(!m_infiniteRepeat) 
+					//	m_delayTimer.stop();
 				}
 			} else {
 				rc = processMouseMove(command, curMode, guiX, guiY);

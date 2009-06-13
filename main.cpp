@@ -43,9 +43,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "plBrowser.h"
 #include "bookmarks.h"
 #include "playlist.h"
+#include "settings.h"
 #include "albumArt.h"
 #include "overlay.h"
 #include "nowPlaying.h"
+#include "fullPlaying.h"
 #include "buttonManager.h"
 #include "libmpdclient.h"
 #include "threadFunctions.h"
@@ -455,7 +457,7 @@ int main ( int argc, char** argv )
 			Bookmarks bookmarks(threadParms.mpd, screen, bg, font, mainRect, skipVal, numPerScreen, playlist, config, statsBar, keyboard);
 			ButtonManager buttonManager(threadParms.mpd, threadParms.lockConnection, screen, bg, config, volumeScale);
 			CommandFactory commandFactory(threadParms.mpd, volumeScale);
-	
+			PlayerSettings settings(threadParms.mpd, screen, bg, font, mainRect, config, skipVal, numPerScreen, gp2xRegs, keyboard);
 
 			int curMode = 0;	
 			int volume = 10;
@@ -492,8 +494,8 @@ int main ( int argc, char** argv )
 			artParms.doArtLoad = false;
 			artParms.done = false;
 			artParms.artSurface = NULL;	
-			artParms.destWidth = config.getItemAsNum("sk_art_image_width");
-			artParms.destHeight = config.getItemAsNum("sk_art_image_height");
+			artParms.destWidth = config.getItemAsNum("sk_full_art_width");
+			artParms.destHeight = config.getItemAsNum("sk_full_art_height");
 			artThread = SDL_CreateThread(loadAlbumArt, &artParms);
 			if(artThread == NULL) {
 				cout << "unable to create album art thread" << endl;
@@ -502,6 +504,7 @@ int main ( int argc, char** argv )
 
 
 			AlbumArt albumArt(threadParms.mpd, screen, bg, config, artRect, artParms);
+			FullPlaying fullPlaying(threadParms.mpd, screen, bg, font, mainRect, config, skipVal, numPerScreen, keyboard, artParms);
 
 			bool done = false;
 			bool killMpd = false;
@@ -752,8 +755,10 @@ int main ( int argc, char** argv )
 						mpd_finishCommand(threadParms.mpd);
 						break;
 					case CMD_TOGGLE_MODE:
+cout << "curMode " << curMode << endl;
 						++curMode;
-						if(curMode == 5)
+cout << "curMode " << curMode << endl;
+						if(curMode >= 5)
 							curMode = 0;
 						forceRefresh = true;
 						break;
@@ -794,6 +799,11 @@ int main ( int argc, char** argv )
 						curMode = 5;
 						forceRefresh = true;
 						break;
+					case CMD_MENU_SETTINGS:
+cout << "command menu stetet" << endl;
+						curMode = 5;
+						forceRefresh = true;
+						break;
 					case CMD_SHOW_OVERLAY:
 						overlayVisible = !overlayVisible;
 						forceRefresh = true;
@@ -804,7 +814,8 @@ int main ( int argc, char** argv )
 						popupVisible = showLaunchMenu(screen, popup, pwd, config);
 						break;
 					case CMD_SHOW_OPTIONS:
-						popupVisible = showOptionsMenu(screen, popup, config);
+						curMode = 10;
+						forceRefresh = true;
 						break;
 					case CMD_MPD_UPDATE: 
 						{
@@ -822,18 +833,23 @@ int main ( int argc, char** argv )
 						break;	
 					case CMD_SHOW_NP:
 						curMode = 2;
+						forceRefresh = true;
 						break;
 					case CMD_SHOW_PL:
 						curMode = 1;
+						forceRefresh = true;
 						break;
 					case CMD_SHOW_PLS:
 						curMode = 3;
+						forceRefresh = true;
 						break;
 					case CMD_SHOW_LIB:
 						curMode = 0;
+						forceRefresh = true;
 						break;
 					case CMD_SHOW_BKMRKS:
 						curMode = 4;
+						forceRefresh = true;
 						break;
 				}
 
@@ -866,6 +882,9 @@ int main ( int argc, char** argv )
 					}
 					browser.updateStatus(threadParms.mpdStatusChanged, 
 							threadParms.mpdStatus, songDbParms.updating);
+					fullPlaying.updateStatus(threadParms.mpdStatusChanged, 
+							threadParms.mpdStatus, rtmpdStatusChanged, rtmpdStatus, 
+							songDbParms.updating, repeatDelay);
 					plBrowser.updateStatus(threadParms.mpdStatusChanged, 
 							threadParms.mpdStatus);
 					bookmarks.updateStatus(threadParms.mpdStatusChanged, 
@@ -890,8 +909,9 @@ int main ( int argc, char** argv )
 
 							break;
 						case 2:
-							playlist.processCommand(command, rtmpdStatusChanged, rtmpdStatus, repeatDelay, volume, commandFactory.getHoldTime(), guiPos);
-							playlist.draw(forceRefresh, timePerFrame, overlayVisible||keyboardVisible);
+							//fullPlaying.processCommand(command, rtmpdStatusChanged, rtmpdStatus, repeatDelay, volume, commandFactory.getHoldTime(), guiPos);
+							fullPlaying.processCommand(command, guiPos, commandFactory.getHoldTime());
+							fullPlaying.draw(forceRefresh, timePerFrame, overlayVisible||keyboardVisible);
 
 							break;
 						case 3:
@@ -922,8 +942,28 @@ int main ( int argc, char** argv )
 							bookmarks.draw(forceRefresh, timePerFrame, overlayVisible||keyboardVisible);
 							break;
 						case 5:
-							
 							menu.draw(forceRefresh, timePerFrame, overlayVisible||keyboardVisible);
+							break;
+						case 10: 
+							{
+								rMode = settings.processCommand(command, guiPos);
+								if(rMode == CMD_SHOW_KEYBOARD) {
+									keyboardVisible = true;
+									forceRefresh = true;
+									settings.draw(forceRefresh, timePerFrame, overlayVisible||keyboardVisible);
+								} else if(rMode == CMD_HIDE_KEYBOARD) {
+									keyboardVisible = false;
+									forceRefresh = true;
+									settings.draw(forceRefresh, timePerFrame, overlayVisible||keyboardVisible);
+								} else if (rMode == CMD_MENU_SETTINGS) {
+									curMode = 5;
+									forceRefresh = true;
+									menu.draw(forceRefresh, timePerFrame, overlayVisible||keyboardVisible);
+								} else	{ 	
+									settings.draw(forceRefresh, timePerFrame, overlayVisible||keyboardVisible);
+								}
+							}
+							
 							break;
 						default: 
 							playlist.processCommand(command, rtmpdStatusChanged, rtmpdStatus, repeatDelay, volume, commandFactory.getHoldTime(), guiPos);

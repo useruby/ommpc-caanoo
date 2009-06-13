@@ -55,11 +55,13 @@ Menu::Menu(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* bg, TTF_Font* 
 
 
 	//CHANGE HERE WHEN ADDING ITEMS, right now it's 2 items
-	m_2ndRowOffset = (width-(m_colWidth*2))/2;
+	m_2ndRowOffset = (width-(m_colWidth*3))/2;
 	m_1stRowOffset2 = (width-(m_colWidth*3))/2;
+	m_1stRowOffset3 = (width-(m_colWidth*3))/2;
 
 	m_ySize1 = (height-(m_rowHeight*2))/2;
 	m_ySize2 = (height-(m_rowHeight))/2;
+	m_ySize3 = (height-(m_rowHeight))/2;
  
 	string skinName = m_config.getItem("skin");
 	m_drawIcons =  m_config.getItemAsNum("drawIcons");
@@ -106,6 +108,11 @@ void Menu::initItems(int command)
 				MenuButton butt5("Settings", "settings");
 				butt5.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, "np", CMD_MENU_SETTINGS, m_colWidth, m_rowHeight);
 				m_buttons.push_back(butt5);
+				
+				xOffset += m_colWidth;
+				MenuButton butt6("Exit", "exit");
+				butt6.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, "np", CMD_MENU_EXIT, m_colWidth, m_rowHeight);
+				m_buttons.push_back(butt6);
 
 				m_buttons[m_menu1Active].active(true);
 			}
@@ -127,6 +134,26 @@ void Menu::initItems(int command)
 				MenuButton butt2("Options", "options");
 				xOffset += m_colWidth;
 				butt2.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, "np", CMD_SHOW_OPTIONS, m_colWidth, m_rowHeight);
+				m_buttons.push_back(butt2);
+
+				m_buttons[m_menu2Active].active(true);
+			}
+			break;
+		case CMD_MENU_EXIT:
+			{
+				m_view = 1;
+				int xOffset = m_1stRowOffset3;
+				int yOffset = m_ySize3;
+				MenuButton butt0("Main Menu", "main");
+				butt0.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, "np", CMD_SHOW_MENU, m_colWidth, m_rowHeight);
+				m_buttons.push_back(butt0);
+
+				xOffset += m_colWidth;
+				MenuButton butt1("Detach Client", "detach");
+				butt1.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, "np", CMD_DETACH, m_colWidth, m_rowHeight); m_buttons.push_back(butt1); 
+				MenuButton butt2("Exit", "exit");
+				xOffset += m_colWidth;
+				butt2.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, "np", CMD_QUIT, m_colWidth, m_rowHeight);
 				m_buttons.push_back(butt2);
 
 				m_buttons[m_menu2Active].active(true);
@@ -213,6 +240,7 @@ int Menu::processCommand(int command, GuiPos& guiPos)
 		switch(rCommand) {
 			case CMD_SHOW_MENU:
 			case CMD_MENU_SETTINGS:
+			case CMD_MENU_EXIT:
 				initItems(rCommand);
 				m_refresh = true;
 				break;

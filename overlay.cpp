@@ -151,14 +151,10 @@ int Overlay::processCommand(int command, GuiPos& guiPos, bool visible)
 			if(command == CMD_CLICK) {
 				if(inRect(guiPos.curX, guiPos.curY, m_prevRect))
 					rCommand = CMD_PREV;
-				else if(inRect(guiPos.curX, guiPos.curY, m_rwRect))
-					rCommand = CMD_RW;
 				else if(inRect(guiPos.curX, guiPos.curY, m_playRect))
 					rCommand = CMD_PLAY_PAUSE;
 				else if(inRect(guiPos.curX, guiPos.curY, m_stopRect))
 					rCommand = CMD_STOP;
-				else if(inRect(guiPos.curX, guiPos.curY, m_ffRect))
-					rCommand = CMD_FF;
 				else if(inRect(guiPos.curX, guiPos.curY, m_nextRect))
 					rCommand = CMD_NEXT;
 				else if(inRect(guiPos.curX, guiPos.curY, m_menuRect))
@@ -167,7 +163,13 @@ int Overlay::processCommand(int command, GuiPos& guiPos, bool visible)
 					rCommand = CMD_QUIT;
 				else
 					rCommand = CMD_SHOW_OVERLAY;
+			} else if(command == CMD_HOLD_CLICK) {
+				if(inRect(guiPos.curX, guiPos.curY, m_rwRect))
+					rCommand = CMD_RW;
+				else if(inRect(guiPos.curX, guiPos.curY, m_ffRect))
+					rCommand = CMD_FF;
 			}
+		
 		} else {
 			if(command == CMD_CLICK) {
 				if(guiPos.curY > m_clickRect1.y 

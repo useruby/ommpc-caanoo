@@ -29,7 +29,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <SDL_ttf.h>
 #include "libmpdclient.h"
 #include "menuButton.h"
+#include "artButton.h"
 #include "scroller.h"
+#include "threadParms.h"
 
 class Config;
 class GuiPos;
@@ -38,14 +40,19 @@ class Keyboard;
 class FullPlaying  : public Scroller
 {
 public:
-    	FullPlaying(mpd_Connection* mpd, SDL_Surface* bg, SDL_Surface* screen, SDL_Rect& rect, Config& config, Keyboard& kb);
+	FullPlaying(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* bg, TTF_Font* font, 
+				SDL_Rect& rect,	Config& config, int skipVal, int numPerScreen, Keyboard& kb, 
+				artThreadParms_t& artParms);
 	
-	void updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus, bool updatingSongDb);
-	int processCommand(int command, GuiPos& guiPos);
+	void updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus,
+						int rtmpdStatusChanged, mpd_Status* rtmpdStatus, bool updatingSongDb,
+						int repeatDelay);
+	int processCommand(int command, GuiPos& guiPos, int delayTime);
 	void draw(bool forceRefresh, long timePerFrame, bool inBack);
 
 protected:
 	Keyboard& m_keyboard;
+	artThreadParms_t& m_artParms;
 	bool m_drawIcons;
 	MenuButton* m_playBtn;
 	MenuButton* m_pauseBtn;
@@ -54,7 +61,8 @@ protected:
 	MenuButton* m_ffBtn;
 	MenuButton* m_prevBtn;
 	MenuButton* m_nextBtn;
-	
+	ArtButton* m_artBtn;
+	int m_curElapsed;	
 };
 
 #endif
