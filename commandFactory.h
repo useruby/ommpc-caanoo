@@ -42,7 +42,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 					CMD_MPD_ADD_ALL, CMD_SHOW_OVERLAY, CMD_CLICK, CMD_LAUNCH_PROCESS,
 					CMD_SAVE_PL_KEYBOARD, CMD_SAVE_BKMRK_KEYBOARD, CMD_SAVE_PL_FROM_BROWSER,
 					CMD_SHOW_KEYBOARD, CMD_HIDE_KEYBOARD, CMD_POP_KEYBOARD, CMD_POP_CHG_OPTION,
-					CMD_FILTER_KEYBOARD, CMD_ADD_AS_PL, CMD_QUEUE, CMD_MOUSE_UP, CMD_MOUSE_DOWN, CMD_MOUSE_LEFT, CMD_MOUSE_RIGHT, CMD_HOLD_CLICK, CMD_SHOW_NP, CMD_SHOW_LIB, CMD_SHOW_PL, CMD_SHOW_PLS, CMD_SHOW_BKMRKS, CMD_MENU_SETTINGS, CMD_MENU_SELECT, CMD_MENU_EXIT, CMD_FLIP_ART} cmdTypes_t;
+					CMD_FILTER_KEYBOARD, CMD_ADD_AS_PL, CMD_QUEUE,
+CMD_MOUSE_UP, CMD_MOUSE_DOWN, CMD_MOUSE_LEFT, CMD_MOUSE_RIGHT,
+CMD_HOLD_CLICK, CMD_SHOW_NP, CMD_SHOW_LIB, CMD_SHOW_PL, CMD_SHOW_PLS,
+CMD_SHOW_BKMRKS, CMD_MENU_SETTINGS, CMD_MENU_SELECT, CMD_MENU_EXIT,
+CMD_FLIP_ART, CMD_POP_HELP} cmdTypes_t;
 
 class CommandFactory
 {
@@ -52,6 +56,7 @@ public:
 	int getCommandWhileLocked(bool keysHeld[], int curMode, int& timer, bool popupVisible, long delayTime);
 
 	int keyDown(int key, int curMode);
+	int keyPopup(int key, int curMode, int command);
 	int keyUp(int key, int curMode);
 	int mouseDown(int curMode, int guiX=0, int guiY=0);
 	int mouseUp(int curMode, int guiX=0, int guiY=0);
@@ -74,9 +79,12 @@ protected:
 	mpd_Connection* m_mpd;
 
 	int m_keyDown;
+	int m_keyDown2;
+	bool m_combo;
 	Timer m_delayTimer;
 	std::map<std::string, std::vector<int> > m_keys;
 	std::map<std::string, std::vector<int> > m_holdKeys;
+	std::map<std::string, std::vector<std::pair<int, int> > > m_comboKeys;
 	bool m_repeating;
 	bool m_infiniteRepeat;
 	int m_prevX;

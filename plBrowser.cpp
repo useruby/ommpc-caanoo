@@ -188,7 +188,7 @@ int PLBrowser::processCommand(int command, int curMode, GuiPos& guiPos)
 						newMode = 1;
 					}
 					break;
-				case CMD_PAUSE:
+				case CMD_PLAY_PAUSE:
 					if(m_curState == MPD_STATUS_STATE_PAUSE) {
 						m_curState = MPD_STATUS_STATE_PLAY;	
 						mpd_sendPauseCommand(m_mpd, 0);

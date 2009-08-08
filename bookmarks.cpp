@@ -25,6 +25,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "commandFactory.h"
 #include "playlist.h"
 #include "keyboard.h"
+#include "buttonManager.h"
 #include "config.h"
 #include "statsBar.h"
 #include "guiPos.h"
@@ -36,11 +37,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <sys/stat.h>
 using namespace std;
 
-Bookmarks::Bookmarks(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* bg, TTF_Font* font, SDL_Rect& rect, int skipVal, int numPerScreen, Playlist& pl, Config& config, StatsBar& sb, Keyboard& kb)
+Bookmarks::Bookmarks(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* bg, TTF_Font* font, SDL_Rect& rect, int skipVal, int numPerScreen, Playlist& pl, Config& config, StatsBar& sb, ButtonManager& bm, bool classicStatsBar, Keyboard& kb)
 : Scroller(mpd, screen, bg, font, rect, config, skipVal, numPerScreen)
 , m_playlist(pl)
 , m_sb(sb)
+, m_bm(bm)
 , m_keyboard(kb)
+, m_classicStatsBar(classicStatsBar)
 {
 	char pwd[129];
 	getcwd(pwd, 128);
@@ -117,7 +120,12 @@ void Bookmarks::updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus)
 void Bookmarks::doSave()
 {
 	string curMpdPath;
-	int curTime = m_sb.elapsedTime();
+	int curTime; 
+	if(m_classicStatsBar)
+		curTime = m_sb.elapsedTime();
+	else
+		curTime = m_bm.elapsedTime();
+
 	string bfile = m_curDir+m_keyboard.getText()+".bkmrk";
 	ofstream out(bfile.c_str(), ios::out| ios::trunc);
    
@@ -171,8 +179,15 @@ int Bookmarks::processCommand(int command, GuiPos& guiPos)
 					case CMD_LOAD_BKMRK:
 						if(m_curItemName == m_config.getItem("LANG_CREATE_BKMRK")) {
 							string curTitle = m_playlist.nowPlayingTitle();
-							string formattedTime = m_sb.formattedElapsedTime();
-							int curTime = m_sb.elapsedTime();
+							string formattedTime;
+							int curTime;
+							if(m_classicStatsBar) {	
+								curTime = m_sb.elapsedTime();
+								formattedTime = m_sb.formattedElapsedTime();
+							} else {
+								curTime = m_bm.elapsedTime();
+								formattedTime = m_bm.formattedElapsedTime();
+							}
 							string bfile = curTitle+"_"+formattedTime;
 							m_keyboard.init(CMD_SAVE_BKMRK, bfile);
 							newMode = CMD_SHOW_KEYBOARD;	
@@ -200,7 +215,7 @@ int Bookmarks::processCommand(int command, GuiPos& guiPos)
 							}
 						}
 						break;
-					case CMD_PAUSE:	
+					case CMD_PLAY_PAUSE:	
 						if(m_curState == MPD_STATUS_STATE_PAUSE) {
 							m_curState = MPD_STATUS_STATE_PLAY;	
 							mpd_sendPauseCommand(m_mpd, 0);

@@ -88,7 +88,6 @@ void PlayerSettings::initItemIndexLookup() {
 		m_itemIndexLookup.push_back(index);
 		if(index > m_optionsIters.size())
 			skipVal = m_skipVal;
-cout << "i  " << index << " skip val " << skipVal << endl;
 		if(skipCount >= (skipVal)) {
 			++index;
 			skipCount = 0;
@@ -366,7 +365,6 @@ int PlayerSettings::processCommand(int command, GuiPos& guiPos)
 		if(guiPos.curY > m_clearRect.y && (guiPos.curY < m_clearRect.y + m_clearRect.h))	 {
 			if(guiPos.curX < (m_clearRect.w+m_clearRect.x)) {
 				m_curItemNum = m_topItemNum + m_itemIndexLookup[guiPos.curY];		
-cout << "select action " << m_curItemNum << "   command  " << command << endl;
 				if(m_curItemNum > m_listing.size())
 					m_curItemNum = m_listing.size() -1;
 				if(m_curItemNum < 5) {
@@ -389,7 +387,6 @@ cout << "select action " << m_curItemNum << "   command  " << command << endl;
 	}
 	switch (command) {
 		case CMD_POP_SELECT:
-				cout << m_curItemNum << "   sele   " << selectedAction() << endl;;
 				if(m_curItemNum >4 && m_curItemNum <9) {
 					m_keyboard.init(CMD_POP_CHG_OPTION, getSelOptionText());
 					rCommand = CMD_SHOW_KEYBOARD;

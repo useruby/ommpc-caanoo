@@ -141,10 +141,10 @@ bool Overlay::inRect(int x, int y, SDL_Rect& rect)
 		return false;
 }
 
-int Overlay::processCommand(int command, GuiPos& guiPos, bool visible)
+int Overlay::processCommand(int command, GuiPos& guiPos, bool visible, int curMode)
 {
 	int rCommand = command;
-	if(command > 0) {
+	if(command > 0 && curMode != 5 && curMode != 2) {
 		if(visible) {
 			m_refresh = true;
 

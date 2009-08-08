@@ -52,6 +52,7 @@ Popup::Popup(mpd_Connection* mpd, SDL_Surface* screen, Config& config, SDL_Rect&
 , m_borderRect(rect)
 , m_gp2xRegs(gp2xRegs)
 , m_keyboard(kb)
+, m_globalKeys(false)
 {
 	m_borderRect.x = m_clearRect.x-1;
 	m_borderRect.y = m_clearRect.y-1;
@@ -424,7 +425,7 @@ int Popup::processCommand(int command, GuiPos& guiPos)
 	switch (command) {
 		case CMD_POP_SELECT:
 			if(m_type == POPUP_OPTIONS)	 {
-				cout << m_curItemNum << endl;
+				//cout << m_curItemNum << endl;
 				if(m_curItemNum >4 && m_curItemNum <9) {
 					rCommand = CMD_POP_KEYBOARD;
 				} 

@@ -72,6 +72,11 @@ void SeekButton::init(Config& config)
 	config.getItemAsColor("sk_seek_textColor", m_textColor.r, m_textColor.g, m_textColor.b);
 } 
 
+int SeekButton::elapsedTime()
+{
+	return m_elapsedSeconds;
+}
+
 void SeekButton::updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus,
 						int rtmpdStatusChanged, mpd_Status* rtmpdStatus, bool forceRefresh)
 {

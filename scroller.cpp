@@ -64,7 +64,6 @@ Scroller::Scroller(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* bg, TT
 	m_downClearRect.w = 25;
 	m_downClearRect.y = rect.y+rect.h-25;
 	m_downClearRect.h = 25;
-cout << m_skipVal << endl;
 	m_config.getItemAsColor("sk_popup_itemColor", m_pauseItemColor.r, m_pauseItemColor.g, m_pauseItemColor.b);
 	
 	string skinName = m_config.getItem("skin");

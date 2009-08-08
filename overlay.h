@@ -43,7 +43,7 @@ public:
 							int rtmpdStatusChanged, mpd_Status* rtmpdStatus, int repeatDelay);
 	void draw(bool forceUpdate);
 	bool inRect(int x, int y, SDL_Rect& rect);
-	int processCommand(int command, GuiPos& guiPos, bool visible);
+	int processCommand(int command, GuiPos& guiPos, bool visible, int curMode);
 protected:
 	
 	mpd_Connection* m_mpd;

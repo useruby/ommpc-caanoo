@@ -45,7 +45,8 @@ public:
 	enum {POPUP_LIST, POPUP_CONFIRM, POPUP_MENU, POPUP_OPTIONS}; // popup types
 	enum {POPUP_CANCEL, POPUP_SAVE_PL, POPUP_LAUNCH, POPUP_DETACH, 
 				  POPUP_EXIT, POPUP_DO_SAVE_PL, POPUP_DO_LAUNCH, POPUP_SHOW_OPTIONS, 
-				  POPUP_SAVE_OPTIONS, POPUP_MPD_UPDATE, POPUP_BKMRK, POPUP_MPD_ADD_ALL}; //popup action
+				  POPUP_SAVE_OPTIONS, POPUP_MPD_UPDATE, POPUP_BKMRK,
+POPUP_MPD_ADD_ALL, POPUP_SHOW_GLOBAL}; //popup action
 	Popup(mpd_Connection* mpd, SDL_Surface* screen, Config& config, SDL_Rect& rect,
 				int skipVal, int numPerScreen, GP2XRegs& gp2xregs, Keyboard& kb);
 	
@@ -62,6 +63,8 @@ public:
 	virtual void initItemIndexLookup();
 	void updateMpdConf();
 	std::string getSelOptionText();
+	void toggleHelpView(){m_globalKeys = !m_globalKeys;}
+	bool showGlobalKeys(){ return m_globalKeys;}
 protected:
 	
 	GP2XRegs& m_gp2xRegs;
@@ -75,6 +78,7 @@ protected:
 	SDL_Color m_borderColor;
 	SDL_Color m_backColor;
 	int m_type;
+	bool m_globalKeys;
 
 	//for options menu
 	optionsText_t m_optionsText;

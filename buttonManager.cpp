@@ -144,3 +144,19 @@ void ButtonManager::draw(bool forceRefresh, long timePerFrame, bool inBack)
 	if(m_seekBtn)
 		m_seekBtn->draw(m_screen, m_bg, forceRefresh, timePerFrame, inBack);
 }
+
+string ButtonManager::formattedElapsedTime() 
+{
+	ostringstream out;
+	int elapsedSeconds = m_seekBtn->elapsedTime();
+	int mins = elapsedSeconds/60;
+	int seconds = elapsedSeconds - (mins*60);
+	out << setfill('0') << setw(3) << mins << "_" << setw(2)<< seconds;
+	string elapsed = out.str();
+	return elapsed;
+}
+
+int ButtonManager::elapsedTime() 
+{
+	return m_seekBtn->elapsedTime();
+}

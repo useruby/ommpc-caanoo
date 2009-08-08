@@ -30,12 +30,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 using namespace std;
 CommandFactory::CommandFactory(mpd_Connection* mpd, vector<int>& volScale)
 : m_keyDown(-1)
+, m_keyDown2(-1)
 , m_volScale(volScale)
 , m_mouseMove(false)
 , m_repeating(false)
 , m_infiniteRepeat(false)
 , m_prevX(0)
 , m_prevY(0)
+, m_combo(false)
 {
 	m_delayTimer.stop();
     ifstream configFile("keys", ios::in);
@@ -63,9 +65,15 @@ int CommandFactory::keyDown(int key, int curMode)
 		command = processKeyDown(curMode);			
 	} else if (m_keyDown != key) {
 		//do processing for key combo
-		command = processKeyCombo(key, curMode);
+		m_keyDown2 = key;
+		m_combo = true;
+		command = processKeyUp(curMode);
 		m_keyDown = -1;
+		m_keyDown2 = -1;
 		m_delayTimer.stop();
+		m_repeating = false;
+		m_mouseMove = false;
+		m_combo = false;
 	} else { //same key still down
 	}
 
@@ -94,7 +102,6 @@ int CommandFactory::checkRepeat(int command, int prevCommand, int curMode, int& 
 		if(m_keyDown == 9999) {
 			SDL_GetMouseState(&guiX, &guiY);
 			if(delayTime > DELAY && !m_mouseMove) {	
-cout << "here" << endl;
 				rc = processDelayKey(curMode);
 				m_repeating = true;
 				if(prevCommand != CMD_RIGHT && prevCommand != CMD_LEFT 
@@ -114,7 +121,7 @@ cout << "here" << endl;
 			m_repeating = true;
 			if(!m_infiniteRepeat) 
 				m_delayTimer.stop();
-		}
+		} 
 
 	}
 	
@@ -133,6 +140,22 @@ int CommandFactory::keyUp(int key, int curMode)
 	m_mouseMove = false;
 	m_delayTimer.stop();
 	return command;
+}
+
+int CommandFactory::keyPopup(int key, int curMode, int command)
+{
+	int rCommand = command;
+	if(m_keyDown == key && !m_repeating) {
+		//do processing for key
+		if(checkKey("MENU_SELECT")) { 
+			rCommand = CMD_POP_SELECT;
+		}
+	}
+	m_keyDown = -1;
+	m_repeating = false;
+	m_mouseMove = false;
+	m_delayTimer.stop();
+	return rCommand;
 }
 
 int CommandFactory::mouseUp(int curMode, int guiX, int guiY)
@@ -224,6 +247,8 @@ int CommandFactory::processKeyUp(int curMode)
 		command = CMD_POP_SELECT;
 	} else if(checkKey("MENU_CANCEL")) {
 		command = CMD_POP_CANCEL;
+	} else if(checkKey("MENU_HELP")) {
+		command = CMD_POP_HELP;
 	}
 	switch(curMode) {
 		case 0: //Library
@@ -244,6 +269,7 @@ int CommandFactory::processKeyUp(int curMode)
 			}
 		break;
 		case 1: //Playlist
+		case 2: //Playing
 			if(checkKey("PL_PLAY_PAUSE")) {
 				command = CMD_PLAY_PAUSE;
 			} else if(checkKey("PL_STOP")) {
@@ -270,7 +296,7 @@ int CommandFactory::processKeyUp(int curMode)
 				command = CMD_QUEUE;
 			}
 		break;
-		case 2: //PL browser
+		case 3: //PL browser
 			if(checkKey("PLBROWSE_SELECT")) {
 				command = CMD_LOAD_PL;
 			} else if(checkKey("PLBROWSE_PLAY_PAUSE")) {
@@ -283,7 +309,7 @@ int CommandFactory::processKeyUp(int curMode)
 				command = CMD_DEL_PL;
 			}
 		break;
-		case 3: //Bookmarks
+		case 4: //Bookmarks
 			if(checkKey("BOOKMRK_SELECT")) {
 				command = CMD_LOAD_BKMRK;
 			} else if(checkKey("BOOKMRK_PLAY_PAUSE")) {
@@ -294,7 +320,7 @@ int CommandFactory::processKeyUp(int curMode)
 				command = CMD_DEL_BKMRK;
 			}
 		break;
-		case 4: //menu
+		case 5: //menu
 			if(checkDelayKey("MENU_SELECT")) {
 				command = CMD_MENU_SELECT;
 			}
@@ -364,6 +390,7 @@ int CommandFactory::processDelayKey(int curMode)
 			}
 		break;
 		case 1: //Playlist
+		case 2: //Playing
 			if(checkDelayKey("PL_PLAY_PAUSE")) {
 				command = CMD_PLAY_PAUSE;
 			} else if(checkDelayKey("PL_STOP")) {
@@ -392,7 +419,7 @@ int CommandFactory::processDelayKey(int curMode)
 				command = CMD_QUEUE;
 			}
 		break;
-		case 2: //PL browser
+		case 3: //PL browser
 			if(checkDelayKey("PLBROWSE_SELECT")) {
 				command = CMD_LOAD_PL;
 			} else if(checkDelayKey("PLBROWSE_PLAY_PAUSE")) {
@@ -405,7 +432,7 @@ int CommandFactory::processDelayKey(int curMode)
 				command = CMD_DEL_PL;
 			}
 		break;
-		case 3: //Bookmarks
+		case 4: //Bookmarks
 			if(checkDelayKey("BOOKMRK_SELECT")) {
 				command = CMD_LOAD_BKMRK;
 			} else if(checkDelayKey("BOOKMRK_PLAY_PAUSE")) {
@@ -416,7 +443,7 @@ int CommandFactory::processDelayKey(int curMode)
 				command = CMD_DEL_BKMRK;
 			}
 		break;
-		case 4: //menu
+		case 5: //menu
 			if(checkDelayKey("MENU_SELECT")) {
 				command = CMD_MENU_SELECT;
 			}
@@ -450,14 +477,30 @@ bool CommandFactory::checkDelayKey(string keyName)
 bool CommandFactory::checkKey(string keyName)
 {
 	bool rc = false;
-	map<string, vector<int> >::iterator findIter;
-	findIter = m_keys.find(keyName);
-	if(findIter != m_keys.end()) {
-		for(vector<int>::iterator vIter = (*findIter).second.begin();
-				vIter != (*findIter).second.end();
-				++vIter) {
-			if((*vIter) == m_keyDown)
-				rc = true;
+	if(!m_combo) {
+		map<string, vector<int> >::iterator findIter;
+		findIter = m_keys.find(keyName);
+		if(findIter != m_keys.end()) {
+			for(vector<int>::iterator vIter = (*findIter).second.begin();
+					vIter != (*findIter).second.end();
+					++vIter) {
+				if((*vIter) == m_keyDown)
+					rc = true;
+			}
+		}
+	} else {
+		map<string, vector<pair<int, int> > >::iterator findIter;
+		findIter = m_comboKeys.find(keyName);
+		if(findIter != m_comboKeys.end()) {
+			for(vector<pair<int, int> >::iterator vIter = (*findIter).second.begin();
+					vIter != (*findIter).second.end();
+					++vIter) {
+				if((*vIter).first == m_keyDown 
+						&& (*vIter).second == m_keyDown2 ||
+					(*vIter).first == m_keyDown2 
+						&& (*vIter).second == m_keyDown )
+					rc = true;
+			}
 		}
 	}
 	return rc;
@@ -466,6 +509,7 @@ bool CommandFactory::checkKey(string keyName)
 void CommandFactory::processValue(string item, string value)
 {
 	bool holdValue = false;
+	bool comboValue = false;
 	bool both = false;
 	size_t lastPos = 0;
 	size_t pos;
@@ -473,14 +517,22 @@ void CommandFactory::processValue(string item, string value)
 	int pass = 1;
 	while(pos != string::npos || pass == 1) {
 		string curValue; 
+		string curValue2; 
 		if(pos == string::npos)
 			curValue = value;
 		else	
 			curValue = value.substr(lastPos,  pos-lastPos);
 		int insertVal = 0;	
+		int insertVal2 = 0;	
 		if(curValue.substr(0, 5) == "HOLD_") {
 			curValue = curValue.substr(5);
 			holdValue = true;
+		}
+		if(curValue.find("+") != string::npos) {
+			int pos = curValue.find("+");
+			curValue2 = curValue.substr(pos+1);
+			curValue = curValue.substr(0, pos);
+			comboValue = true;
 		}
 		if(item == "RIGHT" || item == "LEFT" || item == "UP" || item == "DOWN"
 			|| item == "VOL_UP" || item == "VOL_DOWN") {
@@ -557,28 +609,115 @@ void CommandFactory::processValue(string item, string value)
 			insertVal = SDLK_SPACE;
 		else
 			insertVal = curValue[0];
+	//repeat for possible combo	
+		if(curValue2 == "GAME_B") {
+#ifdef GP2X
+			insertVal2 = GP2X_VK_FB;
+#endif
+		} else if(curValue2 == "GAME_A") {
+#ifdef GP2X
+			insertVal2 = GP2X_VK_FA;
+#endif
+		} else if(curValue2 == "GAME_X") {
+#ifdef GP2X
+			insertVal2 = GP2X_VK_FX;
+#endif
+		} else if(curValue2 == "GAME_Y") {
+#ifdef GP2X
+			insertVal2 = GP2X_VK_FY;
+#endif
+		} else if(curValue2 == "GAME_L") {
+#ifdef GP2X
+			insertVal2 = GP2X_VK_FL;
+#endif
+		} else if(curValue2 == "GAME_R") {
+#ifdef GP2X
+			insertVal2 = GP2X_VK_FR;
+#endif
+		} else if(curValue2 == "GAME_START") {
+#ifdef GP2X
+			insertVal2 = GP2X_VK_START;
+#endif
+		} else if(curValue2 == "GAME_SELECT") {
+#ifdef GP2X
+			insertVal2 = GP2X_VK_SELECT;
+#endif
+		} else if(curValue2 == "GAME_VOL_UP") {
+#ifdef GP2X
+			insertVal2 = GP2X_VK_VOL_UP;
+#endif
+		} else if(curValue2 == "GAME_VOL_DOWN") {
+#ifdef GP2X
+			insertVal2 = GP2X_VK_VOL_DOWN;
+#endif
+		} else if(curValue2 == "GAME_UP") {
+#ifdef GP2X
+			insertVal2 = GP2X_VK_UP;
+#endif
+		} else if(curValue2 == "GAME_DOWN") {
+#ifdef GP2X
+			insertVal2 = GP2X_VK_DOWN;
+#endif
+		} else if(curValue2 == "GAME_LEFT") {
+#ifdef GP2X
+			insertVal2 = GP2X_VK_LEFT;
+#endif
+		} else if(curValue2 == "GAME_RIGHT") {
+#ifdef GP2X
+			insertVal2 = GP2X_VK_RIGHT;
+#endif
+		} 
+		else if(curValue2 == "Escape")
+			insertVal2 = SDLK_ESCAPE;
+		else if(curValue2 == "Right")
+			insertVal2 = SDLK_RIGHT;
+		else if(curValue2 == "Left")
+			insertVal2 = SDLK_LEFT;
+		else if(curValue2 == "Up")
+			insertVal2 = SDLK_UP;
+		else if(curValue2 == "Down")
+			insertVal2 = SDLK_DOWN;
+		else if(curValue2 == "Space")
+			insertVal2 = SDLK_SPACE;
+		else
+			insertVal2 = curValue2[0];
 
 		if(pass == 1) {
-			vector<int> tmp;
-			tmp.push_back(insertVal);
-			if(holdValue || both) {
-				m_holdKeys.insert(make_pair(item, tmp));
-			}
-			if(!holdValue || both)
-				m_keys.insert(make_pair(item, tmp));
+			if(!comboValue) {
+				vector<int> tmp;
+				tmp.push_back(insertVal);
+				if(holdValue || both) {
+					m_holdKeys.insert(make_pair(item, tmp));
+				}
+				if(!holdValue || both)
+					m_keys.insert(make_pair(item, tmp));
+			} else {
+				vector<pair<int,int> > tmp;
+				tmp.push_back(make_pair(insertVal, insertVal2));
+				m_comboKeys.insert(make_pair(item, tmp));
+			}	
 		}
 		else {
-			map<string, vector<int> >::iterator findIter;
-		
-			if(holdValue || both) {
-				findIter = m_holdKeys.find(item);
-				if(findIter != m_holdKeys.end())
-					(*findIter).second.push_back(insertVal);
-			}
-			if(!holdValue || both){
-				findIter = m_keys.find(item);
-				if(findIter != m_keys.end())
-					(*findIter).second.push_back(insertVal);
+			if(!comboValue) {
+				map<string, vector<int> >::iterator findIter;
+
+				if(holdValue || both) {
+					findIter = m_holdKeys.find(item);
+					if(findIter != m_holdKeys.end())
+						(*findIter).second.push_back(insertVal);
+				}
+				if(!holdValue || both){
+					findIter = m_keys.find(item);
+					if(findIter != m_keys.end())
+						(*findIter).second.push_back(insertVal);
+				}
+			} else {
+				map<string, vector<pair<int,int> > >::iterator findIter;
+				findIter = m_comboKeys.find(item);
+				if(findIter != m_comboKeys.end())
+					(*findIter).second.push_back(
+									make_pair(insertVal,insertVal2));
+
 			}
 		}
 		++pass;	

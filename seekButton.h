@@ -44,6 +44,7 @@ public:
 					  bool forceRefresh);
 	int processCommand(int command, GuiPos& guiPos, mpd_Connection* mpd);
 	virtual void draw(SDL_Surface* screen, SDL_Surface* bg, bool forceRefresh, long timePerFrame, bool inBack);
+	int elapsedTime();
 protected:
 	std::string formattedTime(int time);
 	std::string formattedRemaining(int time);

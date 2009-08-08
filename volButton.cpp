@@ -63,7 +63,7 @@ void VolButton::init(Config& config, vector<int>& volScale)
 		m_softVol = false;
 
 	SDL_Surface * tmpBack = IMG_Load(string("skins/"+config.getItem("skin")+"/"+
-				config.getItem(btnName+"_backBig")).c_str());
+				m_name+"_backBig.png").c_str());
 	if (!tmpBack) {
 		printf("Unable to load big vol button image: %s\n", SDL_GetError());
 	} else {
@@ -75,7 +75,7 @@ void VolButton::init(Config& config, vector<int>& volScale)
 	}
 	
 	tmpBack = IMG_Load(string("skins/"+config.getItem("skin")+"/"+
-				config.getItem(btnName+"_foreBig")).c_str());
+				m_name+"_foreBig.png").c_str());
 	if (!tmpBack) {
 		printf("Unable to load big vol button image: %s\n", SDL_GetError());
 	} else {
@@ -132,11 +132,12 @@ int VolButton::processCommand(int command, GuiPos& guiPos)
 				&& guiPos.curX < m_destRect.x + m_width
 				&& guiPos.curY > m_destRect.y 
 				&& guiPos.curY < m_destRect.y + m_destRect.h) {
-			
+		/*	
 				if(guiPos.curX < (m_destRect.x + m_width)/2)
 					rCommand = CMD_VOL_DOWN;
 				else
 					rCommand = CMD_VOL_UP;
+		*/
 
 			}
 		}
@@ -169,6 +170,7 @@ int VolButton::processCommand(int command, GuiPos& guiPos)
 						command = CMD_VOL_DOWN;
 					else
 						command = CMD_VOL_UP;
+					m_refresh = true;
 				}
 			}
 		}
@@ -180,12 +182,12 @@ int VolButton::processCommand(int command, GuiPos& guiPos)
 
 void VolButton::draw(SDL_Surface* screen, SDL_Surface* bg, bool forceRefresh)
 {
-	//clear this portion of the screen 
+		
 	Button::draw(screen, bg, forceRefresh);
 /*
 	if(m_showBig && (forceRefresh || m_refresh)) {
 		SDL_SetClipRect(screen, &m_clearRectBig);
-//		SDL_BlitSurface(bg, &m_clearRectBig, screen, &m_clearRectBig);
+		SDL_BlitSurface(bg, &m_clearRectBig, screen, &m_clearRectBig);
 		cout << "dst " << m_destRectBig.h << endl;
 		if(m_backImageBig != NULL)
 			SDL_BlitSurface(m_backImageBig, NULL, screen, &m_clearRectBig );
@@ -193,6 +195,9 @@ void VolButton::draw(SDL_Surface* screen, SDL_Surface* bg, bool forceRefresh)
 			SDL_BlitSurface(m_foreImageBig, &m_srcRectBig, screen, &m_destRectBig );
  	
 		m_refresh = false;
+	} else {
+	//clear this portion of the screen 
+
 	}
 */
 }

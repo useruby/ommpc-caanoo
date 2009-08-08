@@ -50,6 +50,8 @@ public:
 					  bool forceRefresh);
 	int processCommand(int command, GuiPos& guiPos);
 	void draw(bool forceRefresh, long timePerFrame, bool inBack);
+	std::string formattedElapsedTime();
+	int elapsedTime();
 protected:
 	
 	mpd_Connection* m_mpd;
