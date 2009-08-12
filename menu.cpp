@@ -226,6 +226,7 @@ int Menu::processCommand(int command, GuiPos& guiPos)
 						m_buttons[m_menu2Active].active(false);
 						m_menu2Active = curItem;
 					}
+					m_refresh = true;
 				}
 			}
 			++curItem;

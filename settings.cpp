@@ -402,11 +402,14 @@ int PlayerSettings::processCommand(int command, GuiPos& guiPos)
 					m_curItemNum = m_listing.size() -1;
 				if(m_curItemNum < 5) {
 					rCommand = 0;
+					m_refresh = true;
 				} else if(m_curItemNum < 9) {
 					m_keyboard.init(CMD_POP_CHG_OPTION, getSelOptionText());
 					rCommand = CMD_SHOW_KEYBOARD;
+					m_refresh = true;
 				} else  {
 					command = CMD_POP_SELECT;
+					m_refresh = true;
 				}	
 			} else if(guiPos.curX > (m_clearRect.w+m_clearRect.x)) {
 					if(m_curItemNum == m_topItemNum + m_itemIndexLookup[guiPos.curY]) {	
@@ -414,6 +417,7 @@ int PlayerSettings::processCommand(int command, GuiPos& guiPos)
 							command = CMD_LEFT;
 						else
 							command = CMD_RIGHT;
+						m_refresh = true;
 					}
 			}
 		} 
@@ -436,6 +440,7 @@ int PlayerSettings::processCommand(int command, GuiPos& guiPos)
 			break;
 		case CMD_POP_CHG_OPTION:
 			(*m_optionsIters[m_curItemNum]) = m_keyboard.getText();
+			m_refresh = true;
 			break;
 		case CMD_DOWN:
 			++Scroller::m_curItemNum;
@@ -444,6 +449,7 @@ int PlayerSettings::processCommand(int command, GuiPos& guiPos)
 			} else 	if(Scroller::m_curItemNum >= Scroller::m_numPerScreen+Scroller::m_topItemNum) {
 				++Scroller::m_topItemNum;
 			}
+			m_refresh = true;
 			rCommand = 0;
 			break;
 		case CMD_UP:
@@ -455,6 +461,7 @@ int PlayerSettings::processCommand(int command, GuiPos& guiPos)
 				m_curItemNum = m_lastItemNum;
 				m_topItemNum = m_curItemNum - m_numPerScreen+1;			
 			}
+			m_refresh = true;
 			rCommand = 0;
 			break;
 		case CMD_LEFT:
@@ -463,12 +470,14 @@ int PlayerSettings::processCommand(int command, GuiPos& guiPos)
 				else
 					m_optionsIters[m_curItemNum]--;
 				rCommand = 0;
+			m_refresh = true;
 			break;
 		case CMD_RIGHT:
 				m_optionsIters[m_curItemNum]++;
 				if (m_optionsIters[m_curItemNum] == m_optionsText[m_curItemNum].end())
 					m_optionsIters[m_curItemNum] = m_optionsText[m_curItemNum].begin();
 				rCommand = 0;
+			m_refresh = true;
 			break;
 	}
 
@@ -499,7 +508,7 @@ void PlayerSettings::draw(bool forceRefresh, long timePerFrame, bool inBack)
 		SDL_BlitSurface(m_plSurfaceText,NULL, m_screen, &m_destRect );
 		m_destRect.y += m_skipVal*2;
 		m_curItemClearRect.y += m_skipVal*2;
-	{
+		{
 			m_selectedOptions.clear();
 
 			m_selectedOptions.push_back((*m_optionsIters[0]));
@@ -514,6 +523,8 @@ void PlayerSettings::draw(bool forceRefresh, long timePerFrame, bool inBack)
 				
 			Scroller::draw(m_selectedOptions);
 		}
+		cout << "refreshing" << endl;
+		m_refresh = false;
 	}
 }
 

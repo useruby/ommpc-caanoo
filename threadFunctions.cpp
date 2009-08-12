@@ -30,6 +30,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "unistd.h"
 #include <dirent.h>
+#include <sys/stat.h>
 
 using namespace std;
 
@@ -152,48 +153,52 @@ int loadAlbumArt(void* data)
 			SDL_FreeSurface(artParms->artSurface);
 			SDL_Surface* tmp;
 			string file = artParms->songFile;
+			string pngFile = "";
+			string jpgFile = "";
 			string dir;
-			int pos = file.rfind(".");;
+			int pos = file.rfind(".");
 			if(pos != string::npos) {
-				file = file.substr(0, pos+1) + "jpg";
+				jpgFile = file.substr(0, pos+1) + "jpg";
+				pngFile = file.substr(0, pos+1) + "png";
 			}
 			pos = file.rfind("/");;
 			if(pos != string::npos) {
-				 dir = file.substr(0, pos+1);
+				dir = file.substr(0, pos+1);
+				jpgFile = jpgFile.substr(pos+1);
+				pngFile = pngFile.substr(pos+1);
 			}
 				
 			//AlbumArt.jpg
 			//AlbumArtSmall.jpg
 			//Folder.jpg
 		
-			bool goodArt = false;	
-			if(!goodArt) {
-				tmp  = IMG_Load((dir + "AlbumArt.jpg").c_str());	
-				if(!tmp)
-					cout << "Can't find " << dir << "AlbumArt.jpg" << endl;
-				else 
+			bool goodArt = false;
+			string artName = "";	
+			struct stat s;
+			std::string imagesTmp[] = {"cover.jpg", "cover.png", "folder.jpg", "folder.png",
+									"Cover.jpg", "Cover.png", "Folder.jpg", "Folder.png",
+									jpgFile, pngFile, "AlbumArt.jpg", "albumart.jpg", "AlbumArt.png",
+									"albumart.png", "AlbumArtSmall.jpg", "albumartsmall.jpg",
+									"AlbumArtSmall.png", "albumartsmall.png"};	
+			std::vector<std::string> images(imagesTmp, imagesTmp+18);
+
+			for(std::vector<std::string>::iterator imgIter = images.begin();
+				imgIter != images.end() && !goodArt;
+				++imgIter) {
+				std::string curImage = dir+(*imgIter);
+				if (stat(curImage.c_str(), &s) < 0) {
+					cout << "Can't find " << curImage << endl;
+				} else {
 					goodArt = true;
+					artName = curImage;
+				}
 			}
 			if(!goodArt) {
-				tmp  = IMG_Load((dir + "AlbumArtSmall.jpg").c_str());	
-				if(!tmp)
-					cout << "Can't find " << dir << "AlbumArtSmall.jpg" << endl;
-				else 
-					goodArt = true;
-			}
-			if(!goodArt) {
-				tmp  = IMG_Load((dir + "Folder.jpg").c_str());	
-				if(!tmp)
-					cout << "Can't find " << dir << "Folder.jpg" << endl;
-				else 
-					goodArt = true;
-			}
-			if(!goodArt) {
-				tmp  = IMG_Load(file.c_str());	
-				if(!tmp)
-					cout << "Can't find "  << file << endl;
-				else 
-					goodArt = true;
+				tmp  = IMG_Load(artName.c_str());	
+				if(!tmp) {
+					cout << "Failed Image Load of "  << artName << endl;
+					goodArt = false;
+				}
 			}
 			//last resort...just pull the first jpg in the folder...
 			if(!goodArt && !file.empty()) {

@@ -101,7 +101,7 @@ void MenuButton::init(Config& config, int x, int y, string type, int command, in
 		SDL_FreeSurface(m_sText);
 
 	if(!m_label.empty())
-		m_sText = TTF_RenderText_Blended(m_font, m_label.c_str(), m_textColor);
+		m_sText = TTF_RenderUTF8_Blended(m_font, m_label.c_str(), m_textColor);
 	m_mouseRect = m_destRect;
 }
 
