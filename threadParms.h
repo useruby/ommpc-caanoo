@@ -28,7 +28,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <string>
 #include "songDb.h"
 
-#ifndef GP2X
+#if !defined(GP2X) && !defined(WIZ)
 #define GP2X_VK_FY  SDLK_d
 #define GP2X_VK_FX  SDLK_s
 #define GP2X_VK_FB  SDLK_p

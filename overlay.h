@@ -45,7 +45,8 @@ public:
 	bool inRect(int x, int y, SDL_Rect& rect);
 	int processCommand(int command, GuiPos& guiPos, bool visible, int curMode);
 protected:
-	
+	void initAll();
+	bool m_good;	
 	mpd_Connection* m_mpd;
 	SDL_Surface* m_screen;
 

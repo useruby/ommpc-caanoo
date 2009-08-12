@@ -47,9 +47,11 @@ public:
 protected:
 	bool inRect(int x, int y, SDL_Rect& rect);
 	void initKeys();
+	void initAll();
 void initVector(std::vector<std::string>& myVect, std::string myArray[], int size);
 
 private:
+	bool m_good;
 	int m_returnCmd;	
 	Config& m_config;
 	SDL_Surface* m_screen;

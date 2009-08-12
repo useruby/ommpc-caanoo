@@ -163,7 +163,17 @@ int CommandFactory::mouseUp(int curMode, int guiX, int guiY)
 	int command = 0;
 	if(m_keyDown == 9999 && !m_repeating && !m_mouseMove) {
 		//do processing for key
-		command = CMD_CLICK;
+		if(guiX < m_prevX-18) {
+			;
+		}else if(guiX > m_prevX+18) {
+			;
+		}else if(guiY < m_prevY-18) {
+			;
+		}else if(guiY > m_prevY+18) {
+			;
+		} else {
+			command = CMD_CLICK;
+		}
 	}
 	m_keyDown = -1;
 	m_repeating = false;
@@ -181,29 +191,22 @@ int CommandFactory::processMouseMove(int preCommand, int curMode, int guiX, int 
 {
 	int command = preCommand;
 
-	if(guiX < m_prevX-30) {
+	if(guiX < m_prevX-40) {
 		m_mouseMove = true;
 		command = CMD_MOUSE_RIGHT;
 		m_prevX = guiX;
-	}else if(guiX > m_prevX+30) {
+	}else if(guiX > m_prevX+40) {
 		m_mouseMove = true;
 		m_prevX = guiX;
 		command = CMD_MOUSE_LEFT;
-	}else if(guiY < m_prevY-30) {
+	}else if(guiY < m_prevY-40) {
 		m_mouseMove = true;
 		command = CMD_MOUSE_UP;
-	}else if(guiY > m_prevY+30) {
+	}else if(guiY > m_prevY+40) {
 		m_mouseMove = true;
 		command = CMD_MOUSE_DOWN;
-	}else if(guiX < m_prevX-11) {
-		m_mouseMove = true;
-	}else if(guiX > m_prevX+11) {
-		m_mouseMove = true;
-	}else if(guiY < m_prevY-11) {
-		m_mouseMove = true;
-	}else if(guiY > m_prevY+11) {
-		m_mouseMove = true;
 	}
+
 	return command;
 }
 
@@ -539,59 +542,59 @@ void CommandFactory::processValue(string item, string value)
 			both = true;
 		}
 		if(curValue == "GAME_B") {
-#ifdef GP2X
+#if defined(GP2X) || defined(WIZ)
 			insertVal = GP2X_VK_FB;
 #endif
 		} else if(curValue == "GAME_A") {
-#ifdef GP2X
+#if defined(GP2X) || defined(WIZ)
 			insertVal = GP2X_VK_FA;
 #endif
 		} else if(curValue == "GAME_X") {
-#ifdef GP2X
+#if defined(GP2X) || defined(WIZ)
 			insertVal = GP2X_VK_FX;
 #endif
 		} else if(curValue == "GAME_Y") {
-#ifdef GP2X
+#if defined(GP2X) || defined(WIZ)
 			insertVal = GP2X_VK_FY;
 #endif
 		} else if(curValue == "GAME_L") {
-#ifdef GP2X
+#if defined(GP2X) || defined(WIZ)
 			insertVal = GP2X_VK_FL;
 #endif
 		} else if(curValue == "GAME_R") {
-#ifdef GP2X
+#if defined(GP2X) || defined(WIZ)
 			insertVal = GP2X_VK_FR;
 #endif
 		} else if(curValue == "GAME_START") {
-#ifdef GP2X
+#if defined(GP2X) || defined(WIZ)
 			insertVal = GP2X_VK_START;
 #endif
 		} else if(curValue == "GAME_SELECT") {
-#ifdef GP2X
+#if defined(GP2X) || defined(WIZ)
 			insertVal = GP2X_VK_SELECT;
 #endif
 		} else if(curValue == "GAME_VOL_UP") {
-#ifdef GP2X
+#if defined(GP2X) || defined(WIZ)
 			insertVal = GP2X_VK_VOL_UP;
 #endif
 		} else if(curValue == "GAME_VOL_DOWN") {
-#ifdef GP2X
+#if defined(GP2X) || defined(WIZ)
 			insertVal = GP2X_VK_VOL_DOWN;
 #endif
 		} else if(curValue == "GAME_UP") {
-#ifdef GP2X
+#if defined(GP2X) || defined(WIZ)
 			insertVal = GP2X_VK_UP;
 #endif
 		} else if(curValue == "GAME_DOWN") {
-#ifdef GP2X
+#if defined(GP2X) || defined(WIZ)
 			insertVal = GP2X_VK_DOWN;
 #endif
 		} else if(curValue == "GAME_LEFT") {
-#ifdef GP2X
+#if defined(GP2X) || defined(WIZ)
 			insertVal = GP2X_VK_LEFT;
 #endif
 		} else if(curValue == "GAME_RIGHT") {
-#ifdef GP2X
+#if defined(GP2X) || defined(WIZ)
 			insertVal = GP2X_VK_RIGHT;
 #endif
 		} 
@@ -611,59 +614,59 @@ void CommandFactory::processValue(string item, string value)
 			insertVal = curValue[0];
 	//repeat for possible combo	
 		if(curValue2 == "GAME_B") {
-#ifdef GP2X
+#if defined(GP2X) || defined(WIZ)
 			insertVal2 = GP2X_VK_FB;
 #endif
 		} else if(curValue2 == "GAME_A") {
-#ifdef GP2X
+#if defined(GP2X) || defined(WIZ)
 			insertVal2 = GP2X_VK_FA;
 #endif
 		} else if(curValue2 == "GAME_X") {
-#ifdef GP2X
+#if defined(GP2X) || defined(WIZ)
 			insertVal2 = GP2X_VK_FX;
 #endif
 		} else if(curValue2 == "GAME_Y") {
-#ifdef GP2X
+#if defined(GP2X) || defined(WIZ)
 			insertVal2 = GP2X_VK_FY;
 #endif
 		} else if(curValue2 == "GAME_L") {
-#ifdef GP2X
+#if defined(GP2X) || defined(WIZ)
 			insertVal2 = GP2X_VK_FL;
 #endif
 		} else if(curValue2 == "GAME_R") {
-#ifdef GP2X
+#if defined(GP2X) || defined(WIZ)
 			insertVal2 = GP2X_VK_FR;
 #endif
 		} else if(curValue2 == "GAME_START") {
-#ifdef GP2X
+#if defined(GP2X) || defined(WIZ)
 			insertVal2 = GP2X_VK_START;
 #endif
 		} else if(curValue2 == "GAME_SELECT") {
-#ifdef GP2X
+#if defined(GP2X) || defined(WIZ)
 			insertVal2 = GP2X_VK_SELECT;
 #endif
 		} else if(curValue2 == "GAME_VOL_UP") {
-#ifdef GP2X
+#if defined(GP2X) || defined(WIZ)
 			insertVal2 = GP2X_VK_VOL_UP;
 #endif
 		} else if(curValue2 == "GAME_VOL_DOWN") {
-#ifdef GP2X
+#if defined(GP2X) || defined(WIZ)
 			insertVal2 = GP2X_VK_VOL_DOWN;
 #endif
 		} else if(curValue2 == "GAME_UP") {
-#ifdef GP2X
+#if defined(GP2X) || defined(WIZ)
 			insertVal2 = GP2X_VK_UP;
 #endif
 		} else if(curValue2 == "GAME_DOWN") {
-#ifdef GP2X
+#if defined(GP2X) || defined(WIZ)
 			insertVal2 = GP2X_VK_DOWN;
 #endif
 		} else if(curValue2 == "GAME_LEFT") {
-#ifdef GP2X
+#if defined(GP2X) || defined(WIZ)
 			insertVal2 = GP2X_VK_LEFT;
 #endif
 		} else if(curValue2 == "GAME_RIGHT") {
-#ifdef GP2X
+#if defined(GP2X) || defined(WIZ)
 			insertVal2 = GP2X_VK_RIGHT;
 #endif
 		} 

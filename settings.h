@@ -60,6 +60,8 @@ public:
 
 
 protected:
+	void initAll();
+	bool m_good;
 	GP2XRegs& m_gp2xRegs;
 	std::string m_curDir;
 	

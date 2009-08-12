@@ -46,6 +46,7 @@ public:
 	void draw(std::vector<std::string>& selectedOptions);
 
 	int skipVal();
+	void initAllS();
 	virtual void initItemIndexLookup();
 	virtual void makeCurItemVisible();
 protected:
@@ -99,6 +100,7 @@ protected:
 	int m_delay;
 	int m_delayCnt;
 	bool m_refresh;
+	bool m_goodS;
 };
 
 #endif

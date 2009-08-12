@@ -35,7 +35,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 using namespace std;
 
-MenuButton::MenuButton(string label, string id)
+MenuButton::MenuButton(string label, string id, TTF_Font* font)	
 : Button(id, "overlay")
 , m_active(false)
 , m_label(label)
@@ -43,7 +43,7 @@ MenuButton::MenuButton(string label, string id)
 , m_id(id)
 , m_displayText(true)
 {
-	m_font = TTF_OpenFont("Vera.ttf", 10);
+	m_font = font;
 	if(m_label.empty())
 		m_displayText = false;
 }
@@ -54,6 +54,7 @@ void MenuButton::init(Config& config, int command)
 	Button::init(config);
 	m_mouseRect = m_destRect;
 }
+
 void MenuButton::init(Config& config, int x, int y, string type, int command, int xSize, int ySize)
 {
 	config.getItemAsColor("sk_seek_textColor", m_textColor.r, m_textColor.g, m_textColor.b);

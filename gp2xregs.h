@@ -26,12 +26,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <fcntl.h>
 #include <sys/mman.h>
 
-#define OFF_GPIOH          (0x106E)
-#define OFF_GPIOL          (0x1076)
-//#define OFF_GPIOH          (0x0837)
-//#define OFF_GPIOL          (0x083B)
-#define PWR_TFT_BIT        (11)
-#define SYS_CLK_FREQ 7372800 
+#if defined(GP2X)
+	#define OFF_GPIOH          (0x106E)
+	#define OFF_GPIOL          (0x1076)
+	#define PWR_TFT_BIT        (11)
+	#define SYS_CLK_FREQ 7372800 
+#elif defined(WIZ)
+	#define SYS_CLK_FREQ 27
+#endif
 
 
 class GP2XRegs
@@ -48,7 +50,7 @@ protected:
 	void initVersion();
 	bool m_screenIsOff;
 	int m_version;
-#ifdef GP2X
+#if defined(GP2X) || defined(WIZ)
 	int m_memfd;
 	unsigned long* m_memregs32;
 	unsigned short* m_memregs16;

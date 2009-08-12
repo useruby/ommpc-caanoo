@@ -44,6 +44,11 @@ Bookmarks::Bookmarks(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* bg, 
 , m_bm(bm)
 , m_keyboard(kb)
 , m_classicStatsBar(classicStatsBar)
+, m_good(false)
+{
+}
+
+void Bookmarks::initAll()
 {
 	char pwd[129];
 	getcwd(pwd, 128);
@@ -63,6 +68,8 @@ Bookmarks::Bookmarks(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* bg, 
 	initItemIndexLookup();	
 	ls(m_curDir);
 	m_numPerScreen--;
+
+	m_good = true;
 }
 
 void Bookmarks::ls(std::string dir)
@@ -244,7 +251,9 @@ int Bookmarks::processCommand(int command, GuiPos& guiPos)
 }
 
 void Bookmarks::draw(bool forceRefresh, long timePerFrame, bool inBack)
-{
+{	
+	if(!m_good)
+		initAll();
 	if(forceRefresh || (!inBack && m_refresh)) {
 		//ls(m_curDir);
 		//clear this portion of the screen 

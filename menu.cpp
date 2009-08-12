@@ -36,13 +36,25 @@ using namespace std;
 
 Menu::Menu(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* bg, TTF_Font* font, 
 				SDL_Rect& rect,	Config& config, int skipVal, int numPerScreen, SongDb& songdb, Keyboard& kb, Playlist& pl)
-: Scroller(mpd, screen, bg, font, rect, config, skipVal, numPerScreen-1)
-, m_songDb(songdb)
+: m_songDb(songdb)
 , m_keyboard(kb)
 , m_pl(pl)
 , m_menu1Active(0)
 , m_menu2Active(0)
 , m_view(0)
+, m_config(config)
+, m_destRect(rect)
+, m_clearRect(rect)
+, m_screen(screen)
+, m_bg(bg)
+, m_mpd(mpd)
+, m_skipVal(skipVal)
+, m_numPerScreen(numPerScreen-1)
+, m_good(false)
+{
+}
+
+void Menu::initAll()
 {
 	m_config.getItemAsColor("sk_main_itemColor", m_itemColor.r, m_itemColor.g, m_itemColor.b);
 	m_config.getItemAsColor("sk_main_curItemColor", m_curItemColor.r, m_curItemColor.g, m_curItemColor.b);
@@ -63,104 +75,127 @@ Menu::Menu(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* bg, TTF_Font* 
 	m_ySize2 = (height-(m_rowHeight))/2;
 	m_ySize3 = (height-(m_rowHeight))/2;
  
-	string skinName = m_config.getItem("skin");
 	m_drawIcons =  m_config.getItemAsNum("drawIcons");
 
 	initItems(CMD_SHOW_MENU);
+	m_good = true;
 }
 
-void Menu::initItems(int command)
+void Menu::switchMenu(int command)
 {
-	m_buttons.clear();
 	switch(command) {
 		case CMD_SHOW_MENU:
+				m_view = 0;
+			m_buttons = m_buttonsMenu;
+			m_buttons[m_menu1Active].active(true);
+			break;
+		case CMD_MENU_SETTINGS:
+				m_view = 1;
+			m_buttons = m_buttonsSet;
+				m_buttons[m_menu2Active].active(true);
+			break;
+		case CMD_MENU_EXIT:
+				m_view = 1;
+			m_buttons = m_buttonsExit;
+				m_buttons[m_menu2Active].active(true);
+			break;
+	}
+}
+void Menu::initItems(int command)
+{
+	//m_buttons.clear();
+	//switch(command) {
+	//	case CMD_SHOW_MENU:
+	m_font = TTF_OpenFont("Vera.ttf", 10);
 			{
 				m_view = 0;
 				int xOffset = 0;
 				int yOffset = m_ySize1;
-				MenuButton butt0("Now Playing", "np");
-				butt0.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, "np", CMD_SHOW_NP, m_colWidth, m_rowHeight);
-				m_buttons.push_back(butt0);
+				MenuButton butt(m_config.getItem("LANG_MENU_NP"), "np", m_font);
+				butt.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, "np", CMD_SHOW_NP, m_colWidth, m_rowHeight);
+				m_buttonsMenu.push_back(butt);
 
-				MenuButton butt1("Current Playlist", "cur_pl");
+				MenuButton butt1(m_config.getItem("LANG_MENU_PL"), "cur_pl", m_font);
 				xOffset += m_colWidth;
-				butt1.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, "np", CMD_SHOW_PL, m_colWidth, m_rowHeight);
-				m_buttons.push_back(butt1);
+				butt1.init(m_config, m_destRect.x+xOffset, m_destRect.y+yOffset, 
+								"np", CMD_SHOW_PL, m_colWidth, m_rowHeight);
+				m_buttonsMenu.push_back(butt1);
 
-				MenuButton butt2("Music Library", "lib");
+				MenuButton butt2(m_config.getItem("LANG_MENU_LIB"), "lib", m_font);
 				xOffset += m_colWidth;
-				butt2.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, "np", CMD_SHOW_LIB, m_colWidth, m_rowHeight);
-				m_buttons.push_back(butt2);
+				butt2.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, 
+						  		"np", CMD_SHOW_LIB, m_colWidth, m_rowHeight);
+				m_buttonsMenu.push_back(butt2);
 
-				MenuButton butt3("Playlists", "pls");
+				MenuButton butt3(m_config.getItem("LANG_MENU_PLS"), "pls", m_font);
 				xOffset += m_colWidth;
-				butt3.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, "np", CMD_SHOW_PLS, m_colWidth, m_rowHeight);
-				m_buttons.push_back(butt3);
-				
+				butt3.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, 
+							"np", CMD_SHOW_PLS, m_colWidth, m_rowHeight); 
+				m_buttonsMenu.push_back(butt3);
 
 				xOffset = m_2ndRowOffset;
 				yOffset += m_rowHeight;
-				MenuButton butt4("Bookmarks", "bkmrks");
-				butt4.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, "np", CMD_SHOW_BKMRKS, m_colWidth, m_rowHeight);
-				m_buttons.push_back(butt4);
+				MenuButton butt4(m_config.getItem("LANG_MENU_BKMRKS"), "bkmrks", m_font);
+				butt4.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, 
+							"np", CMD_SHOW_BKMRKS, m_colWidth, m_rowHeight);
+				m_buttonsMenu.push_back(butt4);
 
 				xOffset += m_colWidth;
-				MenuButton butt5("Settings", "settings");
+				MenuButton butt5(m_config.getItem("LANG_MENU_SET"), "settings", m_font);
 				butt5.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, "np", CMD_MENU_SETTINGS, m_colWidth, m_rowHeight);
-				m_buttons.push_back(butt5);
+				m_buttonsMenu.push_back(butt5);
 				
 				xOffset += m_colWidth;
-				MenuButton butt6("Exit", "exit");
+				MenuButton butt6(m_config.getItem("LANG_MENU_EXIT"), "exit", m_font);
 				butt6.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, "np", CMD_MENU_EXIT, m_colWidth, m_rowHeight);
-				m_buttons.push_back(butt6);
+				m_buttonsMenu.push_back(butt6);
 
-				m_buttons[m_menu1Active].active(true);
 			}
-			break;
-		case CMD_MENU_SETTINGS:
+	//		break;
+	//	case CMD_MENU_SETTINGS:
 			{
 				m_view = 1;
 				int xOffset = m_1stRowOffset2;
 				int yOffset = m_ySize2;
-				MenuButton butt0("Main Menu", "main");
+				MenuButton butt0(m_config.getItem("LANG_MENU_MAIN"),  "main", m_font);
 				butt0.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, "np", CMD_SHOW_MENU, m_colWidth, m_rowHeight);
-				m_buttons.push_back(butt0);
+				m_buttonsSet.push_back(butt0);
 
 				xOffset += m_colWidth;
-				MenuButton butt1("Update Db", "update");
+				MenuButton butt1(m_config.getItem("LANG_MENU_UPDATE"), "update", m_font);
 				butt1.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, "np", CMD_MPD_UPDATE, m_colWidth, m_rowHeight);
-				m_buttons.push_back(butt1);
+				m_buttonsSet.push_back(butt1);
 
-				MenuButton butt2("Options", "options");
+				MenuButton butt2(m_config.getItem("LANG_MENU_OPTIONS"), "options", m_font);
 				xOffset += m_colWidth;
 				butt2.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, "np", CMD_SHOW_OPTIONS, m_colWidth, m_rowHeight);
-				m_buttons.push_back(butt2);
+				m_buttonsSet.push_back(butt2);
 
-				m_buttons[m_menu2Active].active(true);
 			}
-			break;
-		case CMD_MENU_EXIT:
+	//		break;
+	//	case CMD_MENU_EXIT:
 			{
 				m_view = 1;
 				int xOffset = m_1stRowOffset3;
 				int yOffset = m_ySize3;
-				MenuButton butt0("Main Menu", "main");
+				MenuButton butt0(m_config.getItem("LANG_MENU_MAIN"), "main", m_font);
 				butt0.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, "np", CMD_SHOW_MENU, m_colWidth, m_rowHeight);
-				m_buttons.push_back(butt0);
+				m_buttonsExit.push_back(butt0);
 
 				xOffset += m_colWidth;
-				MenuButton butt1("Detach Client", "detach");
-				butt1.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, "np", CMD_DETACH, m_colWidth, m_rowHeight); m_buttons.push_back(butt1); 
-				MenuButton butt2("Exit", "exit");
+				MenuButton butt1(m_config.getItem("LANG_MENU_DETACH"),  "detach", m_font);
+				butt1.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, "np", CMD_DETACH, m_colWidth, m_rowHeight); 
+				m_buttonsExit.push_back(butt1); 
+				MenuButton butt2(m_config.getItem("LANG_MENU_EXIT"), "exit", m_font);
 				xOffset += m_colWidth;
 				butt2.init(m_config, m_destRect.x+xOffset,m_destRect.y+yOffset, "np", CMD_QUIT, m_colWidth, m_rowHeight);
-				m_buttons.push_back(butt2);
+				m_buttonsExit.push_back(butt2);
 
-				m_buttons[m_menu2Active].active(true);
 			}
-			break;
-		}
+	//		break;
+	//	}
 	
+	switchMenu(command);
 }
 
 void Menu::updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus, bool updatingSongDb)
@@ -241,7 +276,7 @@ int Menu::processCommand(int command, GuiPos& guiPos)
 			case CMD_SHOW_MENU:
 			case CMD_MENU_SETTINGS:
 			case CMD_MENU_EXIT:
-				initItems(rCommand);
+				switchMenu(rCommand);
 				m_refresh = true;
 				break;
 		}
@@ -251,6 +286,8 @@ int Menu::processCommand(int command, GuiPos& guiPos)
 
 void Menu::draw(bool forceRefresh, long timePerFrame, bool inBack)
 {
+	if(!m_good)
+		initAll();
 	if(forceRefresh || (!inBack && m_refresh)) {
 		//clear this portion of the screen 
 		SDL_SetClipRect(m_screen, &m_clearRect);

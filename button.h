@@ -35,6 +35,7 @@ class Button
 public:
 	Button(std::string name, std::string imageDir="skin");
 	virtual void init(Config& config);
+	void updateInfo(std::string name, std::string imageDir);
 	virtual void updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus,
 					  int rtmpdStatusChanged, mpd_Status* rtmpdStatus, 
 					  bool forceRefresh);

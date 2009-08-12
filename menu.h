@@ -37,7 +37,7 @@ class SongDb;
 class Keyboard;
 class Playlist;
 
-class Menu  : public Scroller
+class Menu
 {
 public:
  	enum {TYPE_FOLDER, TYPE_FILE, TYPE_BACK, TYPE_ALL, TYPE_FILTER};
@@ -48,12 +48,17 @@ public:
 	void draw(bool forceRefresh, long timePerFrame, bool inBack);
 
 protected:
+	void initAll();
 	void initItems(int command);
+	void switchMenu(int command);
 	SDL_Surface * m_iconBrowse;
 	SongDb& m_songDb;
 	Keyboard& m_keyboard;
 	Playlist& m_pl;
 	bool m_drawIcons;
+	std::vector<MenuButton> m_buttonsMenu;
+	std::vector<MenuButton> m_buttonsSet;
+	std::vector<MenuButton> m_buttonsExit;
 	std::vector<MenuButton> m_buttons;
 	int m_view;
 	int m_menu1Active;
@@ -67,7 +72,22 @@ protected:
 	int m_ySize1;
 	int m_ySize2;
 	int m_ySize3;
+	TTF_Font* m_font;	
+	mpd_Connection* m_mpd;
+
+	SDL_Surface* m_screen;
+	SDL_Rect m_destRect;
+	SDL_Rect& m_clearRect;
+	Config& m_config;
 	
+	int m_skipVal;
+	int m_numPerScreen;
+	SDL_Color m_itemColor;
+	SDL_Color m_curItemColor;
+	bool m_refresh;
+	int m_curState;
+	SDL_Surface * m_bg;
+	bool m_good;
 };
 
 #endif

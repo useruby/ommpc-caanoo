@@ -53,14 +53,33 @@ Playlist::Playlist(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* bg, TT
 , m_moveTo(-1)
 , m_moveFrom(-1)
 , m_lastQueued(-1)
+, m_good(false)
+{
+}
+
+void Playlist::initAll()
 {
 	m_origY = m_destRect.y;
 	m_config.getItemAsColor("sk_main_itemColor", m_itemColor.r, m_itemColor.g, m_itemColor.b);
 	m_config.getItemAsColor("sk_main_curItemColor", m_curItemColor.r, m_curItemColor.g, m_curItemColor.b);
+	
+	string skinName = m_config.getItem("skin");
+	SDL_Surface* tmpSurface = NULL;	
+	tmpSurface = IMG_Load(string("skins/"+skinName+"/bg_nowPlaying.png").c_str());
+	if (!tmpSurface)
+		tmpSurface = IMG_Load(string("skins/default/bg_nowPlaying.png").c_str());
+	if (!tmpSurface)
+		printf("Unable to load image: %s\n", SDL_GetError());
+	else { 
+		m_bgNowPlaying = SDL_DisplayFormatAlpha(tmpSurface);
+		SDL_FreeSurface(tmpSurface);
+	}
 
 	initItemIndexLookup();
 	// centre the bitmap on screen
 	load("");
+	
+	m_good = true;	
 }
 
 void Playlist::initItemIndexLookup() {
@@ -561,6 +580,8 @@ void Playlist::processCommand(int command, int& rtmpdStatusChanged, mpd_Status* 
 
 void Playlist::draw(bool forceRefresh, long timePerFrame, bool inBack)
 {
+	if(!m_good)
+		initAll();
 	if(forceRefresh || (!inBack && m_refresh)) {
 		//clear this portion of the screen 
 		SDL_SetClipRect(m_screen, &m_clearRect);

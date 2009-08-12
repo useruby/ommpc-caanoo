@@ -38,6 +38,7 @@ Overlay::Overlay(mpd_Connection* mpd, SDL_Surface* screen, Config& config, SDL_R
 , m_clearRect(rect)
 , m_refresh(true)
 , m_playlist(playlist)
+, m_good(false)
 {
 	m_prevRect.x = 8;
 	m_prevRect.y = 8; 
@@ -76,15 +77,18 @@ Overlay::Overlay(mpd_Connection* mpd, SDL_Surface* screen, Config& config, SDL_R
 	m_stopRect.h = 48; 
 
 
-	m_clickRect1.x = config.getItemAsNum("sk_overlay_click_1_x");
-	m_clickRect1.y = config.getItemAsNum("sk_overlay_click_1_y");
-	m_clickRect1.w = config.getItemAsNum("sk_overlay_click_1_w");
-	m_clickRect1.h = config.getItemAsNum("sk_overlay_click_1_h");
-	m_clickRect2.x = config.getItemAsNum("sk_overlay_click_2_x");
-	m_clickRect2.y = config.getItemAsNum("sk_overlay_click_2_y");
-	m_clickRect2.w = config.getItemAsNum("sk_overlay_click_2_w");
-	m_clickRect2.h = config.getItemAsNum("sk_overlay_click_2_h");
+	m_clickRect1.x = m_config.getItemAsNum("sk_overlay_click_1_x");
+	m_clickRect1.y = m_config.getItemAsNum("sk_overlay_click_1_y");
+	m_clickRect1.w = m_config.getItemAsNum("sk_overlay_click_1_w");
+	m_clickRect1.h = m_config.getItemAsNum("sk_overlay_click_1_h");
+	m_clickRect2.x = m_config.getItemAsNum("sk_overlay_click_2_x");
+	m_clickRect2.y = m_config.getItemAsNum("sk_overlay_click_2_y");
+	m_clickRect2.w = m_config.getItemAsNum("sk_overlay_click_2_w");
+	m_clickRect2.h = m_config.getItemAsNum("sk_overlay_click_2_h");
+}
 	
+void Overlay::initAll()
+{
 	SDL_Surface* tmpSurface = NULL;	
 	string overlayName = m_config.getItem("sk_overlay");
 	tmpSurface = IMG_Load(string("overlays/"+overlayName+"/play.png").c_str());
@@ -123,6 +127,7 @@ Overlay::Overlay(mpd_Connection* mpd, SDL_Surface* screen, Config& config, SDL_R
 	if (!tmpSurface)
 		tmpSurface = IMG_Load(string("overlays/default/stop.png").c_str());
 	m_stop = SDL_DisplayFormatAlpha(tmpSurface);
+	m_good = true;
 }
 
 void Overlay::updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus,
@@ -191,6 +196,8 @@ int Overlay::processCommand(int command, GuiPos& guiPos, bool visible, int curMo
 
 void Overlay::draw(bool forceUpdate)
 {
+	if(!m_good)
+		initAll();
 	if(forceUpdate) {
 		cout << "should be after " << endl;
 		SDL_SetClipRect(m_screen, &m_prevRect);

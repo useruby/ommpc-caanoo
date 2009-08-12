@@ -39,6 +39,11 @@ PLBrowser::PLBrowser(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface * bg,
 , m_playlist(pl)
 , m_keyboard(keyboard)
 , m_plSurfaceText(NULL)
+, m_good(false)
+{
+}
+
+void PLBrowser::initAll()
 {
 	m_config.getItemAsColor("sk_main_itemColor", m_itemColor.r, m_itemColor.g, m_itemColor.b);
 	m_config.getItemAsColor("sk_main_curItemColor", m_curItemColor.r, m_curItemColor.g, m_curItemColor.b);
@@ -47,6 +52,8 @@ PLBrowser::PLBrowser(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface * bg,
     ls("");
 		
 	m_plSurfaceText = TTF_RenderUTF8_Blended(m_font, m_config.getItem("LANG_PL").c_str(), m_itemColor);
+	
+	m_good = true;
 }
 
 PLBrowser::~PLBrowser()
@@ -223,6 +230,8 @@ int PLBrowser::processCommand(int command, int curMode, GuiPos& guiPos)
 
 void PLBrowser::draw(bool forceRefresh, long timePerFrame, bool inBack)
 {
+	if(!m_good)
+		initAll();
 	if(forceRefresh || (!inBack && m_refresh)) {
 //		ls("");
 		//clear this portion of the screen 

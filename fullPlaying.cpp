@@ -47,27 +47,34 @@ FullPlaying::FullPlaying(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* 
 , m_keyboard(kb)
 , m_artParms(artParms)
 , m_curElapsed(0)
+, m_good(false)
+{
+	m_artBtn = new ArtButton(m_artParms, "", "full_art");;
+	m_artBtn->init(m_config, CMD_FLIP_ART);
+	//	initAll();
+}
+
+void FullPlaying::initAll()
 {
 	m_config.getItemAsColor("sk_main_itemColor", m_itemColor.r, m_itemColor.g, m_itemColor.b);
 	m_config.getItemAsColor("sk_main_curItemColor", m_curItemColor.r, m_curItemColor.g, m_curItemColor.b);
-	m_playBtn = new MenuButton("", "play");
-	m_playBtn->init(config, CMD_PLAY_PAUSE);
-	m_pauseBtn = new MenuButton("", "pause");
-	m_pauseBtn->init(config, CMD_PLAY_PAUSE);
-	m_stopBtn = new MenuButton("", "stop");
-	m_stopBtn->init(config, CMD_STOP);
-	m_rwBtn = new MenuButton("", "rw");
-	m_rwBtn->init(config, CMD_RW);
-	m_ffBtn = new MenuButton("", "ff");
-	m_ffBtn->init(config, CMD_FF);
-	m_prevBtn = new MenuButton("", "prev");
-	m_prevBtn->init(config, CMD_PREV);
-	m_nextBtn = new MenuButton("", "next");
-	m_nextBtn->init(config, CMD_NEXT);
+	m_playBtn = new MenuButton("", "play", m_font);
+	m_playBtn->init(m_config, CMD_PLAY_PAUSE);
+	m_pauseBtn = new MenuButton("", "pause", m_font);
+	m_pauseBtn->init(m_config, CMD_PLAY_PAUSE);
+	m_stopBtn = new MenuButton("", "stop", m_font);
+	m_stopBtn->init(m_config, CMD_STOP);
+	m_rwBtn = new MenuButton("", "rw", m_font);
+	m_rwBtn->init(m_config, CMD_RW);
+	m_ffBtn = new MenuButton("", "ff", m_font);
+	m_ffBtn->init(m_config, CMD_FF);
+	m_prevBtn = new MenuButton("", "prev", m_font);
+	m_prevBtn->init(m_config, CMD_PREV);
+	m_nextBtn = new MenuButton("", "next", m_font);
+	m_nextBtn->init(m_config, CMD_NEXT);
 
 	
-	m_artBtn = new ArtButton(artParms, "", "full_art");;
-	m_artBtn->init(config, CMD_FLIP_ART);
+	m_good = true;
 }
 
 void FullPlaying::updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus,
@@ -227,6 +234,8 @@ int FullPlaying::processCommand(int command, GuiPos& guiPos, int delayTime)
 
 void FullPlaying::draw(bool forceRefresh, long timePerFrame, bool inBack)
 {
+	if(!m_good)
+		initAll();
 	if(forceRefresh || (!inBack && m_refresh)) {
 		//clear this portion of the screen 
 		SDL_SetClipRect(m_screen, &m_clearRect);

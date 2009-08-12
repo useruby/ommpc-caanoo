@@ -53,6 +53,8 @@ public:
 
 	void doSave();
 protected:
+	void initAll();
+	bool m_good;
 	std::string m_curDir;
 
 	int m_nowPlaying;

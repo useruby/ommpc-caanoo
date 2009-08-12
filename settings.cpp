@@ -42,31 +42,36 @@ PlayerSettings::PlayerSettings(mpd_Connection* mpd, SDL_Surface* screen, SDL_Sur
 , m_keyboard(keyboard)
 , m_plSurfaceText(NULL)
 , m_gp2xRegs(gp2xRegs)
+, m_good(false)
 {
+}
+
+void PlayerSettings::initAll()
+{	
 	m_config.getItemAsColor("sk_main_itemColor", m_itemColor.r, m_itemColor.g, m_itemColor.b);
 	m_config.getItemAsColor("sk_main_curItemColor", m_curItemColor.r, m_curItemColor.g, m_curItemColor.b);
 
 	m_plSurfaceText = TTF_RenderUTF8_Blended(m_font, m_config.getItem("LANG_MENU_OPTIONS").c_str(), m_itemColor);
 	
 	Scroller::listing_t items;
-	items.push_back(make_pair("  "+config.getItem("LANG_CLOCK"), 21));
-	items.push_back(make_pair("  "+config.getItem("LANG_CLOCK_LOCKED"), 25));
-	items.push_back(make_pair("  "+config.getItem("LANG_SHOW_ART"), 22));
-	items.push_back(make_pair("  "+config.getItem("LANG_SKIN"), 23));
-	items.push_back(make_pair("  "+config.getItem("LANG_SOFT_VOL"), 24));
-	items.push_back(make_pair("  "+config.getItem("LANG_INSTALL_PATH"), 26));
-	items.push_back(make_pair("  "+config.getItem("LANG_MUSIC_PATH"), 27));
-	items.push_back(make_pair("  "+config.getItem("LANG_PL_PATH"), 28));
-	items.push_back(make_pair("  "+config.getItem("LANG_ART_PATH"), 29));
+	items.push_back(make_pair("  "+m_config.getItem("LANG_CLOCK"), 21));
+	items.push_back(make_pair("  "+m_config.getItem("LANG_CLOCK_LOCKED"), 25));
+//	items.push_back(make_pair("  "+m_config.getItem("LANG_SHOW_ART"), 22));
+	items.push_back(make_pair("  "+m_config.getItem("LANG_SKIN"), 23));
+	items.push_back(make_pair("  "+m_config.getItem("LANG_SOFT_VOL"), 24));
+	items.push_back(make_pair("  "+m_config.getItem("LANG_INSTALL_PATH"), 26));
+	items.push_back(make_pair("  "+m_config.getItem("LANG_MUSIC_PATH"), 27));
+	items.push_back(make_pair("  "+m_config.getItem("LANG_PL_PATH"), 28));
+	items.push_back(make_pair("  "+m_config.getItem("LANG_ART_PATH"), 29));
 
 	items.push_back(make_pair(" ", 99));
-	items.push_back(make_pair(" "+config.getItem("LANG_SAVE"), 8));
-	items.push_back(make_pair(" "+config.getItem("LANG_CANCEL"), 0));
+	items.push_back(make_pair(" "+m_config.getItem("LANG_SAVE"), 8));
+	items.push_back(make_pair(" "+m_config.getItem("LANG_CANCEL"), 0));
 	
 	setItemsText(items, 0);
-	SDL_Rect popRect;
 	m_numPerScreen = m_numPerScreen/2;
 	initItemIndexLookup();
+	m_good = true;
 }
 
 PlayerSettings::~PlayerSettings()
@@ -114,23 +119,49 @@ void PlayerSettings::setOptionsText()
 {
 	vector<string> curOption;
 	vector<string>::iterator curIter;
+#if defined(GP2X)
 	for(int i=65; i<=280; i+=5) {
+#else
+	int everyThird = 0;
+	for(int i=100; i<=600; i+=33) {
+#endif
 		ostringstream mhz;
+#if !defined(GP2X)
+		if(everyThird == 3) {
+			i++;
+			everyThird = 0;
+		}
+		everyThird++;
+#endif
 		mhz << i;
 		curOption.push_back(mhz.str());
 	}
 	m_optionsText.push_back(curOption);
 	curOption.clear();
+#if defined(GP2X)
 	for(int i=65; i<=280; i+=5) {
+#else
+	everyThird = 0;
+	for(int i=100; i<=600; i+=33) {
+#endif
 		ostringstream mhz;
+#if !defined(GP2X)
+		if(everyThird == 3) {
+			i++;
+			everyThird = 0;
+		}
+		everyThird++;
+#endif
 		mhz << i;
 		curOption.push_back(mhz.str());
 	}
 	m_optionsText.push_back(curOption);
+/*
 	curOption.clear();
 	curOption.push_back("true");
 	curOption.push_back("false");
 	m_optionsText.push_back(curOption);
+*/
 	curOption.clear();
 
 	DIR * udir = opendir("skins/");
@@ -151,7 +182,7 @@ void PlayerSettings::setOptionsText()
 					throw runtime_error(msg.c_str());
 				}
 
-				if (S_ISDIR(s.st_mode) && strncmp(dirent->d_name, "overlay", 7)) 
+				if (S_ISDIR(s.st_mode) && strncmp(dirent->d_name, "default", 7)) 
 					curOption.push_back(dirent->d_name);
 			}
 			dirent = readdir(udir);
@@ -198,25 +229,25 @@ void PlayerSettings::setOptionsText()
 		curIter = m_optionsText[1].begin();
 	m_optionsIters.push_back(curIter);
 
-	curIter = find(m_optionsText[2].begin(), m_optionsText[2].end(), m_config.getItem("showAlbumArt"));
+//	curIter = find(m_optionsText[2].begin(), m_optionsText[2].end(), m_config.getItem("showAlbumArt"));
+//	if(curIter == m_optionsText[2].end())
+//		curIter = m_optionsText[2].begin();
+//	m_optionsIters.push_back(curIter);
+	curIter = find(m_optionsText[2].begin(), m_optionsText[2].end(), m_config.getItem("skin"));
 	if(curIter == m_optionsText[2].end())
 		curIter = m_optionsText[2].begin();
 	m_optionsIters.push_back(curIter);
-	curIter = find(m_optionsText[3].begin(), m_optionsText[3].end(), m_config.getItem("skin"));
+	curIter = find(m_optionsText[3].begin(), m_optionsText[3].end(), m_config.getItem("softwareVolume"));
 	if(curIter == m_optionsText[3].end())
 		curIter = m_optionsText[3].begin();
 	m_optionsIters.push_back(curIter);
-	curIter = find(m_optionsText[4].begin(), m_optionsText[4].end(), m_config.getItem("softwareVolume"));
-	if(curIter == m_optionsText[4].end())
-		curIter = m_optionsText[4].begin();
+	curIter = m_optionsText[4].begin();
 	m_optionsIters.push_back(curIter);
 	curIter = m_optionsText[5].begin();
 	m_optionsIters.push_back(curIter);
 	curIter = m_optionsText[6].begin();
 	m_optionsIters.push_back(curIter);
 	curIter = m_optionsText[7].begin();
-	m_optionsIters.push_back(curIter);
-	curIter = m_optionsText[8].begin();
 	m_optionsIters.push_back(curIter);
 }
 
@@ -225,7 +256,7 @@ void PlayerSettings::saveOptions()
 	string oldSkin = m_config.getItem("skin");
 	string oldSpeed = m_config.getItem("cpuSpeed");
 	string oldSpeedLocked = m_config.getItem("cpuSpeedLocked");
-	string oldSaa = m_config.getItem("showAlbumArt");
+//	string oldSaa = m_config.getItem("showAlbumArt");
 	string oldSoftwareVol = m_config.getItem("softwareVolume");
 	string oldAAR = m_config.getItem("albumArtRoot");
 	string oldMR = m_config.getItem("musicRoot");
@@ -242,28 +273,28 @@ void PlayerSettings::saveOptions()
 				name = "cpuSpeed";
 			else if(itemNum == 1)
 				name = "cpuSpeedLocked";
+		//	else if(itemNum == 2)
+		//		name = "showAlbumArt";
 			else if(itemNum == 2)
-				name = "showAlbumArt";
-			else if(itemNum == 3)
 				name = "skin";
-			else if(itemNum == 4)
+			else if(itemNum == 3)
 				name = "softwareVolume";
-			else if(itemNum == 5) {
+			else if(itemNum == 4) {
 				name = "programRoot";
 				if((*m_optionsIters[itemNum])[(*m_optionsIters[itemNum]).length()-1] != '/')
 					(*m_optionsIters[itemNum]) = (*m_optionsIters[itemNum]) + '/';
 			}
-			else if(itemNum == 6) {
+			else if(itemNum == 5) {
 				name = "musicRoot";
 				if((*m_optionsIters[itemNum])[(*m_optionsIters[itemNum]).length()-1] != '/')
 					(*m_optionsIters[itemNum]) = (*m_optionsIters[itemNum]) + '/';
 			}
-			else if(itemNum == 7) {
+			else if(itemNum == 6) {
 				name = "playlistRoot";
 				if((*m_optionsIters[itemNum])[(*m_optionsIters[itemNum]).length()-1] != '/')
 					(*m_optionsIters[itemNum]) = (*m_optionsIters[itemNum]) + '/';
 			}
-			else if(itemNum == 8) {
+			else if(itemNum == 7) {
 				name = "albumArtRoot";
 				if((*m_optionsIters[itemNum])[(*m_optionsIters[itemNum]).length()-1] != '/')
 					(*m_optionsIters[itemNum]) = (*m_optionsIters[itemNum]) + '/';
@@ -293,7 +324,7 @@ void PlayerSettings::saveOptions()
 	}
 	m_config.init();
 	//reload skin file to pick up on any skin changes/album art flage changes.
-	if(oldSkin == m_config.getItem("skin") || (oldSaa == m_config.getItem("showAlbumArt")))
+	if(oldSkin == m_config.getItem("skin"))
 		; //
 		
 }
@@ -348,6 +379,8 @@ int PlayerSettings::selectedAction()
 
 int PlayerSettings::processCommand(int command, GuiPos& guiPos) 
 {
+	if(!m_good)
+		initAll();
 	int rCommand = command;
 	int selAction = selectedAction();
 
@@ -387,7 +420,7 @@ int PlayerSettings::processCommand(int command, GuiPos& guiPos)
 	}
 	switch (command) {
 		case CMD_POP_SELECT:
-				if(m_curItemNum >4 && m_curItemNum <9) {
+				if(m_curItemNum >=4 && m_curItemNum <9) {
 					m_keyboard.init(CMD_POP_CHG_OPTION, getSelOptionText());
 					rCommand = CMD_SHOW_KEYBOARD;
 				} else if(selectedAction() == 0) {
@@ -452,7 +485,9 @@ string PlayerSettings::getSelOptionText()
 
 
 void PlayerSettings::draw(bool forceRefresh, long timePerFrame, bool inBack)
-{
+{	
+	if(!m_good)
+		initAll();
 	/*clear this portion of the screen 
 	SDL_SetClipRect(m_screen, &m_borderRect);
 	SDL_FillRect(m_screen, &m_borderRect, SDL_MapRGB(m_screen->format, m_borderColor.r, m_borderColor.g, m_borderColor.b));
@@ -475,7 +510,7 @@ void PlayerSettings::draw(bool forceRefresh, long timePerFrame, bool inBack)
 			m_selectedOptions.push_back((*m_optionsIters[5]));
 			m_selectedOptions.push_back((*m_optionsIters[6]));
 			m_selectedOptions.push_back((*m_optionsIters[7]));
-			m_selectedOptions.push_back((*m_optionsIters[8]));
+		//	m_selectedOptions.push_back((*m_optionsIters[8]));
 				
 			Scroller::draw(m_selectedOptions);
 		}

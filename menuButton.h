@@ -38,10 +38,9 @@ class GuiPos;
 class MenuButton : public Button
 {
 public:
-	MenuButton(std::string label, std::string id);
+	MenuButton(std::string label, std::string id, TTF_Font* font);
 	void init(Config& config, int x, int y, std::string type, int command, int xSize, int ySize);
 	void init(Config& config, int command);
-
 	void updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus,
 					  int rtmpdStatusChanged, mpd_Status* rtmpdStatus, 
 					  bool forceRefresh);

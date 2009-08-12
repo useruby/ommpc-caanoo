@@ -51,6 +51,8 @@ public:
 	void draw(bool forceRefresh, long timePerFrame, bool inBack);
 
 protected:
+	void initAll();
+	bool m_good;
 	Keyboard& m_keyboard;
 	artThreadParms_t& m_artParms;
 	bool m_drawIcons;

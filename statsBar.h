@@ -43,6 +43,8 @@ public:
 							int rtmpdStatusChanged, mpd_Status* rtmpdStatus, bool forceRefresh);
 	void draw(bool forceRefresh, int fps);
 protected:
+	void initAll();
+	bool m_good;
 	
 	mpd_Connection* m_mpd;
 	SDL_mutex* m_lock;

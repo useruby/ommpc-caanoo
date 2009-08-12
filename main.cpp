@@ -84,93 +84,93 @@ bool showPopupHelp(SDL_Surface* screen, Popup& popup, Config& config, int curMod
 	if(!popup.showGlobalKeys()) {
 		switch(curMode) {
 			case 0: //Library
-				items.push_back(make_pair("  "+config.getItem("LIB_SELECT")+spaces
+				items.push_back(make_pair("  "+config.getItem("BIND_LIB_SELECT")+spaces
 							+keys.getItem("LIB_SELECT"), (int)Popup::POPUP_CANCEL)); 
-				items.push_back(make_pair("  "+config.getItem("LIB_PREV_DIR")+spaces
+				items.push_back(make_pair("  "+config.getItem("BIND_LIB_PREV_DIR")+spaces
 							+keys.getItem("LIB_PREV_DIR"), (int)Popup::POPUP_CANCEL)); 
-				items.push_back(make_pair("  "+config.getItem("LIB_PLAY_PAUSE")+spaces
+				items.push_back(make_pair("  "+config.getItem("BIND_LIB_PLAY_PAUSE")+spaces
 							+keys.getItem("LIB_PLAY_PAUSE"), (int)Popup::POPUP_CANCEL)); 
-				items.push_back(make_pair("  "+config.getItem("LIB_STOP")+spaces
+				items.push_back(make_pair("  "+config.getItem("BIND_LIB_STOP")+spaces
 							+keys.getItem("LIB_STOP"), (int)Popup::POPUP_CANCEL)); 
-				items.push_back(make_pair("  "+config.getItem("LIB_ADD_TO_PL")+spaces
+				items.push_back(make_pair("  "+config.getItem("BIND_LIB_ADD_TO_PL")+spaces
 							+keys.getItem("LIB_ADD_TO_PL"), (int)Popup::POPUP_CANCEL)); 
-				items.push_back(make_pair("  "+config.getItem("LIB_ADD_AS_PL")+spaces
+				items.push_back(make_pair("  "+config.getItem("BIND_LIB_ADD_AS_PL")+spaces
 							+keys.getItem("LIB_ADD_AS_PL"), (int)Popup::POPUP_CANCEL)); 
-				items.push_back(make_pair("  "+config.getItem("LIB_QUEUE")+spaces
+				items.push_back(make_pair("  "+config.getItem("BIND_LIB_QUEUE")+spaces
 							+keys.getItem("LIB_QUEUE"), (int)Popup::POPUP_CANCEL)); 
 				break;
 			case 1: //Playlist
 			case 2: //NP
-				items.push_back(make_pair("  "+config.getItem("PL_PLAY_PAUSE")+spaces
+				items.push_back(make_pair("  "+config.getItem("BIND_PL_PLAY_PAUSE")+spaces
 							+keys.getItem("PL_PLAY_PAUSE"), (int)Popup::POPUP_CANCEL)); 
-				items.push_back(make_pair("  "+config.getItem("PL_STOP")+spaces
+				items.push_back(make_pair("  "+config.getItem("BIND_PL_STOP")+spaces
 							+keys.getItem("PL_STOP"), (int)Popup::POPUP_CANCEL)); 
-				items.push_back(make_pair("  "+config.getItem("PL_NEXT")+spaces
+				items.push_back(make_pair("  "+config.getItem("BIND_PL_NEXT")+spaces
 							+keys.getItem("PL_NEXT"), (int)Popup::POPUP_CANCEL)); 
-				items.push_back(make_pair("  "+config.getItem("PL_FF")+spaces
+				items.push_back(make_pair("  "+config.getItem("BIND_PL_FF")+spaces
 							+keys.getItem("PL_FF"), (int)Popup::POPUP_CANCEL)); 
-				items.push_back(make_pair("  "+config.getItem("PL_PREV")+spaces
+				items.push_back(make_pair("  "+config.getItem("BIND_PL_PREV")+spaces
 							+keys.getItem("PL_PREV"), (int)Popup::POPUP_CANCEL)); 
-				items.push_back(make_pair("  "+config.getItem("PL_REW")+spaces
+				items.push_back(make_pair("  "+config.getItem("BIND_PL_REW")+spaces
 							+keys.getItem("PL_REW"), (int)Popup::POPUP_CANCEL)); 
-				items.push_back(make_pair("  "+config.getItem("PL_TOGGLE_RND_RPT")+spaces
+				items.push_back(make_pair("  "+config.getItem("BIND_PL_TOGGLE_RND_RPT")+spaces
 							+keys.getItem("PL_TOGGLE_RND_RPT"), (int)Popup::POPUP_CANCEL)); 
-				items.push_back(make_pair("  "+config.getItem("PL_RND")+spaces
+				items.push_back(make_pair("  "+config.getItem("BIND_PL_RND")+spaces
 							+keys.getItem("PL_RND"), (int)Popup::POPUP_CANCEL)); 
-				items.push_back(make_pair("  "+config.getItem("PL_RPT")+spaces
+				items.push_back(make_pair("  "+config.getItem("BIND_PL_RPT")+spaces
 							+keys.getItem("PL_RPT"), (int)Popup::POPUP_CANCEL)); 
-				items.push_back(make_pair("  "+config.getItem("PL_REMOVE_FROM_PL")+spaces
+				items.push_back(make_pair("  "+config.getItem("BIND_PL_REMOVE_FROM_PL")+spaces
 							+keys.getItem("PL_REMOVE_FROM_PL"), (int)Popup::POPUP_CANCEL)); 
-				items.push_back(make_pair("  "+config.getItem("PL_MOVE_IN_PL")+spaces
+				items.push_back(make_pair("  "+config.getItem("BIND_PL_MOVE_IN_PL")+spaces
 							+keys.getItem("PL_MOVE_IN_PL"), (int)Popup::POPUP_CANCEL)); 
-				items.push_back(make_pair("  "+config.getItem("PL_QUEUE_NEXT")+spaces
+				items.push_back(make_pair("  "+config.getItem("BIND_PL_QUEUE_NEXT")+spaces
 							+keys.getItem("PL_QUEUE_NEXT"), (int)Popup::POPUP_CANCEL)); 
 
 				break;	
 			case 3: //
-				items.push_back(make_pair("  "+config.getItem("PLBROWSE_SELECT")+spaces
+				items.push_back(make_pair("  "+config.getItem("BIND_PLBROWSE_SELECT")+spaces
 							+keys.getItem("PLBROWSE_SELECT"), (int)Popup::POPUP_CANCEL)); 
-				items.push_back(make_pair("  "+config.getItem("PLBROWSE_PLAY_PAUSE")+spaces
+				items.push_back(make_pair("  "+config.getItem("BIND_PLBROWSE_PLAY_PAUSE")+spaces
 							+keys.getItem("PLBROWSE_PLAY_PAUSE"), (int)Popup::POPUP_CANCEL)); 
-				items.push_back(make_pair("  "+config.getItem("PLBROWSE_STOP")+spaces
+				items.push_back(make_pair("  "+config.getItem("BIND_PLBROWSE_STOP")+spaces
 							+keys.getItem("PLBROWSE_STOP"), (int)Popup::POPUP_CANCEL)); 
-				items.push_back(make_pair("  "+config.getItem("PLBROWSE_APPEND")+spaces
+				items.push_back(make_pair("  "+config.getItem("BIND_PLBROWSE_APPEND")+spaces
 							+keys.getItem("PLBROWSE_APPEND"), (int)Popup::POPUP_CANCEL)); 
-				items.push_back(make_pair("  "+config.getItem("PLBROWSE_DEL")+spaces
+				items.push_back(make_pair("  "+config.getItem("BIND_PLBROWSE_DEL")+spaces
 							+keys.getItem("PLBROWSE_DEL"), (int)Popup::POPUP_CANCEL)); 
 				break;	
 			case 4: //bookmarks
-				items.push_back(make_pair("  "+config.getItem("BOOKMRK_SELECT")+spaces
+				items.push_back(make_pair("  "+config.getItem("BIND_BOOKMRK_SELECT")+spaces
 							+keys.getItem("BOOKMRK_SELECT"), (int)Popup::POPUP_CANCEL)); 
-				items.push_back(make_pair("  "+config.getItem("BOOKMRK_PLAY_PAUSE")+spaces
+				items.push_back(make_pair("  "+config.getItem("BIND_BOOKMRK_PLAY_PAUSE")+spaces
 							+keys.getItem("BOOKMRK_PLAY_PAUSE"), (int)Popup::POPUP_CANCEL)); 
-				items.push_back(make_pair("  "+config.getItem("BOOKMRK_STOP")+spaces
+				items.push_back(make_pair("  "+config.getItem("BIND_BOOKMRK_STOP")+spaces
 							+keys.getItem("BOOKMRK_STOP"), (int)Popup::POPUP_CANCEL)); 
-				items.push_back(make_pair("  "+config.getItem("BOOKMRK_DEL")+spaces
+				items.push_back(make_pair("  "+config.getItem("BIND_BOOKMRK_DEL")+spaces
 							+keys.getItem("BOOKMRK_DEL"), (int)Popup::POPUP_CANCEL)); 
 				break;	
 
 		}	
 	} else {
-		items.push_back(make_pair("  "+config.getItem("RIGHT")+spaces
+		items.push_back(make_pair("  "+config.getItem("BIND_RIGHT")+spaces
 					+keys.getItem("RIGHT"), (int)Popup::POPUP_CANCEL)); 
-		items.push_back(make_pair("  "+config.getItem("LEFT")+spaces
+		items.push_back(make_pair("  "+config.getItem("BIND_LEFT")+spaces
 					+keys.getItem("LEFT"), (int)Popup::POPUP_CANCEL)); 
-		items.push_back(make_pair("  "+config.getItem("UP")+spaces
+		items.push_back(make_pair("  "+config.getItem("BIND_UP")+spaces
 					+keys.getItem("UP"), (int)Popup::POPUP_CANCEL)); 
-		items.push_back(make_pair("  "+config.getItem("DOWN")+spaces
+		items.push_back(make_pair("  "+config.getItem("BIND_DOWN")+spaces
 					+keys.getItem("DOWN"), (int)Popup::POPUP_CANCEL)); 
-		items.push_back(make_pair("  "+config.getItem("SHOW_CONTROLS")+spaces
+		items.push_back(make_pair("  "+config.getItem("BIND_SHOW_CONTROLS")+spaces
 					+keys.getItem("SHOW_CONTROLS"), (int)Popup::POPUP_CANCEL)); 
-		items.push_back(make_pair("  "+config.getItem("VOL_UP")+spaces
+		items.push_back(make_pair("  "+config.getItem("BIND_VOL_UP")+spaces
 					+keys.getItem("VOL_UP"), (int)Popup::POPUP_CANCEL)); 
-		items.push_back(make_pair("  "+config.getItem("VOL_DOWN")+spaces
+		items.push_back(make_pair("  "+config.getItem("BIND_VOL_DOWN")+spaces
 					+keys.getItem("VOL_DOWN"), (int)Popup::POPUP_CANCEL)); 
-		items.push_back(make_pair("  "+config.getItem("SHOW_MENU")+spaces
+		items.push_back(make_pair("  "+config.getItem("BIND_SHOW_MENU")+spaces
 					+keys.getItem("SHOW_MENU"), (int)Popup::POPUP_CANCEL)); 
-		items.push_back(make_pair("  "+config.getItem("LOCK")+spaces
+		items.push_back(make_pair("  "+config.getItem("BIND_LOCK")+spaces
 					+keys.getItem("LOCK"), (int)Popup::POPUP_CANCEL)); 
-		items.push_back(make_pair("  "+config.getItem("TOGGLE_MODE")+spaces
+		items.push_back(make_pair("  "+config.getItem("BIND_TOGGLE_MODE")+spaces
 					+keys.getItem("TOGGLE_MODE"), (int)Popup::POPUP_CANCEL)); 
 		//	items.push_back(make_pair("", type));	
 	}	
@@ -181,7 +181,7 @@ bool showPopupHelp(SDL_Surface* screen, Popup& popup, Config& config, int curMod
 	popRect.x = (screen->w - popRect.w) / 2;
 	popRect.y = (screen->h - popRect.h) / 2;
 	popup.setSize(popRect);
-	popup.setTitle("  "+config.getItem("LANG_MENU")+"      ommpc v0.4.0");
+	popup.setTitle("  "+config.getItem("LANG_MENU")+"      ommpc v0.4.2");
 	show = true;
 
 	return show;
@@ -357,6 +357,9 @@ int main ( int argc, char** argv )
 	struct stat stFileInfo;
 	if(stat("/dev/touchscreen/wm97xx",&stFileInfo) == 0)
 		f200 = true;
+#if defined(WIZ)
+	f200 = true;
+#endif
 
 	vector<int> volumeScale;
 	int pid;
@@ -371,9 +374,13 @@ int main ( int argc, char** argv )
 	} else if(pid == 0) { //child..attempt to launch mpd
 		Config config;
 		if(config.verifyMpdPaths()) {		
-			execlp("./mpd/mpd", "./mpd/mpd", "--no-create-db", "mpd.conf",  NULL);
+			char pwd[129];
+			getcwd(pwd, 128);
+			string pwdStr(pwd);
+			pwdStr += "/mpd/mpd";
+			execlp(pwdStr.c_str(), pwdStr.c_str(), "--no-create-db", "mpd.conf",  NULL);
 			cout << errno << " " << strerror(errno) << endl;
-#ifdef GP2X
+#if defined(GP2X) || defined(WIZ)
 			exit(-1);
 #else		
 			exit(1);
@@ -416,7 +423,6 @@ int main ( int argc, char** argv )
 				cout << "    " <<  SDL_JoystickName(i) << endl;
 				SDL_JoystickOpen(i);	
 			}
-
 			if (TTF_Init() == -1)
 			{
 				printf("Unable to initialize SDL_ttf: %s \n", TTF_GetError());
@@ -426,21 +432,25 @@ int main ( int argc, char** argv )
 				//Or:
 				//exit(1);
 			}
-
+cout << "set video mode" << endl;
 			// create a new window
 			SDL_Surface* screen = SDL_SetVideoMode(config.getItemAsNum("sk_screen_width"),
 												   config.getItemAsNum("sk_screen_height"),
+#if defined(WIZ)
+													16,
+#else
 													32,
+#endif
+					//SDL_SWSURFACE|SDL_DOUBLEBUF);
 					SDL_HWSURFACE|SDL_DOUBLEBUF);
 			if ( !screen )
 			{
 				printf("Unable to set 320x240 video: %s\n", SDL_GetError());
 				return 1;
 			}
-#ifdef GP2X
+#if defined(GP2X) || defined(WIZ)
 			SDL_ShowCursor(SDL_DISABLE);
 #endif
-
 			SDL_Rect mainRect = { config.getItemAsNum("sk_main_x"),
 				config.getItemAsNum("sk_main_y"),
 				config.getItemAsNum("sk_main_width"),
@@ -482,7 +492,6 @@ int main ( int argc, char** argv )
 			popRect.h = 100;
 			popRect.x = (screen->w - 150) / 2;
 			popRect.y = (screen->h - 100) / 2;
-
 			threadParms_t threadParms;
 			if(mpdStarted) {
 				threadParms.mpd = mpd_newConnection(config.getItem("host").c_str(), 
@@ -521,7 +530,7 @@ int main ( int argc, char** argv )
 				mpd_freeStatus(rtmpdStatus);
 			}
 			rtmpdStatus = NULL;
-#ifdef GP2X
+#if defined(GP2X) || defined(WIZ)
 			if (mpdStarted && rtmpdState == MPD_STATUS_STATE_PLAY) {
 				mpd_sendPauseCommand(threadParms.mpd, 1);
 				mpd_finishCommand(threadParms.mpd);
@@ -537,8 +546,8 @@ int main ( int argc, char** argv )
 			SDL_Surface * tmpbg = IMG_Load(string("skins/"+skinName+"/bg.png").c_str());
 			if (!tmpbg)
 				printf("Unable to load skin image: %s\n", SDL_GetError());
-cout << "before" << endl;
 			SDL_Surface * bg = SDL_DisplayFormat(tmpbg);
+
 			Keyboard keyboard(screen, config);
 			int popPerScreen = (popRect.h-(2*skipVal))/skipVal;
 			Popup popup(threadParms.mpd, screen, config, popRect, skipVal, popPerScreen, gp2xRegs, keyboard);
@@ -553,7 +562,6 @@ cout << "before" << endl;
 			Bookmarks bookmarks(threadParms.mpd, screen, bg, font, mainRect, skipVal, numPerScreen, playlist, config, statsBar, buttonManager, classicStatsBar, keyboard);
 			CommandFactory commandFactory(threadParms.mpd, volumeScale);
 			PlayerSettings settings(threadParms.mpd, screen, bg, font, mainRect, config, skipVal, numPerScreen, gp2xRegs, keyboard);
-
 			int curMode = 0;	
 			int volume = 10;
 			int isPlaying = 0;
@@ -573,7 +581,6 @@ cout << "before" << endl;
 					//carry on
 				}
 			}
-
 			//polling thread that gets current status from mpd
 			SDL_Thread *statusThread;
 			if(mpdStarted) {
@@ -623,12 +630,14 @@ cout << "before" << endl;
 			Timer timer;	
 			Timer timer2;	
 			int fps=0;
-			long frameTime = ((float)1000/(float)15) * 1000;
+			int targetFps = (config.getItemAsNum("fps")==0 ? 10 : config.getItemAsNum("fps"));
+			cout << "target fps=" << targetFps << endl;
+			long frameTime = ((float)1000/(float)targetFps) * 1000;
 			long now = timer.check();
 			long nextFrame = 0;
 			long timePerFrame = 0;
 			long diffTime = 0;
-
+cout << "away we go" << endl;
 			SDL_Event event;
 			int mouseState = 0; //0=unpressed, 1=down, 2=up
 			if(!config.verifyMpdPaths() || threadParms.mpd == NULL) {		
@@ -1113,7 +1122,7 @@ cout << "command menu stetet" << endl;
 						artParms.done = true;
 					}
 
-#ifdef GP2X
+#if defined(GP2X) || defined(WIZ)
 					// start playing, if it was playing when we last exited,
 					// or if we had just paused an already-playing MPD daemon
 					if(mpdStarted && (rtmpdState == MPD_STATUS_STATE_PAUSE && isPlaying)
@@ -1198,7 +1207,7 @@ cout << "command menu stetet" << endl;
 				ommcState.close();
 			}
 
-#ifdef GP2X
+#if defined(GP2X) || defined(WIZ)
 			// kill MPD
 			if(mpdStarted && killMpd) {
 				mpd_sendKillCommand(threadParms.mpd);

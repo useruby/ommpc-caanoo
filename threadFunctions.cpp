@@ -127,7 +127,7 @@ int pollMpdStatus(void *data)
 		}
 		SDL_mutexV(threadParms->lockConnection);
 		do {
-			SDL_Delay(300);
+			SDL_Delay(150);
 		} while((threadParms->mpdStatusChanged != 0)
 				&& !threadParms->pollStatusDone);
 	}

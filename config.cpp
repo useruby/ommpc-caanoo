@@ -93,6 +93,7 @@ void Config::readConfigFile(ifstream& configFile)
 
 void Config::readLangFile(string lang)
 {
+cout << "lang " << lang << endl;
 	lang = "languages/"+lang;
 	// Open the test file (must be UTF-8 encoded)
 	ifstream fs8(lang.c_str());
@@ -149,7 +150,9 @@ void Config::saveConfigFile()
 	for(std::map<std::string, std::string>::iterator cIter =  m_configItems.begin();
 	cIter != m_configItems.end();
 	++cIter) {
-		if((*cIter).first.substr(0,3) != "sk_" && (*cIter).first.substr(0,4) != "LANG") {
+		if((*cIter).first.substr(0,3) != "sk_" 
+			&& (*cIter).first.substr(0,4) != "LANG"
+			&& (*cIter).first.substr(0,4) != "BIND") {
 			configFile << (*cIter).first << "=" << (*cIter).second << endl;
 		}
 	}

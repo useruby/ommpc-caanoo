@@ -84,6 +84,12 @@ void Button::init(Config& config)
 	m_srcRect.h = m_destRect.h;
 }
 
+void Button::updateInfo(string name, string imageDir)
+{
+	m_name = name;
+	m_imageDir = imageDir;
+}
+
 void Button::updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus,
 						int rtmpdStatusChanged, mpd_Status* rtmpdStatus, bool forceRefresh)
 {

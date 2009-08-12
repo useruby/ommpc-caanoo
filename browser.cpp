@@ -47,6 +47,11 @@ Browser::Browser(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* bg, TTF_
 , m_appended(false)
 , m_queued(false)
 , m_showTime(0)
+, m_good(false)
+{
+}
+
+void Browser::initAll()
 {
 	m_config.getItemAsColor("sk_main_itemColor", m_itemColor.r, m_itemColor.g, m_itemColor.b);
 	m_config.getItemAsColor("sk_main_curItemColor", m_curItemColor.r, m_curItemColor.g, m_curItemColor.b);
@@ -87,6 +92,32 @@ Browser::Browser(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* bg, TTF_
 		m_appendedImg = SDL_DisplayFormatAlpha(tmpSurface);
 		SDL_FreeSurface(tmpSurface);
 	}
+	
+	tmpSurface = NULL;	
+	tmpSurface = IMG_Load(string("skins/"+skinName+"/iconFolder.png").c_str());
+	if (!tmpSurface)
+		tmpSurface = IMG_Load(string("skins/default/iconFolder.png").c_str());
+	m_iconFolder = SDL_DisplayFormatAlpha(tmpSurface);
+	SDL_FreeSurface(tmpSurface);
+	
+	tmpSurface = IMG_Load(string("skins/"+skinName+"/iconFile.png").c_str());
+	if (!tmpSurface)
+		tmpSurface = IMG_Load(string("skins/default/iconFile.png").c_str());
+	if (!tmpSurface)
+		printf("Unable to load image: %s\n", SDL_GetError());
+	else { 
+		m_iconFile = SDL_DisplayFormatAlpha(tmpSurface);
+		SDL_FreeSurface(tmpSurface);
+	}
+	tmpSurface = IMG_Load(string("skins/"+skinName+"/iconFilter.png").c_str());
+	if (!tmpSurface)
+		tmpSurface = IMG_Load(string("skins/default/iconFilter.png").c_str());
+	if (!tmpSurface)
+		printf("Unable to load image: %s\n", SDL_GetError());
+	else { 
+		m_iconFilter = SDL_DisplayFormatAlpha(tmpSurface);
+		SDL_FreeSurface(tmpSurface);
+	}
 
 	m_numPerScreen--;
 	initItemIndexLookup();	
@@ -94,6 +125,8 @@ Browser::Browser(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* bg, TTF_
     //ls("tim");
     for(int i=0; i<=5; ++i)
 	    m_filters.push_back("");
+
+	m_good = true;
 }
 
 void Browser::ls(std::string item)
@@ -751,6 +784,8 @@ int Browser::processCommand(int command, GuiPos& guiPos)
 
 void Browser::draw(bool forceRefresh, long timePerFrame, bool inBack)
 {
+	if(!m_good)
+		initAll();
 	if(forceRefresh || (!inBack && m_refresh) || m_queued || m_appended) {
 		//clear this portion of the screen 
 		SDL_SetClipRect(m_screen, &m_clearRect);

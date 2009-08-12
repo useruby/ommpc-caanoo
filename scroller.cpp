@@ -47,6 +47,11 @@ Scroller::Scroller(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* bg, TT
 	, m_refresh(true)
 	, m_delay(0)
 	, m_delayCnt(0)
+	, m_iconFilter(NULL)
+	, m_iconFile(NULL)
+	, m_iconFolder(NULL)
+	, m_bgNowPlaying(NULL)
+	, m_goodS(false)
 {
 	m_destRect.x = rect.x;
 	m_destRect.y = rect.y;
@@ -64,6 +69,13 @@ Scroller::Scroller(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* bg, TT
 	m_downClearRect.w = 25;
 	m_downClearRect.y = rect.y+rect.h-25;
 	m_downClearRect.h = 25;
+	
+	
+	//updateDisplayList();
+}
+
+void Scroller::initAllS()
+{
 	m_config.getItemAsColor("sk_popup_itemColor", m_pauseItemColor.r, m_pauseItemColor.g, m_pauseItemColor.b);
 	
 	string skinName = m_config.getItem("skin");
@@ -87,45 +99,8 @@ Scroller::Scroller(mpd_Connection* mpd, SDL_Surface* screen, SDL_Surface* bg, TT
 		printf("Unable to load image: %s\n", SDL_GetError());
 	else 
 		m_upBtn = SDL_DisplayFormatAlpha(m_upBtn);
-	
-	SDL_Surface* tmpSurface = NULL;	
-	tmpSurface = IMG_Load(string("skins/"+skinName+"/iconFolder.png").c_str());
-	if (!tmpSurface)
-		tmpSurface = IMG_Load(string("skins/default/iconFolder.png").c_str());
-	m_iconFolder = SDL_DisplayFormatAlpha(tmpSurface);
-	SDL_FreeSurface(tmpSurface);
-	
-	tmpSurface = IMG_Load(string("skins/"+skinName+"/iconFile.png").c_str());
-	if (!tmpSurface)
-		tmpSurface = IMG_Load(string("skins/default/iconFile.png").c_str());
-	if (!tmpSurface)
-		printf("Unable to load image: %s\n", SDL_GetError());
-	else { 
-		m_iconFile = SDL_DisplayFormatAlpha(tmpSurface);
-		SDL_FreeSurface(tmpSurface);
-	}
-	tmpSurface = IMG_Load(string("skins/"+skinName+"/iconFilter.png").c_str());
-	if (!tmpSurface)
-		tmpSurface = IMG_Load(string("skins/default/iconFilter.png").c_str());
-	if (!tmpSurface)
-		printf("Unable to load image: %s\n", SDL_GetError());
-	else { 
-		m_iconFilter = SDL_DisplayFormatAlpha(tmpSurface);
-		SDL_FreeSurface(tmpSurface);
-	}
-	tmpSurface = IMG_Load(string("skins/"+skinName+"/bg_nowPlaying.png").c_str());
-	if (!tmpSurface)
-		tmpSurface = IMG_Load(string("skins/default/bg_nowPlaying.png").c_str());
-	if (!tmpSurface)
-		printf("Unable to load image: %s\n", SDL_GetError());
-	else { 
-		m_bgNowPlaying = SDL_DisplayFormatAlpha(tmpSurface);
-		SDL_FreeSurface(tmpSurface);
-	}
-	
-	//updateDisplayList();
 
-
+	m_goodS = true;
 }
 
 void Scroller::initItemIndexLookup() {
@@ -307,6 +282,8 @@ cout << "m_curitem " << m_curItemNum << "  disploff  " << m_displayListOffset <<
 
 void Scroller::draw(long timePerFrame, bool drawIcons, int nowPlaying, int lastQueued) 
 {
+	if(!m_goodS)
+		initAllS();
 	if(timePerFrame > 0) 
 		m_delay = 1000000 /(15 * timePerFrame) ;
 
@@ -397,6 +374,8 @@ void Scroller::draw(long timePerFrame, bool drawIcons, int nowPlaying, int lastQ
 
 void Scroller::draw(vector<string>& selectedOptions) 
 {
+	if(!m_goodS)
+		initAllS();
 	SDL_Surface *sText;
 	int numProcessed = 0;
 	int numDisplayed = 0;

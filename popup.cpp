@@ -122,15 +122,37 @@ void Popup::setOptionsText()
 {
 	vector<string> curOption;
 	vector<string>::iterator curIter;
+#if defined(GP2X)
 	for(int i=65; i<=280; i+=5) {
+#else
+	int everyThird = 1;
+	for(int i=100; i<=600; i+=33) {
+#endif
 		ostringstream mhz;
+#if !defined(GP2X)
+		if(everyThird == 3) {
+			i++;
+			everyThird = 1;
+		}
+#endif
 		mhz << i;
 		curOption.push_back(mhz.str());
 	}
 	m_optionsText.push_back(curOption);
 	curOption.clear();
+#if defined(GP2X)
 	for(int i=65; i<=280; i+=5) {
+#else
+	everyThird = 1;
+	for(int i=100; i<=600; i+=33) {
+#endif
 		ostringstream mhz;
+#if !defined(GP2X)
+		if(everyThird == 3) {
+			i++;
+			everyThird = 1;
+		}
+#endif
 		mhz << i;
 		curOption.push_back(mhz.str());
 	}
@@ -159,7 +181,7 @@ void Popup::setOptionsText()
 					throw runtime_error(msg.c_str());
 				}
 
-				if (S_ISDIR(s.st_mode) && strncmp(dirent->d_name, "overlay", 7)) 
+				if (S_ISDIR(s.st_mode) && strncmp(dirent->d_name, "default", 7)) 
 					curOption.push_back(dirent->d_name);
 			}
 			dirent = readdir(udir);

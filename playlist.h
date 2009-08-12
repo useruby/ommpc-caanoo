@@ -70,6 +70,8 @@ public:
 
 	int getPlayingState() {return m_curState;}
 protected:
+	void initAll();
+	bool m_good;
 	std::string m_curDir;
 
 	int m_view;

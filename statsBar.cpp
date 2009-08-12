@@ -51,21 +51,12 @@ StatsBar::StatsBar(mpd_Connection* mpd, SDL_mutex* lock, SDL_Surface* screen, SD
 , m_playlist(pl)
 , m_bg(bg)
 , m_f200(f200)
+, m_good(false)
 {
 	m_backRect = rect;
 	m_destRect.x = rect.x;
 	m_destRect.y = rect.y;
 	m_origY = m_destRect.y;
-	m_font = TTF_OpenFont(config.getItem("sk_font_stats").c_str(),
-						  config.getItemAsNum("sk_font_stats_size"));
-	m_itemH = TTF_FontLineSkip( m_font );
-
-	m_itemWidth = m_config.getItemAsNum("sk_stats_itemWidth");
-	m_itemSpacing = m_config.getItemAsNum("sk_stats_itemSpacing");
-
-	m_config.getItemAsColor("sk_stats_itemColor", m_itemColor.r, m_itemColor.g, m_itemColor.b);
-	m_config.getItemAsColor("sk_stats_curItemColor", m_curItemColor.r, m_curItemColor.g, m_curItemColor.b);
-
 	int from = 0;
 	for(int i=0; i<=20; ++i) {
 		int j;
@@ -74,6 +65,20 @@ StatsBar::StatsBar(mpd_Connection* mpd, SDL_mutex* lock, SDL_Surface* screen, SD
 
 		from = j;
 	}
+}
+
+void StatsBar::initAll()
+{
+	m_font = TTF_OpenFont(m_config.getItem("sk_font_stats").c_str(),
+						  m_config.getItemAsNum("sk_font_stats_size"));
+	m_itemH = TTF_FontLineSkip( m_font );
+
+	m_itemWidth = m_config.getItemAsNum("sk_stats_itemWidth");
+	m_itemSpacing = m_config.getItemAsNum("sk_stats_itemSpacing");
+
+	m_config.getItemAsColor("sk_stats_itemColor", m_itemColor.r, m_itemColor.g, m_itemColor.b);
+	m_config.getItemAsColor("sk_stats_curItemColor", m_curItemColor.r, m_curItemColor.g, m_curItemColor.b);
+
 	if(m_config.getItem("softwareVolume") == "on")
 		m_softVol = true;
 	else
@@ -81,6 +86,7 @@ StatsBar::StatsBar(mpd_Connection* mpd, SDL_mutex* lock, SDL_Surface* screen, SD
 
 	//for(int i=0; i<=100; ++i)
 	//	cout << "vol " << i << "  " << m_f200VolLookup[i] << endl;	
+	m_good= true;
 }
 
 string StatsBar::formattedElapsedTime()
@@ -213,7 +219,9 @@ void StatsBar::updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus,
 }
 
 void StatsBar::draw(bool forceRefresh, int fps)
-{
+{	
+	if(!m_good)
+		initAll();
 	//clear this portion of the screen 
 	SDL_SetClipRect(m_screen, &m_clearRect);
 	SDL_BlitSurface(m_bg, &m_clearRect, m_screen, &m_clearRect );

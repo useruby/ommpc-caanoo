@@ -40,6 +40,11 @@ Keyboard::Keyboard(SDL_Surface* screen, Config& config)
 , m_refresh(true)
 , m_foundKey(false)
 , m_counter(0)
+, m_good(false)
+{
+}
+
+void Keyboard::initAll() 
 {
 	SDL_Surface* tmpSurface = NULL;	
 	string keyboardName = m_config.getItem("sk_keyboard");
@@ -87,6 +92,7 @@ Keyboard::Keyboard(SDL_Surface* screen, Config& config)
 	SDL_FreeSurface(tmpSurface);
 	
 	initKeys();
+	m_good = true;
 }
 
 void Keyboard::initVector(vector<string>& myVect, string myArray[], int size)
@@ -444,12 +450,14 @@ int Keyboard::processCommand(int command, GuiPos& guiPos)
 
 bool Keyboard::draw(bool forceRefresh)
 {
+	if(!m_good)
+		initAll();
 	bool refreshRet = false;
 	if(forceRefresh || m_refresh) {
 		keyPositions_t::iterator pIter = m_keyPositions.begin();
 		SDL_Rect entryRect;
 		SDL_Surface *sText;
-		cout << "keyboard " << forceRefresh << m_refresh  << m_foundKey<< endl;
+		//cout << "keyboard " << forceRefresh << m_refresh  << m_foundKey<< endl;
 		if(m_counter < 10) {
 			entryRect.w = 28;
 			entryRect.h = 28;

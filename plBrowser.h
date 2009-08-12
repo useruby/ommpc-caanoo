@@ -52,6 +52,8 @@ public:
 	std::string currentItemPath();
 
 protected:
+	void initAll();
+	bool m_good;
 	std::string m_curDir;
 
 	Playlist& m_playlist;

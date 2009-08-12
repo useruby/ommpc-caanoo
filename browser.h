@@ -65,6 +65,8 @@ public:
 
 	bool updatingDb() { return m_updatingDb;}
 protected:
+	void initAll();
+	bool m_good;
 	std::string replaceWildcard(std::string input);
 	void addFolderAsPlaylist(bool append=false);
 	void artistAsPlaylist(std::string artist, bool append=false);
