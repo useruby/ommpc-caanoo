@@ -70,6 +70,7 @@ protected:
 	std::string m_type;
 	std::string m_genre;
 	std::string m_track;
+	std::string m_date;
 	bool m_showInfo;
 	int m_counter;
 	SDL_Rect m_moveRect;
@@ -78,6 +79,8 @@ protected:
 	SDL_Surface* m_typeSurface;
 	SDL_Surface* m_genreSurface;
 	SDL_Surface* m_trackSurface;
+	SDL_Surface* m_dateSurface;
+	SDL_Surface* m_rateSurface;
 	int m_skipVal;
 };
 

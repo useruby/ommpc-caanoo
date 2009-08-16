@@ -15,9 +15,11 @@ public:
 	typedef std::vector<std::string> genres_t;
 	typedef std::vector<std::string> artists_t;
 	SongDb(std::string, int, int);
+//	SongDb(mpd_Connection* mpd);
 	~SongDb();
 
 	void update();
+	bool updating(){return m_updating;};
 	void showAll();
 	songsAndPaths_t getSongsInAlbum(std::string album, std::string artist);
 	songsAndPaths_t getSongsForArtist(std::string artist);
@@ -34,6 +36,10 @@ private:
 	mpd_Connection* m_mpd;
 	sqlite3* m_db;
 	char* m_errMsg;		
+	bool m_updating;
+	std::string m_host;
+	int m_port;
+	int m_timeout;
 };
 
 #endif

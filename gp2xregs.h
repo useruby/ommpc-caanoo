@@ -46,6 +46,14 @@ public:
 	void toggleScreen();	
 	inline bool screenIsOff() {return m_screenIsOff;}
 	inline int version() {return m_version;}
+	inline void vsync()
+	{
+#if defined(WIZ)
+		while((m_memregs16[0x308C] & (1 << 10)) == 0);
+		m_memregs16[0x308C] |= (1 << 10);
+#endif
+	};
+
 protected:
 	void initVersion();
 	bool m_screenIsOff;

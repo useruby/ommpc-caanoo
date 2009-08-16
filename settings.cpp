@@ -56,7 +56,7 @@ void PlayerSettings::initAll()
 	Scroller::listing_t items;
 	items.push_back(make_pair("  "+m_config.getItem("LANG_CLOCK"), 21));
 	items.push_back(make_pair("  "+m_config.getItem("LANG_CLOCK_LOCKED"), 25));
-//	items.push_back(make_pair("  "+m_config.getItem("LANG_SHOW_ART"), 22));
+	items.push_back(make_pair("  "+m_config.getItem("LANG_SEL_LANG"), 22));
 	items.push_back(make_pair("  "+m_config.getItem("LANG_SKIN"), 23));
 	items.push_back(make_pair("  "+m_config.getItem("LANG_SOFT_VOL"), 24));
 	items.push_back(make_pair("  "+m_config.getItem("LANG_INSTALL_PATH"), 26));
@@ -156,15 +156,35 @@ void PlayerSettings::setOptionsText()
 		curOption.push_back(mhz.str());
 	}
 	m_optionsText.push_back(curOption);
-/*
+
 	curOption.clear();
-	curOption.push_back("true");
-	curOption.push_back("false");
+	DIR * udir = opendir("languages/");
+	if(udir != NULL) {
+		struct dirent * dirent = readdir(udir);
+
+		bool done = false;
+		while(dirent != NULL) {
+			if(dirent->d_name[0] != '.') {
+				string ename = "languages/";
+				ename += dirent->d_name;
+				struct stat s;
+
+				if (stat(ename.c_str(), &s) < 0) {
+					string msg = "error calling stat on ";
+					msg += ename;
+					throw runtime_error(msg.c_str());
+				}
+
+				curOption.push_back(dirent->d_name);
+			}
+			dirent = readdir(udir);
+		}
+	}
 	m_optionsText.push_back(curOption);
-*/
+	closedir(udir);	
 	curOption.clear();
 
-	DIR * udir = opendir("skins/");
+	udir = opendir("skins/");
 
 	if(udir != NULL) {
 		struct dirent * dirent = readdir(udir);
@@ -189,6 +209,7 @@ void PlayerSettings::setOptionsText()
 		}
 	}
 	m_optionsText.push_back(curOption);
+	closedir(udir);	
 	
 	curOption.clear();
 	curOption.push_back("off");
@@ -229,25 +250,25 @@ void PlayerSettings::setOptionsText()
 		curIter = m_optionsText[1].begin();
 	m_optionsIters.push_back(curIter);
 
-//	curIter = find(m_optionsText[2].begin(), m_optionsText[2].end(), m_config.getItem("showAlbumArt"));
-//	if(curIter == m_optionsText[2].end())
-//		curIter = m_optionsText[2].begin();
-//	m_optionsIters.push_back(curIter);
-	curIter = find(m_optionsText[2].begin(), m_optionsText[2].end(), m_config.getItem("skin"));
+	curIter = find(m_optionsText[2].begin(), m_optionsText[2].end(), m_config.getItem("language"));
 	if(curIter == m_optionsText[2].end())
 		curIter = m_optionsText[2].begin();
 	m_optionsIters.push_back(curIter);
-	curIter = find(m_optionsText[3].begin(), m_optionsText[3].end(), m_config.getItem("softwareVolume"));
+	curIter = find(m_optionsText[3].begin(), m_optionsText[3].end(), m_config.getItem("skin"));
 	if(curIter == m_optionsText[3].end())
 		curIter = m_optionsText[3].begin();
 	m_optionsIters.push_back(curIter);
-	curIter = m_optionsText[4].begin();
+	curIter = find(m_optionsText[4].begin(), m_optionsText[4].end(), m_config.getItem("softwareVolume"));
+	if(curIter == m_optionsText[4].end())
+		curIter = m_optionsText[4].begin();
 	m_optionsIters.push_back(curIter);
 	curIter = m_optionsText[5].begin();
 	m_optionsIters.push_back(curIter);
 	curIter = m_optionsText[6].begin();
 	m_optionsIters.push_back(curIter);
 	curIter = m_optionsText[7].begin();
+	m_optionsIters.push_back(curIter);
+	curIter = m_optionsText[8].begin();
 	m_optionsIters.push_back(curIter);
 }
 
@@ -256,7 +277,7 @@ void PlayerSettings::saveOptions()
 	string oldSkin = m_config.getItem("skin");
 	string oldSpeed = m_config.getItem("cpuSpeed");
 	string oldSpeedLocked = m_config.getItem("cpuSpeedLocked");
-//	string oldSaa = m_config.getItem("showAlbumArt");
+	string oldLang = m_config.getItem("language");
 	string oldSoftwareVol = m_config.getItem("softwareVolume");
 	string oldAAR = m_config.getItem("albumArtRoot");
 	string oldMR = m_config.getItem("musicRoot");
@@ -273,28 +294,28 @@ void PlayerSettings::saveOptions()
 				name = "cpuSpeed";
 			else if(itemNum == 1)
 				name = "cpuSpeedLocked";
-		//	else if(itemNum == 2)
-		//		name = "showAlbumArt";
 			else if(itemNum == 2)
-				name = "skin";
+				name = "language";
 			else if(itemNum == 3)
+				name = "skin";
+			else if(itemNum == 4)
 				name = "softwareVolume";
-			else if(itemNum == 4) {
+			else if(itemNum == 5) {
 				name = "programRoot";
 				if((*m_optionsIters[itemNum])[(*m_optionsIters[itemNum]).length()-1] != '/')
 					(*m_optionsIters[itemNum]) = (*m_optionsIters[itemNum]) + '/';
 			}
-			else if(itemNum == 5) {
+			else if(itemNum == 6) {
 				name = "musicRoot";
 				if((*m_optionsIters[itemNum])[(*m_optionsIters[itemNum]).length()-1] != '/')
 					(*m_optionsIters[itemNum]) = (*m_optionsIters[itemNum]) + '/';
 			}
-			else if(itemNum == 6) {
+			else if(itemNum == 7) {
 				name = "playlistRoot";
 				if((*m_optionsIters[itemNum])[(*m_optionsIters[itemNum]).length()-1] != '/')
 					(*m_optionsIters[itemNum]) = (*m_optionsIters[itemNum]) + '/';
 			}
-			else if(itemNum == 7) {
+			else if(itemNum == 8) {
 				name = "albumArtRoot";
 				if((*m_optionsIters[itemNum])[(*m_optionsIters[itemNum]).length()-1] != '/')
 					(*m_optionsIters[itemNum]) = (*m_optionsIters[itemNum]) + '/';
@@ -519,11 +540,10 @@ void PlayerSettings::draw(bool forceRefresh, long timePerFrame, bool inBack)
 			m_selectedOptions.push_back((*m_optionsIters[5]));
 			m_selectedOptions.push_back((*m_optionsIters[6]));
 			m_selectedOptions.push_back((*m_optionsIters[7]));
-		//	m_selectedOptions.push_back((*m_optionsIters[8]));
+			m_selectedOptions.push_back((*m_optionsIters[8]));
 				
 			Scroller::draw(m_selectedOptions);
 		}
-		cout << "refreshing" << endl;
 		m_refresh = false;
 	}
 }

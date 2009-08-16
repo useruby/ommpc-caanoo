@@ -110,6 +110,7 @@ cout << "setting clock to " << MHZ << endl;
 #endif
 }
 
+
 void GP2XRegs::toggleScreen()
 {
 #ifdef GP2X

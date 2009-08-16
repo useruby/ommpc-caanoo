@@ -32,9 +32,16 @@ static int callback2(void *notUsed, int numCols, char** dbResults, char** colNam
 }
 
 
+//SongDb::SongDb(mpd_Connection* mpd)
 SongDb::SongDb(string host, int port, int timeout)
+:m_updating(false)
+,m_host(host)
+,m_port(port)
+,m_timeout(timeout)
+, m_mpd(NULL)
 {
-	m_mpd = mpd_newConnection(host.c_str(), port, timeout);
+//	m_mpd = mpd_newConnection(host.c_str(), port, timeout);
+	//m_mpd = mpd;
 	int rc = sqlite3_open("songdb", &m_db);
 	if(rc) {
 		sqlite3_close(m_db);
@@ -44,24 +51,63 @@ SongDb::SongDb(string host, int port, int timeout)
 }
 
 SongDb::~SongDb() {
-	mpd_closeConnection(m_mpd);
+	if(m_mpd != NULL) {
+		mpd_closeConnection(m_mpd);
+		m_mpd = NULL;
+	}
 	sqlite3_close(m_db);
 }
 
 void SongDb::update()
 {
-cout << "updating song db" << endl;
-	mpd_Status * mpdStatus;
+	m_updating = true;
 
-	mpd_sendStatusCommand(m_mpd);
-	mpdStatus = mpd_getStatus(m_mpd);
-	mpd_finishCommand(m_mpd);
-	while(mpdStatus->updatingDb == 1) { 
-		sleep(7);
+//	cout << "sending status command " << endl;
+//	cout << "get Status " << endl;
+//	cout << "got Status " << endl;
+
+	int timesErrored = 0;	
+	bool done = false;
+	if(m_mpd != NULL) {
+		mpd_closeConnection(m_mpd);
+		m_mpd = NULL;
+	}
+	m_mpd = mpd_newConnection(m_host.c_str(), m_port, m_timeout);
+	mpd_Status * mpdStatus = NULL;
+	while(!done) {
 		mpd_sendStatusCommand(m_mpd);
+	
 		mpdStatus = mpd_getStatus(m_mpd);
 		mpd_finishCommand(m_mpd);
+		if(mpdStatus != NULL) {
+			if(mpdStatus->updatingDb == 0) {
+				done = true;
+				cout << "finished updating mpd db" << endl;
+			} else {
+				cout << "still updating mpd db" << endl;
+				timesErrored = 0;	
+				sleep(5);
+			}
+
+			mpd_freeStatus(mpdStatus);
+			mpdStatus = NULL;
+		} else {
+			cout << "unable to get status, trying again in 5 secs..." << endl;
+			if(m_mpd->error) {
+				cout << "mpd error: " << m_mpd->errorStr << endl;
+			}
+	
+			timesErrored++;
+			if(timesErrored > 3) {
+				mpd_closeConnection(m_mpd);
+				m_mpd = mpd_newConnection(m_host.c_str(), m_port, m_timeout);
+			} else {	
+				sleep(5);
+			}
+		}
 	}
+
+	cout << "updating song db" << endl;
 	mpd_sendListallInfoCommand(m_mpd, "");
 	mpd_InfoEntity* mpdItem = mpd_getNextInfoEntity(m_mpd);
 	string stmt;
@@ -131,7 +177,12 @@ cout << "updating song db" << endl;
 		sprintf(msg, "sql error: %s", m_errMsg);
 		cout << msg << endl;
 	}
-cout << "updated song db" << endl;
+	m_updating = false;
+	if(m_mpd != NULL) {
+		mpd_closeConnection(m_mpd);
+		m_mpd = NULL;
+	}
+	cout << "updated song db" << endl;
 }
 
 std::string SongDb::cleanDoubleQuotes(std::string inStr)

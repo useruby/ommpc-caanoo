@@ -181,7 +181,7 @@ bool showPopupHelp(SDL_Surface* screen, Popup& popup, Config& config, int curMod
 	popRect.x = (screen->w - popRect.w) / 2;
 	popRect.y = (screen->h - popRect.h) / 2;
 	popup.setSize(popRect);
-	popup.setTitle("  "+config.getItem("LANG_MENU")+"      ommpc v0.4.2");
+	popup.setTitle("  "+config.getItem("LANG_MENU")+"      ommpc v0.4.4b");
 	show = true;
 
 	return show;
@@ -438,11 +438,11 @@ cout << "set video mode" << endl;
 												   config.getItemAsNum("sk_screen_height"),
 #if defined(WIZ)
 													16,
+													SDL_SWSURFACE);
 #else
 													32,
+													SDL_HWSURFACE|SDL_DOUBLEBUF);
 #endif
-					//SDL_SWSURFACE|SDL_DOUBLEBUF);
-					SDL_HWSURFACE|SDL_DOUBLEBUF);
 			if ( !screen )
 			{
 				printf("Unable to set 320x240 video: %s\n", SDL_GetError());
@@ -509,6 +509,7 @@ cout << "set video mode" << endl;
 			SongDb songDb(config.getItem("host"), 
 					config.getItemAsNum("port"),
 					config.getItemAsNum("timeout"));
+			//SongDb songDb(threadParms.mpd);
 			SDL_Thread *songDbThread = NULL;
 			songDbThreadParms_t songDbParms;
 			songDbParms.songDb = &songDb;
@@ -630,7 +631,7 @@ cout << "set video mode" << endl;
 			Timer timer;	
 			Timer timer2;	
 			int fps=0;
-			int targetFps = (config.getItemAsNum("fps")==0 ? 10 : config.getItemAsNum("fps"));
+			int targetFps = (config.getItemAsNum("fps")==0 ? 15 : config.getItemAsNum("fps"));
 			cout << "target fps=" << targetFps << endl;
 			long frameTime = ((float)1000/(float)targetFps) * 1000;
 			long now = timer.check();
@@ -937,15 +938,26 @@ cout << "command menu stetet" << endl;
 						break;
 					case CMD_MPD_UPDATE: 
 						{
-							char path[3] = "";
-							mpd_sendUpdateCommand(threadParms.mpd, path);
+							mpd_Status * mpdStatus;
+							mpd_sendStatusCommand(threadParms.mpd);
+							mpdStatus = mpd_getStatus(threadParms.mpd);
 							mpd_finishCommand(threadParms.mpd);
-							if(songDbThread != NULL)	
-								SDL_WaitThread(songDbThread, NULL);
-							songDbThread = SDL_CreateThread(updateSongDb, &songDbParms);
-							if(statusThread == NULL) {
-								cout << "unable to create status thread" << endl;
-								return -1;
+	
+							if(mpdStatus->updatingDb == 0 && !songDb.updating()) { 
+								if(songDbThread != NULL)	
+									SDL_WaitThread(songDbThread, NULL);
+
+								char path[3] = "";
+								mpd_sendUpdateCommand(threadParms.mpd, path);
+								mpd_finishCommand(threadParms.mpd);
+
+								songDbThread = SDL_CreateThread(updateSongDb, &songDbParms);
+								if(statusThread == NULL) {
+									cout << "unable to create status thread" << endl;
+									return -1;
+								}
+							} else {
+								cout << "already updating...." << endl;
 							}
 						}
 						break;	
@@ -1140,6 +1152,7 @@ cout << "command menu stetet" << endl;
 					SDL_mutexV(threadParms.lockConnection);
 					
 					if(!gp2xRegs.screenIsOff())  {
+						//gp2xRegs.vsync();
 				 		SDL_Flip(screen);
 					} else {
 					//	SDL_Delay(165);

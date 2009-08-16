@@ -106,7 +106,7 @@ void Menu::initItems(int command)
 	//m_buttons.clear();
 	//switch(command) {
 	//	case CMD_SHOW_MENU:
-	m_font = TTF_OpenFont("Vera.ttf", 10);
+	m_font = TTF_OpenFont(m_config.getItem("sk_font_main").c_str(), 10);
 			{
 				m_view = 0;
 				int xOffset = 0;

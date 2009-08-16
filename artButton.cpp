@@ -50,10 +50,9 @@ ArtButton::ArtButton(artThreadParms_t& artParms, string label, string id)
 , m_type("")
 , m_genre("")
 , m_track("")
+, m_date("")
 , m_showInfo(false)			
 {
-	m_font = TTF_OpenFont("Vera.ttf", 10);
-	m_skipVal = (int)(TTF_FontLineSkip( m_font ) * 1.1);//config.getItemAsFloat("sk_font_main_extra_spacing"));
 	if(m_label.empty())
 		m_displayText = false;
 	m_artistSurface = NULL;
@@ -61,11 +60,15 @@ ArtButton::ArtButton(artThreadParms_t& artParms, string label, string id)
  m_typeSurface=NULL;
  m_genreSurface=NULL;
  m_trackSurface=NULL;
+	m_dateSurface=NULL;
+	m_rateSurface=NULL;
 }
 
 
 void ArtButton::init(Config& config, int command)
 {
+	m_font = TTF_OpenFont(config.getItem("sk_font_main").c_str(), 10);
+	m_skipVal = (int)(TTF_FontLineSkip( m_font ) * 1.1);//config.getItemAsFloat("sk_font_main_extra_spacing"));
 	string btnName = "sk_"+m_name;
 	m_clearRect.x = config.getItemAsNum(btnName+"_x");
 	m_clearRect.y = config.getItemAsNum(btnName+"_y");
@@ -91,8 +94,17 @@ bool ArtButton::updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus,
 		status = mpdStatus;
 		statusChanged = mpdStatusChanged;
 	}
+	
 
 	if(statusChanged > 0) {
+		if(statusChanged & RATE_CHG) { 
+			ostringstream out;
+			out.str("");
+			out << "Bitrate: " << status->bitRate << " kbps";
+			if(m_rateSurface != NULL)
+				SDL_FreeSurface(m_rateSurface);
+			m_rateSurface = TTF_RenderUTF8_Blended(m_font, out.str().c_str(), m_itemColor);
+		}
 		if(statusChanged & SONG_CHG) {
 			mpd_sendCurrentSongCommand(mpd);
 			mpd_InfoEntity* songEntity = mpd_getNextInfoEntity(mpd);
@@ -115,6 +127,10 @@ bool ArtButton::updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus,
 					m_track  = songEntity->info.song->track;
 				else 
 					m_track = " ";
+				if(songEntity->info.song->date != NULL)
+					m_date  = songEntity->info.song->date;
+				else 
+					m_track = " ";
 				if(songEntity->info.song->file != NULL)
 					title = songEntity->info.song->file;
 		
@@ -132,6 +148,8 @@ bool ArtButton::updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus,
 					ext = " ";
 
 				m_type = ext;
+
+				
 				if(m_albumSurface != NULL) {
 					SDL_FreeSurface(m_albumSurface);
 					
@@ -149,6 +167,9 @@ bool ArtButton::updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus,
 				if(m_trackSurface != NULL)
 					SDL_FreeSurface(m_trackSurface);
 				m_trackSurface = TTF_RenderUTF8_Blended(m_font, ("Track: "+m_track).c_str(), m_itemColor);
+				if(m_dateSurface != NULL)
+					SDL_FreeSurface(m_dateSurface);
+				m_dateSurface = TTF_RenderUTF8_Blended(m_font,("Date: "+m_date).c_str(), m_itemColor);
 			
 			} else {
 				m_artParms.songFile = "";
@@ -200,7 +221,7 @@ bool ArtButton::draw2(SDL_Surface* screen, SDL_Surface* bg, bool forceRefresh)
 		}
 		else {
 			SDL_Rect saveRect = m_clearRect;
-			m_clearRect.y+=m_skipVal*3;
+			m_clearRect.y+=m_skipVal*2;
 			SDL_BlitSurface(m_albumSurface, NULL, screen, &m_clearRect );
 			m_clearRect.y+=m_skipVal;
 			SDL_BlitSurface(m_artistSurface, NULL, screen, &m_clearRect );
@@ -209,7 +230,11 @@ bool ArtButton::draw2(SDL_Surface* screen, SDL_Surface* bg, bool forceRefresh)
 			m_clearRect.y+=m_skipVal;
 			SDL_BlitSurface(m_trackSurface, NULL, screen, &m_clearRect );
 			m_clearRect.y+=m_skipVal;
+			SDL_BlitSurface(m_dateSurface, NULL, screen, &m_clearRect );
+			m_clearRect.y+=m_skipVal;
 			SDL_BlitSurface(m_typeSurface, NULL, screen, &m_clearRect );
+			m_clearRect.y+=m_skipVal;
+			SDL_BlitSurface(m_rateSurface, NULL, screen, &m_clearRect );
 			m_clearRect = saveRect;
 		}
 		m_artParms.doArtLoad = false;

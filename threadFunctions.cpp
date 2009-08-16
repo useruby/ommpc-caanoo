@@ -167,11 +167,10 @@ int loadAlbumArt(void* data)
 				jpgFile = jpgFile.substr(pos+1);
 				pngFile = pngFile.substr(pos+1);
 			}
-				
 			//AlbumArt.jpg
 			//AlbumArtSmall.jpg
 			//Folder.jpg
-		
+	
 			bool goodArt = false;
 			string artName = "";	
 			struct stat s;
@@ -193,7 +192,7 @@ int loadAlbumArt(void* data)
 					artName = curImage;
 				}
 			}
-			if(!goodArt) {
+			if(goodArt) {
 				tmp  = IMG_Load(artName.c_str());	
 				if(!tmp) {
 					cout << "Failed Image Load of "  << artName << endl;

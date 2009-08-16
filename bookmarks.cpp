@@ -116,7 +116,6 @@ void Bookmarks::updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus)
 {
 	if(mpdStatusChanged & SONG_CHG) {
 		m_nowPlaying = mpdStatus->song;	
-			cout << "np " << m_nowPlaying << endl;
 	}
 	if(mpdStatusChanged & STATE_CHG) { 
 		m_curState = mpdStatus->state;
