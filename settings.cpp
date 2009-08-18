@@ -254,7 +254,7 @@ void PlayerSettings::setOptionsText()
 	if(curIter == m_optionsText[2].end())
 		curIter = m_optionsText[2].begin();
 	m_optionsIters.push_back(curIter);
-	curIter = find(m_optionsText[3].begin(), m_optionsText[3].end(), m_config.getItem("skin"));
+	curIter = find(m_optionsText[3].begin(), m_optionsText[3].end(), m_config.getItem("realSkin"));
 	if(curIter == m_optionsText[3].end())
 		curIter = m_optionsText[3].begin();
 	m_optionsIters.push_back(curIter);
@@ -274,7 +274,7 @@ void PlayerSettings::setOptionsText()
 
 void PlayerSettings::saveOptions()
 {
-	string oldSkin = m_config.getItem("skin");
+	string oldSkin = m_config.getItem("realSkin");
 	string oldSpeed = m_config.getItem("cpuSpeed");
 	string oldSpeedLocked = m_config.getItem("cpuSpeedLocked");
 	string oldLang = m_config.getItem("language");
@@ -345,7 +345,7 @@ void PlayerSettings::saveOptions()
 	}
 	m_config.init();
 	//reload skin file to pick up on any skin changes/album art flage changes.
-	if(oldSkin == m_config.getItem("skin"))
+	if(oldSkin == m_config.getItem("realSkin"))
 		; //
 		
 }
@@ -418,10 +418,17 @@ int PlayerSettings::processCommand(int command, GuiPos& guiPos)
 */
 		if(guiPos.curY > m_clearRect.y && (guiPos.curY < m_clearRect.y + m_clearRect.h))	 {
 			if(guiPos.curX < (m_clearRect.w+m_clearRect.x)) {
+				int curcur = m_curItemNum;
 				m_curItemNum = m_topItemNum + m_itemIndexLookup[guiPos.curY];		
 				if(m_curItemNum > m_listing.size())
 					m_curItemNum = m_listing.size() -1;
 				if(m_curItemNum < 5) {
+					if(curcur == m_curItemNum) {
+						if(guiPos.curX < (m_clearRect.x+55)) 
+							command = CMD_LEFT;
+						else
+							command = CMD_RIGHT;	
+					}	
 					rCommand = 0;
 					m_refresh = true;
 				} else if(m_curItemNum < 9) {

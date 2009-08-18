@@ -71,8 +71,6 @@ ButtonManager::ButtonManager(mpd_Connection* mpd, SDL_mutex* lock, SDL_Surface* 
 		}
 		if(btnName == "sk_seek") {
 			string name = "seek";
-			if(config.getItemAsBool("showAlbumArt") == false)
-				name = "seek_big";
 			m_seekBtn = new SeekButton(name);
 			m_seekBtn->init(config);
 		}

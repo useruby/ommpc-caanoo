@@ -62,6 +62,8 @@ LANG_MENU_SET=Konfigurazioa
 LANG_MENU_UPDATE=DB eguneratu
 LANG_MENU_DETACH=Bezeroa baztertu
 LANG_MENU_EXIT=Irten
+LANG_TS_POPUP=Context Menu
+LANG_DISPLAY_OVERLAY=Erakuste Controls
 #Keybinding names
 LANG_BINDINGS=Indarrean dauden botoiak erakutzi
 LANG_GLOBAL_BINDINGS=Botoi globalak erakutzi

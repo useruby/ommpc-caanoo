@@ -106,7 +106,8 @@ void Menu::initItems(int command)
 	//m_buttons.clear();
 	//switch(command) {
 	//	case CMD_SHOW_MENU:
-	m_font = TTF_OpenFont(m_config.getItem("sk_font_main").c_str(), 10);
+	m_font = TTF_OpenFont(m_config.getItem("sk_font_menu").c_str(),
+						  m_config.getItemAsNum("sk_font_menu_size") );
 			{
 				m_view = 0;
 				int xOffset = 0;
@@ -227,6 +228,8 @@ int Menu::processCommand(int command, GuiPos& guiPos)
 						m_menu2Active = curItem;
 					}
 					m_refresh = true;
+				} else if(command == CMD_HOLD_CLICK) {
+					
 				}
 			}
 			++curItem;

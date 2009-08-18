@@ -66,266 +66,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 using namespace std;
 
-
-bool showPopupHelp(SDL_Surface* screen, Popup& popup, Config& config, int curMode)
-{
-	bool show = false;	
-	string spaces = "   ";
-	Config keys("keys");	
-	Scroller::listing_t items;
-	int type = Popup::POPUP_MENU;
-	if(!popup.showGlobalKeys())
-		items.push_back(make_pair("  "+config.getItem("LANG_GLOBAL_BINDINGS"),(int)Popup::POPUP_SHOW_GLOBAL));
-	else
-		items.push_back(make_pair("  "+config.getItem("LANG_BINDINGS"),(int)Popup::POPUP_SHOW_GLOBAL));
-	items.push_back(make_pair("  "+config.getItem("LANG_RET_TO_PLAYER"), (int)Popup::POPUP_CANCEL));
-	items.push_back(make_pair(" ", (int)Popup::POPUP_CANCEL));
-
-	if(!popup.showGlobalKeys()) {
-		switch(curMode) {
-			case 0: //Library
-				items.push_back(make_pair("  "+config.getItem("BIND_LIB_SELECT")+spaces
-							+keys.getItem("LIB_SELECT"), (int)Popup::POPUP_CANCEL)); 
-				items.push_back(make_pair("  "+config.getItem("BIND_LIB_PREV_DIR")+spaces
-							+keys.getItem("LIB_PREV_DIR"), (int)Popup::POPUP_CANCEL)); 
-				items.push_back(make_pair("  "+config.getItem("BIND_LIB_PLAY_PAUSE")+spaces
-							+keys.getItem("LIB_PLAY_PAUSE"), (int)Popup::POPUP_CANCEL)); 
-				items.push_back(make_pair("  "+config.getItem("BIND_LIB_STOP")+spaces
-							+keys.getItem("LIB_STOP"), (int)Popup::POPUP_CANCEL)); 
-				items.push_back(make_pair("  "+config.getItem("BIND_LIB_ADD_TO_PL")+spaces
-							+keys.getItem("LIB_ADD_TO_PL"), (int)Popup::POPUP_CANCEL)); 
-				items.push_back(make_pair("  "+config.getItem("BIND_LIB_ADD_AS_PL")+spaces
-							+keys.getItem("LIB_ADD_AS_PL"), (int)Popup::POPUP_CANCEL)); 
-				items.push_back(make_pair("  "+config.getItem("BIND_LIB_QUEUE")+spaces
-							+keys.getItem("LIB_QUEUE"), (int)Popup::POPUP_CANCEL)); 
-				break;
-			case 1: //Playlist
-			case 2: //NP
-				items.push_back(make_pair("  "+config.getItem("BIND_PL_PLAY_PAUSE")+spaces
-							+keys.getItem("PL_PLAY_PAUSE"), (int)Popup::POPUP_CANCEL)); 
-				items.push_back(make_pair("  "+config.getItem("BIND_PL_STOP")+spaces
-							+keys.getItem("PL_STOP"), (int)Popup::POPUP_CANCEL)); 
-				items.push_back(make_pair("  "+config.getItem("BIND_PL_NEXT")+spaces
-							+keys.getItem("PL_NEXT"), (int)Popup::POPUP_CANCEL)); 
-				items.push_back(make_pair("  "+config.getItem("BIND_PL_FF")+spaces
-							+keys.getItem("PL_FF"), (int)Popup::POPUP_CANCEL)); 
-				items.push_back(make_pair("  "+config.getItem("BIND_PL_PREV")+spaces
-							+keys.getItem("PL_PREV"), (int)Popup::POPUP_CANCEL)); 
-				items.push_back(make_pair("  "+config.getItem("BIND_PL_REW")+spaces
-							+keys.getItem("PL_REW"), (int)Popup::POPUP_CANCEL)); 
-				items.push_back(make_pair("  "+config.getItem("BIND_PL_TOGGLE_RND_RPT")+spaces
-							+keys.getItem("PL_TOGGLE_RND_RPT"), (int)Popup::POPUP_CANCEL)); 
-				items.push_back(make_pair("  "+config.getItem("BIND_PL_RND")+spaces
-							+keys.getItem("PL_RND"), (int)Popup::POPUP_CANCEL)); 
-				items.push_back(make_pair("  "+config.getItem("BIND_PL_RPT")+spaces
-							+keys.getItem("PL_RPT"), (int)Popup::POPUP_CANCEL)); 
-				items.push_back(make_pair("  "+config.getItem("BIND_PL_REMOVE_FROM_PL")+spaces
-							+keys.getItem("PL_REMOVE_FROM_PL"), (int)Popup::POPUP_CANCEL)); 
-				items.push_back(make_pair("  "+config.getItem("BIND_PL_MOVE_IN_PL")+spaces
-							+keys.getItem("PL_MOVE_IN_PL"), (int)Popup::POPUP_CANCEL)); 
-				items.push_back(make_pair("  "+config.getItem("BIND_PL_QUEUE_NEXT")+spaces
-							+keys.getItem("PL_QUEUE_NEXT"), (int)Popup::POPUP_CANCEL)); 
-
-				break;	
-			case 3: //
-				items.push_back(make_pair("  "+config.getItem("BIND_PLBROWSE_SELECT")+spaces
-							+keys.getItem("PLBROWSE_SELECT"), (int)Popup::POPUP_CANCEL)); 
-				items.push_back(make_pair("  "+config.getItem("BIND_PLBROWSE_PLAY_PAUSE")+spaces
-							+keys.getItem("PLBROWSE_PLAY_PAUSE"), (int)Popup::POPUP_CANCEL)); 
-				items.push_back(make_pair("  "+config.getItem("BIND_PLBROWSE_STOP")+spaces
-							+keys.getItem("PLBROWSE_STOP"), (int)Popup::POPUP_CANCEL)); 
-				items.push_back(make_pair("  "+config.getItem("BIND_PLBROWSE_APPEND")+spaces
-							+keys.getItem("PLBROWSE_APPEND"), (int)Popup::POPUP_CANCEL)); 
-				items.push_back(make_pair("  "+config.getItem("BIND_PLBROWSE_DEL")+spaces
-							+keys.getItem("PLBROWSE_DEL"), (int)Popup::POPUP_CANCEL)); 
-				break;	
-			case 4: //bookmarks
-				items.push_back(make_pair("  "+config.getItem("BIND_BOOKMRK_SELECT")+spaces
-							+keys.getItem("BOOKMRK_SELECT"), (int)Popup::POPUP_CANCEL)); 
-				items.push_back(make_pair("  "+config.getItem("BIND_BOOKMRK_PLAY_PAUSE")+spaces
-							+keys.getItem("BOOKMRK_PLAY_PAUSE"), (int)Popup::POPUP_CANCEL)); 
-				items.push_back(make_pair("  "+config.getItem("BIND_BOOKMRK_STOP")+spaces
-							+keys.getItem("BOOKMRK_STOP"), (int)Popup::POPUP_CANCEL)); 
-				items.push_back(make_pair("  "+config.getItem("BIND_BOOKMRK_DEL")+spaces
-							+keys.getItem("BOOKMRK_DEL"), (int)Popup::POPUP_CANCEL)); 
-				break;	
-
-		}	
-	} else {
-		items.push_back(make_pair("  "+config.getItem("BIND_RIGHT")+spaces
-					+keys.getItem("RIGHT"), (int)Popup::POPUP_CANCEL)); 
-		items.push_back(make_pair("  "+config.getItem("BIND_LEFT")+spaces
-					+keys.getItem("LEFT"), (int)Popup::POPUP_CANCEL)); 
-		items.push_back(make_pair("  "+config.getItem("BIND_UP")+spaces
-					+keys.getItem("UP"), (int)Popup::POPUP_CANCEL)); 
-		items.push_back(make_pair("  "+config.getItem("BIND_DOWN")+spaces
-					+keys.getItem("DOWN"), (int)Popup::POPUP_CANCEL)); 
-		items.push_back(make_pair("  "+config.getItem("BIND_SHOW_CONTROLS")+spaces
-					+keys.getItem("SHOW_CONTROLS"), (int)Popup::POPUP_CANCEL)); 
-		items.push_back(make_pair("  "+config.getItem("BIND_VOL_UP")+spaces
-					+keys.getItem("VOL_UP"), (int)Popup::POPUP_CANCEL)); 
-		items.push_back(make_pair("  "+config.getItem("BIND_VOL_DOWN")+spaces
-					+keys.getItem("VOL_DOWN"), (int)Popup::POPUP_CANCEL)); 
-		items.push_back(make_pair("  "+config.getItem("BIND_SHOW_MENU")+spaces
-					+keys.getItem("SHOW_MENU"), (int)Popup::POPUP_CANCEL)); 
-		items.push_back(make_pair("  "+config.getItem("BIND_LOCK")+spaces
-					+keys.getItem("LOCK"), (int)Popup::POPUP_CANCEL)); 
-		items.push_back(make_pair("  "+config.getItem("BIND_TOGGLE_MODE")+spaces
-					+keys.getItem("TOGGLE_MODE"), (int)Popup::POPUP_CANCEL)); 
-		//	items.push_back(make_pair("", type));	
-	}	
-	popup.setItemsText(items, type);
-	SDL_Rect popRect;
-	popRect.w = 220;
-	popRect.h = popup.skipVal()*17+10;
-	popRect.x = (screen->w - popRect.w) / 2;
-	popRect.y = (screen->h - popRect.h) / 2;
-	popup.setSize(popRect);
-	popup.setTitle("  "+config.getItem("LANG_MENU")+"      ommpc v0.4.4b");
-	show = true;
-
-	return show;
-}
-
-int processPopupHelp(int action, std::string item)
-{
-	int rCommand = 0;
-	switch(action) {
-		case Popup::POPUP_CANCEL:
-			rCommand = 0;
-			break;
-		case Popup::POPUP_LAUNCH:
-			rCommand = CMD_LAUNCH_APP;
-			break;
-		case Popup::POPUP_DETACH:
-			rCommand = CMD_DETACH;
-			break;
-		case Popup::POPUP_EXIT:
-			rCommand = CMD_QUIT;
-			break;
-		case Popup::POPUP_SAVE_PL:
-			rCommand = CMD_SAVE_PL_KEYBOARD;
-			break;
-		case Popup::POPUP_SHOW_OPTIONS:
-			rCommand = CMD_SHOW_OPTIONS;
-			break;
-		case Popup::POPUP_SAVE_OPTIONS:
-			rCommand = CMD_SAVE_OPTIONS;
-			break;
-		case Popup::POPUP_MPD_UPDATE:
-			rCommand = CMD_MPD_UPDATE;
-			break;
-		case Popup::POPUP_BKMRK:
-			rCommand = CMD_SAVE_BKMRK_KEYBOARD;
-			break;
-		case Popup::POPUP_SHOW_GLOBAL:
-			rCommand = CMD_POP_HELP;
-			break;
-	}
-	
-	return rCommand;
-}
-
-bool showLaunchMenu(SDL_Surface* screen, Popup& popup, string dir, Config& config)
-{
-	bool show = false;	
-	
-	Scroller::listing_t items;
-	int type = Popup::POPUP_MENU;
-	DIR * udir = opendir((dir+"/shortcuts/").c_str());
-
-	items.push_back(make_pair("  "+config.getItem("LANG_CANCEL"), 0));	
-	if(udir != NULL) {
-		struct dirent * dirent = readdir(udir);
-
-		bool done = false;
-		while(dirent != NULL) {
-			string ename = dirent->d_name;
-			if(ename[0] != '.' && ename.substr(ename.size() - 2) == "sh") {
-				items.push_back(make_pair("  "+ename, 6));	
-			}
-			dirent = readdir(udir);
-		}
-
-	}	
-			
-	popup.setItemsText(items, type);
-	SDL_Rect popRect;
-	popRect.w = 200;
-	popRect.h = popup.skipVal()*8+15;
-	popRect.x = (screen->w - popRect.w) / 2;
-	popRect.y = (screen->h - popRect.h) / 2;
-	popup.setSize(popRect);
-	popup.setTitle("  "+config.getItem("LANG_LAUNCH_PRGM"));
-	show = true;
-
-	return show;
-}
-
-int processLaunchMenuItem(int action)
-{
-	int rCommand = 0;
-	switch(action) {
-		case Popup::POPUP_CANCEL:
-			rCommand = 0;
-			break;
-		case Popup::POPUP_DO_LAUNCH:
-			rCommand = CMD_LAUNCH_PROCESS;
-			break;
-	}
-	
-	return rCommand;
-}
-
-bool showOptionsMenu(SDL_Surface* screen, Popup& popup, Config& config)
-{
-	bool show = false;	
-	
-	Scroller::listing_t items;
-	int type = Popup::POPUP_OPTIONS;
-	int itemType = Popup::POPUP_SAVE_OPTIONS;
-	items.push_back(make_pair("  "+config.getItem("LANG_CLOCK"), 21));
-	items.push_back(make_pair("  "+config.getItem("LANG_CLOCK_LOCKED"), 25));
-	items.push_back(make_pair("  "+config.getItem("LANG_SHOW_ART"), 22));
-	items.push_back(make_pair("  "+config.getItem("LANG_SKIN"), 23));
-	items.push_back(make_pair("  "+config.getItem("LANG_SOFT_VOL"), 24));
-	items.push_back(make_pair("  "+config.getItem("LANG_INSTALL_PATH"), 26));
-	items.push_back(make_pair("  "+config.getItem("LANG_MUSIC_PATH"), 27));
-	items.push_back(make_pair("  "+config.getItem("LANG_PL_PATH"), 28));
-	items.push_back(make_pair("  "+config.getItem("LANG_ART_PATH"), 29));
-
-	items.push_back(make_pair(" ", 99));
-	items.push_back(make_pair(" "+config.getItem("LANG_SAVE"), 8));
-	items.push_back(make_pair(" "+config.getItem("LANG_CANCEL"), 0));
-	
-	popup.setItemsText(items, type);
-	SDL_Rect popRect;
-	popRect.w = 300;
-	popRect.h = popup.skipVal()*13+25;
-	popRect.x = (screen->w - popRect.w) / 2;
-	popRect.y = (screen->h - popRect.h) / 2;
-	popup.setSize(popRect);
-	popup.setTitle("       "+config.getItem("LANG_OPTIONS"));
-	show = true;
-
-	return show;
-}
-
-int processOptionsMenuItem(int action, Popup& popup)
-{
-	int rCommand = 0;
-	switch(action) {
-		case Popup::POPUP_CANCEL:
-			rCommand = 0;
-			break;
-		case Popup::POPUP_SAVE_OPTIONS:
-			popup.saveOptions();
-			break;
-	}
-	
-	return rCommand;
-}
-
 void initVolumeScale(vector<int>& volumeScale, bool f200, string softVol, int version)
 {
 	if(softVol == "on") {
@@ -735,29 +475,8 @@ cout << "away we go" << endl;
 					command = popup.processCommand(command, guiPos);
 					switch(command) {
 						case CMD_POP_SELECT:
-							int action = popup.selectedAction();
-							std::string selText = popup.selectedText();
-							if(action == Popup::POPUP_DO_SAVE_PL) {
-								if(selText != "Cancel") {
-									mpd_sendSaveCommand(threadParms.mpd, selText.substr(2).c_str());
-									mpd_finishCommand(threadParms.mpd);
-									plBrowser.updateListing();
-									playlist.setNextNumOnSave(selText.substr(2));
-								}
-							} else if(action == Popup::POPUP_DO_LAUNCH){
-								char pwd[129];
-								getcwd(pwd, 128);
-								string pwdStr(pwd);
-								launchProcessName = pwdStr + "/shortcuts/"+
-									selText.substr(2);
-								command = processLaunchMenuItem(action);
-							} else if(action == Popup::POPUP_SAVE_OPTIONS) {
-								command = processOptionsMenuItem(action, popup);
-							} else {
-								if(action == Popup::POPUP_SHOW_GLOBAL)
-									popup.toggleHelpView();
-								command = processPopupHelp(action, selText);
-							}
+							command = popup.processPopupCommand();
+cout << "command = " << command << endl;
 							forceRefresh = true;
 							popupVisible = false;	
 							break;
@@ -765,6 +484,9 @@ cout << "away we go" << endl;
 				}
 				if(curMode == 5) {
 					command = menu.processCommand(command, guiPos);
+					if(command == CMD_POP_CONTEXT) {
+						popupVisible = popup.showPopupTouch(screen, config, curMode);
+					}
 				}
 				command = buttonManager.processCommand(command, guiPos);
 				switch(command) {
@@ -911,8 +633,7 @@ cout << "away we go" << endl;
 						popupVisible = false;	
 						break;
 					case CMD_POP_HELP:
-						popupVisible = showPopupHelp(screen, popup, config,
-curMode);
+						popupVisible = popup.showPopupHelp(screen, config,curMode);
 						break;
 					case CMD_SHOW_MENU:
 						curMode = 5;
@@ -930,7 +651,7 @@ cout << "command menu stetet" << endl;
 					case CMD_LAUNCH_APP:
 						char pwd[129];
 						getcwd(pwd, 128);
-						popupVisible = showLaunchMenu(screen, popup, pwd, config);
+						//popupVisible = showLaunchMenu(screen, popup, pwd, config);
 						break;
 					case CMD_SHOW_OPTIONS:
 						curMode = 10;
@@ -1004,7 +725,7 @@ cout << "command menu stetet" << endl;
 								forceRefresh);
 						statsBar.draw(forceRefresh, fps);
 					}
-					if(config.getItem("showAlbumArt") == "true") {
+					if(false) {//config.getItem("showAlbumArt") == "true") {
 						albumArt.updateStatus(threadParms.mpdStatusChanged, 
 								threadParms.mpdStatus,
 								rtmpdStatusChanged, rtmpdStatus);
@@ -1029,18 +750,25 @@ cout << "command menu stetet" << endl;
 							} else if(rMode == CMD_HIDE_KEYBOARD) {
 								keyboardVisible = false;
 								forceRefresh = true;
+							} else if(rMode == CMD_POP_CONTEXT) {
+								popupVisible = popup.showPopupTouch(screen, config, curMode);
 							} else
 								curMode = rMode;
 							browser.draw(forceRefresh, timePerFrame, overlayVisible||keyboardVisible);
 							break;
 						case 1:
-							playlist.processCommand(command, rtmpdStatusChanged, rtmpdStatus, repeatDelay, volume, commandFactory.getHoldTime(), guiPos);
+							rMode = playlist.processCommand(command, rtmpdStatusChanged, rtmpdStatus, repeatDelay, volume, commandFactory.getHoldTime(), guiPos);
+							if(rMode == CMD_POP_CONTEXT) {
+								popupVisible = popup.showPopupTouch(screen, config, curMode);
+							}
 							playlist.draw(forceRefresh, timePerFrame, overlayVisible||keyboardVisible);
 
 							break;
 						case 2:
-							//fullPlaying.processCommand(command, rtmpdStatusChanged, rtmpdStatus, repeatDelay, volume, commandFactory.getHoldTime(), guiPos);
-							fullPlaying.processCommand(command, guiPos, commandFactory.getHoldTime());
+							rMode = fullPlaying.processCommand(command, guiPos, commandFactory.getHoldTime());
+							if(rMode == CMD_POP_CONTEXT) {
+								popupVisible = popup.showPopupTouch(screen, config, curMode);
+							}
 							fullPlaying.draw(forceRefresh, timePerFrame, overlayVisible||keyboardVisible);
 
 							break;
@@ -1053,6 +781,8 @@ cout << "command menu stetet" << endl;
 							} else if(rMode == CMD_HIDE_KEYBOARD) {
 								keyboardVisible = false;
 								forceRefresh = true;
+							} else if(rMode == CMD_POP_CONTEXT) {
+								popupVisible = popup.showPopupTouch(screen, config, curMode);
 							}
 							else 
 								curMode = rMode;
@@ -1067,6 +797,8 @@ cout << "command menu stetet" << endl;
 							} else if(rMode == CMD_HIDE_KEYBOARD) {
 								keyboardVisible = false;
 								forceRefresh = true;
+							} else if(rMode == CMD_POP_CONTEXT) {
+								popupVisible = popup.showPopupTouch(screen, config, curMode);
 							} else 
 								curMode = rMode;
 							bookmarks.draw(forceRefresh, timePerFrame, overlayVisible||keyboardVisible);

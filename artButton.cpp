@@ -187,24 +187,38 @@ int ArtButton::processCommand(int command, GuiPos& guiPos)
 {
 	int rCommand = command;
 	if(command > 0) {
-		if(command == CMD_CLICK) {
+		if(command == CMD_CLICK || command == CMD_HOLD_CLICK) {
 			if(guiPos.curX > m_mouseRect.x 
 				&& guiPos.curX < m_mouseRect.x + m_mouseRect.w
 				&& guiPos.curY > m_mouseRect.y 
 				&& guiPos.curY < m_mouseRect.y + m_mouseRect.h) {
-				rCommand = m_command;
-				
-				m_showInfo = !m_showInfo;
-				m_refresh = true;	
-				m_counter = m_clearRect.h;
-				m_moveRect = m_clearRect;
-				m_active = true;
+				if(command == CMD_CLICK) {
+					rCommand = m_command;
+
+					m_showInfo = !m_showInfo;
+					m_refresh = true;	
+					m_counter = m_clearRect.h;
+					m_moveRect = m_clearRect;
+					m_active = true;
+				} else {
+					rCommand = CMD_POP_CONTEXT;
+				}
 			}
 		} else if(command == CMD_POP_SELECT && m_active) {
 			rCommand = m_command;
+		} else if(command == CMD_FLIP_ART) {
+					rCommand = m_command;
+
+					m_showInfo = !m_showInfo;
+					m_refresh = true;	
+					m_counter = m_clearRect.h;
+					m_moveRect = m_clearRect;
+					m_active = true;
+
 		}
-	}
 	
+	}
+
 
 	return rCommand;
 }

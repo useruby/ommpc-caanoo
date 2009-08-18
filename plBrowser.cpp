@@ -119,13 +119,16 @@ int PLBrowser::processCommand(int command, int curMode, GuiPos& guiPos)
 {
 	int newMode = curMode;
 	if(command > 0) {
-		if(command == CMD_CLICK) {
+		if(command == CMD_CLICK || command == CMD_HOLD_CLICK) {
 			if(guiPos.curY > m_clearRect.y && (guiPos.curY < m_clearRect.y + m_clearRect.h))	 {
 				if(guiPos.curX < (m_clearRect.w-40)) {
 					m_curItemNum = m_topItemNum + m_itemIndexLookup[guiPos.curY];	
 					if(m_curItemNum < m_listing.size()) {
 						m_curItemType = m_listing[m_curItemNum].second;
-						command = CMD_LOAD_PL;
+						if(command == CMD_CLICK) 
+							command = CMD_LOAD_PL;
+						else
+							newMode = CMD_POP_CONTEXT;
 					} else {
 						m_curItemNum = 0;
 					}

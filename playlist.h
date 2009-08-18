@@ -45,7 +45,7 @@ public:
 	void load(std::string dir);
 	void updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus, 
 							int rtmpdStatusChanged, mpd_Status* rtmpdStatus, int repeatDelay);
-    void processCommand(int event, int& rtmpdStatusChanged, mpd_Status* rtmpdStatus, int repeatDelay, int volume, long delayTime, GuiPos& guiPos);
+    int processCommand(int event, int& rtmpdStatusChanged, mpd_Status* rtmpdStatus, int repeatDelay, int volume, long delayTime, GuiPos& guiPos);
     void draw(bool force, long timePerFrame, bool inBack);
 	std::string currentItemName();
 	std::string currentItemPath();

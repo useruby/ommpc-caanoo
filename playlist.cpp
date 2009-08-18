@@ -190,10 +190,13 @@ void Playlist::setNextNumOnSave(string name)
 {
 	int num = m_config.getItemAsNum("nextPlaylistNum");
 	
-	++num;
 	ostringstream numStr;
 	numStr << num;
+cout << "pl name " << name << endl;
 	if(name == "playlist_"+numStr.str()) {
+		++num;
+		numStr.str("");
+		numStr << num;
 		m_config.setItem("nextPlaylistNum", numStr.str().c_str());
 		m_config.saveConfigFile();
 	}
@@ -386,17 +389,22 @@ void Playlist::updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus,
 
 }
 
-void Playlist::processCommand(int command, int& rtmpdStatusChanged, mpd_Status* rtmpdStatus, int repeatDelay, int volume, long delayTime, GuiPos& guiPos)
+int Playlist::processCommand(int command, int& rtmpdStatusChanged, mpd_Status* rtmpdStatus, int repeatDelay, int volume, long delayTime, GuiPos& guiPos)
 {
+	int rCommand = 0;
 	if(command > 0) {
 		m_refresh = true;
-		if(command == CMD_CLICK) {
+		if(command == CMD_CLICK || command == CMD_HOLD_CLICK) {
 			if(guiPos.curY > m_clearRect.y && (guiPos.curY < m_clearRect.y + m_clearRect.h))	 {
 				if(guiPos.curX < (m_clearRect.w-40)) {
 					m_curItemNum = m_topItemNum + m_itemIndexLookup[guiPos.curY];	
 					if(m_curItemNum < m_listing.size()) {
 						m_curItemType = m_listing[m_curItemNum].second;
-						command = CMD_PLAY_PAUSE;
+						if(command == CMD_CLICK) {
+							command = CMD_PLAY_PAUSE;
+						} else {
+							rCommand = CMD_POP_CONTEXT;
+						}
 					} else {
 						m_curItemNum =0;
 					}
@@ -429,7 +437,9 @@ void Playlist::processCommand(int command, int& rtmpdStatusChanged, mpd_Status* 
 				}
 			}
 		}
-		if(m_moveFrom >= 0 && command != 0 && command != CMD_UP && command != CMD_DOWN && command != CMD_MOVE_IN_PL && command != CMD_RIGHT && command != CMD_LEFT) {
+		if(m_moveFrom >= 0 && command != 0 && command != CMD_UP && command
+!= CMD_DOWN && command != CMD_MOVE_IN_PL && command != CMD_RIGHT && command
+!= CMD_LEFT && command != CMD_HOLD_CLICK) {
 			m_moveFrom = -1;
 		}	
 		if(Scroller::processCommand(command)) {
@@ -542,6 +552,7 @@ void Playlist::processCommand(int command, int& rtmpdStatusChanged, mpd_Status* 
 				//rtmpdStatus = mpd_getStatus(m_mpd);
 				break;
 				case CMD_MOVE_IN_PL:
+cout << "move " << m_moveFrom << "   to  " << endl;
 				if(m_moveFrom >= 0) {
 					m_moveTo = m_curItemNum;
 					mpd_sendMoveCommand(m_mpd, m_moveFrom, m_moveTo);
@@ -571,11 +582,15 @@ void Playlist::processCommand(int command, int& rtmpdStatusChanged, mpd_Status* 
 					
 				}
 				break;
+				case CMD_SHOW_OVERLAY:
+					//rCommand = command;
+				break;
 				default:
 				break;
 			}
 		}
 	}
+	return rCommand;
 }
 
 void Playlist::draw(bool forceRefresh, long timePerFrame, bool inBack)

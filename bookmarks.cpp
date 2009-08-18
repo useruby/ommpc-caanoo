@@ -157,14 +157,17 @@ int Bookmarks::processCommand(int command, GuiPos& guiPos)
 	int newMode = 4;
 	if(command > 0) {
 		m_refresh = true;
-		if(command == CMD_CLICK) {
+		if(command == CMD_CLICK || command == CMD_HOLD_CLICK) {
 			if(guiPos.curY > m_clearRect.y && (guiPos.curY < m_clearRect.y + m_clearRect.h))	 {
 				if(guiPos.curX < (m_clearRect.w-40)) {
 					m_curItemNum = m_topItemNum + m_itemIndexLookup[guiPos.curY];	
 					if(m_curItemNum < m_listing.size()) {
 						m_curItemType = m_listing[m_curItemNum].second;
 						m_curItemName = m_listing[m_curItemNum].first;
-						command = CMD_LOAD_BKMRK;
+						if(command == CMD_CLICK) 
+							command = CMD_LOAD_BKMRK;
+						else
+							newMode = CMD_POP_CONTEXT;
 					} else {
 						m_curItemNum = 0;
 					}

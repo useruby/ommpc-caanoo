@@ -55,9 +55,9 @@ void Config::init()
 	readConfigFile(configFile);
 
 	std::string skinConfig;
-	if(getItem("showAlbumArt") == "false")
-		skinConfig = "skin_noart.conf";
-	else
+	//if(getItem("showAlbumArt") == "false")
+	//	skinConfig = "skin_noart.conf";
+	//else
 		skinConfig = "skin.conf";	
 	ifstream skinFile(("skins/"+getItem("skin")+"/"+skinConfig).c_str(), ios::in);	
     
@@ -67,7 +67,12 @@ void Config::init()
         throw runtime_error(msg.c_str());
 	}
 	readConfigFile(skinFile);
-	
+
+	m_configItems["realSkin"] = m_configItems["skin"];
+	if(getItem("sk_resource_dir") != "") {
+		m_configItems["skin"] = getItem("sk_resource_dir");
+	}
+		
 	if(getItem("language").length() > 0) 
 		readLangFile(getItem("language"));
 	else 

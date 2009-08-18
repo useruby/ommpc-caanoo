@@ -37,6 +37,11 @@ class GP2XRegs;
 class GuiPos;
 class Keyboard;
 
+typedef struct {
+	int command;
+	int contextItem;
+} listingExtras_t;
+
 class Popup : public Scroller
 {
 public:
@@ -46,7 +51,7 @@ public:
 	enum {POPUP_CANCEL, POPUP_SAVE_PL, POPUP_LAUNCH, POPUP_DETACH, 
 				  POPUP_EXIT, POPUP_DO_SAVE_PL, POPUP_DO_LAUNCH, POPUP_SHOW_OPTIONS, 
 				  POPUP_SAVE_OPTIONS, POPUP_MPD_UPDATE, POPUP_BKMRK,
-POPUP_MPD_ADD_ALL, POPUP_SHOW_GLOBAL}; //popup action
+POPUP_MPD_ADD_ALL, POPUP_SHOW_GLOBAL, POPUP_CONTEXT}; //popup action
 	Popup(mpd_Connection* mpd, SDL_Surface* screen, Config& config, SDL_Rect& rect,
 				int skipVal, int numPerScreen, GP2XRegs& gp2xregs, Keyboard& kb);
 	
@@ -65,6 +70,12 @@ POPUP_MPD_ADD_ALL, POPUP_SHOW_GLOBAL}; //popup action
 	std::string getSelOptionText();
 	void toggleHelpView(){m_globalKeys = !m_globalKeys;}
 	bool showGlobalKeys(){ return m_globalKeys;}
+
+
+	bool showPopupHelp(SDL_Surface* screen, Config& config, int curMode);
+	bool showPopupTouch(SDL_Surface* screen, Config& config, int curMode);
+	int processPopupCommand();
+	int touchContextItem();
 protected:
 	
 	GP2XRegs& m_gp2xRegs;
@@ -79,12 +90,13 @@ protected:
 	SDL_Color m_backColor;
 	int m_type;
 	bool m_globalKeys;
-
+	int m_contextItem;
 	//for options menu
 	optionsText_t m_optionsText;
 	optionsTextIters_t m_optionsIters;
 	std::vector<int> m_selectedIndexes;
 	std::vector<std::string> m_selectedOptions;
+	std::vector<listingExtras_t> m_listingExtras;
 	Keyboard& m_keyboard;
 };
 

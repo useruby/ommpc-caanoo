@@ -556,3 +556,263 @@ void Popup::drawSelectList()
 	else 
 		Scroller::draw(0);
 }
+
+
+bool Popup::showPopupHelp(SDL_Surface* screen, Config& config, int curMode)
+{
+	bool show = false;	
+	string spaces = "   ";
+	Config keys("keys");	
+	Scroller::listing_t items;
+	int type = Popup::POPUP_MENU;
+	if(!showGlobalKeys())
+		items.push_back(make_pair("  "+config.getItem("LANG_GLOBAL_BINDINGS"),(int)Popup::POPUP_SHOW_GLOBAL));
+	else
+		items.push_back(make_pair("  "+config.getItem("LANG_BINDINGS"),(int)Popup::POPUP_SHOW_GLOBAL));
+	items.push_back(make_pair("  "+config.getItem("LANG_RET_TO_PLAYER"), (int)Popup::POPUP_CANCEL));
+	items.push_back(make_pair(" ", (int)Popup::POPUP_CANCEL));
+
+	if(!showGlobalKeys()) {
+		switch(curMode) {
+			case 0: //Library
+				items.push_back(make_pair("  "+config.getItem("BIND_LIB_SELECT")+spaces
+							+keys.getItem("LIB_SELECT"), (int)Popup::POPUP_CANCEL)); 
+				items.push_back(make_pair("  "+config.getItem("BIND_LIB_PREV_DIR")+spaces
+							+keys.getItem("LIB_PREV_DIR"), (int)Popup::POPUP_CANCEL)); 
+				items.push_back(make_pair("  "+config.getItem("BIND_LIB_PLAY_PAUSE")+spaces
+							+keys.getItem("LIB_PLAY_PAUSE"), (int)Popup::POPUP_CANCEL)); 
+				items.push_back(make_pair("  "+config.getItem("BIND_LIB_STOP")+spaces
+							+keys.getItem("LIB_STOP"), (int)Popup::POPUP_CANCEL)); 
+				items.push_back(make_pair("  "+config.getItem("BIND_LIB_ADD_TO_PL")+spaces
+							+keys.getItem("LIB_ADD_TO_PL"), (int)Popup::POPUP_CANCEL)); 
+				items.push_back(make_pair("  "+config.getItem("BIND_LIB_ADD_AS_PL")+spaces
+							+keys.getItem("LIB_ADD_AS_PL"), (int)Popup::POPUP_CANCEL)); 
+				items.push_back(make_pair("  "+config.getItem("BIND_LIB_QUEUE")+spaces
+							+keys.getItem("LIB_QUEUE"), (int)Popup::POPUP_CANCEL)); 
+				break;
+			case 1: //Playlist
+			case 2: //NP
+				items.push_back(make_pair("  "+config.getItem("BIND_PL_PLAY_PAUSE")+spaces
+							+keys.getItem("PL_PLAY_PAUSE"), (int)Popup::POPUP_CANCEL)); 
+				items.push_back(make_pair("  "+config.getItem("BIND_PL_STOP")+spaces
+							+keys.getItem("PL_STOP"), (int)Popup::POPUP_CANCEL)); 
+				items.push_back(make_pair("  "+config.getItem("BIND_PL_NEXT")+spaces
+							+keys.getItem("PL_NEXT"), (int)Popup::POPUP_CANCEL)); 
+				items.push_back(make_pair("  "+config.getItem("BIND_PL_FF")+spaces
+							+keys.getItem("PL_FF"), (int)Popup::POPUP_CANCEL)); 
+				items.push_back(make_pair("  "+config.getItem("BIND_PL_PREV")+spaces
+							+keys.getItem("PL_PREV"), (int)Popup::POPUP_CANCEL)); 
+				items.push_back(make_pair("  "+config.getItem("BIND_PL_REW")+spaces
+							+keys.getItem("PL_REW"), (int)Popup::POPUP_CANCEL)); 
+				items.push_back(make_pair("  "+config.getItem("BIND_PL_TOGGLE_RND_RPT")+spaces
+							+keys.getItem("PL_TOGGLE_RND_RPT"), (int)Popup::POPUP_CANCEL)); 
+#if !defined(GP2X) || !defined(WIZ)
+				items.push_back(make_pair("  "+config.getItem("BIND_PL_RND")+spaces
+							+keys.getItem("PL_RND"), (int)Popup::POPUP_CANCEL)); 
+				items.push_back(make_pair("  "+config.getItem("BIND_PL_RPT")+spaces
+							+keys.getItem("PL_RPT"), (int)Popup::POPUP_CANCEL));
+#endif 
+			if(curMode == 1) {
+				items.push_back(make_pair("  "+config.getItem("BIND_PL_REMOVE_FROM_PL")+spaces
+							+keys.getItem("PL_REMOVE_FROM_PL"), (int)Popup::POPUP_CANCEL)); 
+				items.push_back(make_pair("  "+config.getItem("BIND_PL_MOVE_IN_PL")+spaces
+							+keys.getItem("PL_MOVE_IN_PL"), (int)Popup::POPUP_CANCEL)); 
+				items.push_back(make_pair("  "+config.getItem("BIND_PL_QUEUE_NEXT")+spaces
+							+keys.getItem("PL_QUEUE_NEXT"), (int)Popup::POPUP_CANCEL)); 
+			}
+
+				break;	
+			case 3: //
+				items.push_back(make_pair("  "+config.getItem("BIND_PLBROWSE_SELECT")+spaces
+							+keys.getItem("PLBROWSE_SELECT"), (int)Popup::POPUP_CANCEL)); 
+				items.push_back(make_pair("  "+config.getItem("BIND_PLBROWSE_PLAY_PAUSE")+spaces
+							+keys.getItem("PLBROWSE_PLAY_PAUSE"), (int)Popup::POPUP_CANCEL)); 
+				items.push_back(make_pair("  "+config.getItem("BIND_PLBROWSE_STOP")+spaces
+							+keys.getItem("PLBROWSE_STOP"), (int)Popup::POPUP_CANCEL)); 
+				items.push_back(make_pair("  "+config.getItem("BIND_PLBROWSE_APPEND")+spaces
+							+keys.getItem("PLBROWSE_APPEND"), (int)Popup::POPUP_CANCEL)); 
+				items.push_back(make_pair("  "+config.getItem("BIND_PLBROWSE_DEL")+spaces
+							+keys.getItem("PLBROWSE_DEL"), (int)Popup::POPUP_CANCEL)); 
+				break;	
+			case 4: //bookmarks
+				items.push_back(make_pair("  "+config.getItem("BIND_BOOKMRK_SELECT")+spaces
+							+keys.getItem("BOOKMRK_SELECT"), (int)Popup::POPUP_CANCEL)); 
+				items.push_back(make_pair("  "+config.getItem("BIND_BOOKMRK_PLAY_PAUSE")+spaces
+							+keys.getItem("BOOKMRK_PLAY_PAUSE"), (int)Popup::POPUP_CANCEL)); 
+				items.push_back(make_pair("  "+config.getItem("BIND_BOOKMRK_STOP")+spaces
+							+keys.getItem("BOOKMRK_STOP"), (int)Popup::POPUP_CANCEL)); 
+				items.push_back(make_pair("  "+config.getItem("BIND_BOOKMRK_DEL")+spaces
+							+keys.getItem("BOOKMRK_DEL"), (int)Popup::POPUP_CANCEL)); 
+				break;	
+
+		}	
+	} else {
+		items.push_back(make_pair("  "+config.getItem("BIND_RIGHT")+spaces
+					+keys.getItem("RIGHT"), (int)Popup::POPUP_CANCEL)); 
+		items.push_back(make_pair("  "+config.getItem("BIND_LEFT")+spaces
+					+keys.getItem("LEFT"), (int)Popup::POPUP_CANCEL)); 
+		items.push_back(make_pair("  "+config.getItem("BIND_UP")+spaces
+					+keys.getItem("UP"), (int)Popup::POPUP_CANCEL)); 
+		items.push_back(make_pair("  "+config.getItem("BIND_DOWN")+spaces
+					+keys.getItem("DOWN"), (int)Popup::POPUP_CANCEL)); 
+		items.push_back(make_pair("  "+config.getItem("BIND_SHOW_CONTROLS")+spaces
+					+keys.getItem("SHOW_CONTROLS"), (int)Popup::POPUP_CANCEL)); 
+		items.push_back(make_pair("  "+config.getItem("BIND_VOL_UP")+spaces
+					+keys.getItem("VOL_UP"), (int)Popup::POPUP_CANCEL)); 
+		items.push_back(make_pair("  "+config.getItem("BIND_VOL_DOWN")+spaces
+					+keys.getItem("VOL_DOWN"), (int)Popup::POPUP_CANCEL)); 
+		items.push_back(make_pair("  "+config.getItem("BIND_SHOW_MENU")+spaces
+					+keys.getItem("SHOW_MENU"), (int)Popup::POPUP_CANCEL)); 
+		items.push_back(make_pair("  "+config.getItem("BIND_LOCK")+spaces
+					+keys.getItem("LOCK"), (int)Popup::POPUP_CANCEL)); 
+		items.push_back(make_pair("  "+config.getItem("BIND_TOGGLE_MODE")+spaces
+					+keys.getItem("TOGGLE_MODE"), (int)Popup::POPUP_CANCEL)); 
+		//	items.push_back(make_pair("", type));	
+	}	
+	setItemsText(items, type);
+	SDL_Rect popRect;
+	popRect.w = 220;
+	popRect.h = skipVal()*17+10;
+	popRect.x = (screen->w - popRect.w) / 2;
+	popRect.y = (screen->h - popRect.h) / 2;
+	setSize(popRect);
+	setTitle("  "+config.getItem("LANG_MENU")+"      ommpc v0.4.4b");
+	show = true;
+
+	return show;
+}
+
+int Popup::processPopupCommand()
+{
+	int rCommand = 0;
+	switch(selectedAction()) {
+		case Popup::POPUP_CANCEL:
+			rCommand = 0;
+			break;
+		case Popup::POPUP_SHOW_GLOBAL:
+			toggleHelpView();
+			rCommand = CMD_POP_HELP;
+			break;
+		case Popup::POPUP_CONTEXT:
+			listingExtras_t extras = m_listingExtras[m_curItemNum];
+			rCommand = extras.command;
+			break;
+	}
+	
+	return rCommand;
+}
+
+int Popup::touchContextItem()
+{
+	return m_contextItem;
+}
+
+bool Popup::showPopupTouch(SDL_Surface* screen, Config& config, int curMode)
+{
+	bool show = false;	
+	string spaces = "   ";
+	Scroller::listing_t items;
+	int type = Popup::POPUP_MENU;
+	listingExtras_t extras;
+	
+	items.push_back(make_pair(spaces+config.getItem("LANG_RET_TO_PLAYER"), (int)Popup::POPUP_CANCEL));
+	extras.command = 0;
+	m_listingExtras.push_back(extras);
+	if(curMode != 5) {
+		items.push_back(make_pair(spaces+config.getItem("LANG_MENU_MAIN"), (int)Popup::POPUP_CONTEXT));
+		extras.command = CMD_SHOW_MENU;
+		m_listingExtras.push_back(extras);
+	}
+	items.push_back(make_pair(" ", (int)Popup::POPUP_CANCEL));
+	extras.command = 0;
+	m_listingExtras.push_back(extras);
+	
+	switch(curMode) {
+		case 0: //Library
+			items.push_back(make_pair(spaces+config.getItem("BIND_LIB_PLAY_PAUSE"), 
+						(int)Popup::POPUP_CONTEXT)); 
+			extras.command = CMD_PLAY_PAUSE;
+			m_listingExtras.push_back(extras);
+			items.push_back(make_pair(spaces+config.getItem("BIND_LIB_STOP"), 
+						(int)Popup::POPUP_CONTEXT)); 
+			extras.command = CMD_STOP;
+			m_listingExtras.push_back(extras);
+			items.push_back(make_pair(spaces+config.getItem("BIND_LIB_ADD_TO_PL"), 
+						(int)Popup::POPUP_CONTEXT)); 
+			extras.command = CMD_ADD_TO_PL;
+			m_listingExtras.push_back(extras);
+			items.push_back(make_pair(spaces+config.getItem("BIND_LIB_ADD_AS_PL"), 
+						(int)Popup::POPUP_CONTEXT)); 
+			extras.command = CMD_ADD_AS_PL;
+			m_listingExtras.push_back(extras);
+			items.push_back(make_pair(spaces+config.getItem("BIND_LIB_QUEUE"), 
+						(int)Popup::POPUP_CONTEXT)); 
+			extras.command = CMD_QUEUE;
+			m_listingExtras.push_back(extras);
+		break;
+		case 1: //Playlist
+			items.push_back(make_pair(spaces+config.getItem("LANG_DISPLAY_OVERLAY"), (int)Popup::POPUP_CONTEXT));
+			extras.command = CMD_SHOW_OVERLAY;
+			m_listingExtras.push_back(extras);
+			items.push_back(make_pair(spaces+config.getItem("BIND_PL_REMOVE_FROM_PL"), 
+						(int)Popup::POPUP_CONTEXT)); 
+			extras.command = CMD_DEL_FROM_PL;
+			m_listingExtras.push_back(extras);
+;
+			items.push_back(make_pair(spaces+config.getItem("BIND_PL_MOVE_IN_PL"), 
+						(int)Popup::POPUP_CONTEXT)); 
+			extras.command = CMD_MOVE_IN_PL;
+			m_listingExtras.push_back(extras);
+			items.push_back(make_pair(spaces+config.getItem("BIND_PL_QUEUE_NEXT"), 
+						(int)Popup::POPUP_CONTEXT)); 
+			extras.command = CMD_QUEUE;
+			m_listingExtras.push_back(extras);
+		break;
+		case 3: //PL browse
+			items.push_back(make_pair(spaces+config.getItem("BIND_PLBROWSE_PLAY_PAUSE"), 
+						(int)Popup::POPUP_CONTEXT)); 
+			extras.command = CMD_PLAY_PAUSE;
+			m_listingExtras.push_back(extras);
+			items.push_back(make_pair(spaces+config.getItem("BIND_PLBROWSE_STOP"), 
+						(int)Popup::POPUP_CONTEXT)); 
+			extras.command = CMD_STOP;
+			m_listingExtras.push_back(extras);
+			items.push_back(make_pair(spaces+config.getItem("BIND_PLBROWSE_DEL"), 
+						(int)Popup::POPUP_CONTEXT)); 
+			extras.command = CMD_DEL_PL;
+			m_listingExtras.push_back(extras);
+			items.push_back(make_pair(spaces+config.getItem("BIND_PLBROWSE_APPEND"), 
+						(int)Popup::POPUP_CONTEXT)); 
+			extras.command = CMD_APPEND_PL;
+			m_listingExtras.push_back(extras);
+		break;
+		case 4: //bookmarks
+			items.push_back(make_pair(spaces+config.getItem("BIND_BOOKMRK_PLAY_PAUSE"), 
+						(int)Popup::POPUP_CONTEXT)); 
+			extras.command = CMD_PLAY_PAUSE;
+			m_listingExtras.push_back(extras);
+			items.push_back(make_pair(spaces+config.getItem("BIND_BOOKMRK_STOP"), 
+						(int)Popup::POPUP_CONTEXT)); 
+			extras.command = CMD_STOP;
+			m_listingExtras.push_back(extras);
+			items.push_back(make_pair(spaces+config.getItem("BIND_BOOKMRK_DEL"), 
+						(int)Popup::POPUP_CONTEXT)); 
+			extras.command = CMD_DEL_BKMRK;
+			m_listingExtras.push_back(extras);
+		break;
+	}
+	
+	setItemsText(items, type);
+	SDL_Rect popRect;
+	popRect.w = 140;
+	popRect.h = skipVal()*(items.size()+2)+10;
+	popRect.x = (screen->w - popRect.w) / 2;
+	popRect.y = (screen->h - popRect.h) / 2;
+	setSize(popRect);
+	setTitle(spaces+config.getItem("LANG_TS_POPUP"));
+	show = true;
+
+	return show;
+
+
+}

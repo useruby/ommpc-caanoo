@@ -48,11 +48,13 @@ public:
 protected:
 	std::string formattedTime(int time);
 	std::string formattedRemaining(int time);
+	void setDisplayNumWidth();
 
 	int m_delay;
 	int m_delayCnt;
 	
 	int m_width;
+	int m_numWidth;
 	int m_yOffset;
 	int m_timeType;
 	int m_xOffset;

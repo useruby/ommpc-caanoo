@@ -578,14 +578,19 @@ int Browser::processCommand(int command, GuiPos& guiPos)
 	int newMode = 0;
 	if(command > 0) {
 		m_refresh = true;
-		if(command == CMD_CLICK) {
+		if(command == CMD_CLICK || command == CMD_HOLD_CLICK) {
 			if(guiPos.curY > m_clearRect.y && (guiPos.curY < m_clearRect.y + m_clearRect.h))	 {
 				if(guiPos.curX < (m_clearRect.w-40)) {
 					m_curItemNum = m_topItemNum + m_itemIndexLookup[guiPos.curY];	
 					if(m_curItemNum < m_listing.size()) {
 						m_curItemType = m_listing[m_curItemNum].second;
 						m_curItemName = m_listing[m_curItemNum].first;
-						command = CMD_IMMEDIATE_PLAY;
+						if(command == CMD_CLICK)
+							command = CMD_IMMEDIATE_PLAY;
+						else {
+							if(m_view != VIEW_ROOT)
+								newMode = CMD_POP_CONTEXT;
+						}
 					} else {
 						m_curItemNum = 0;
 					}
@@ -641,32 +646,34 @@ int Browser::processCommand(int command, GuiPos& guiPos)
 					break;
 				case CMD_QUEUE: 
 					{
-					std::string song = "";
-					if(m_view == VIEW_FILES) {
-						for(prevItems_t::iterator iIter = m_prevItems.begin();
-								iIter != m_prevItems.end();
-								++iIter) {
-							dir += (*iIter).first + "/";
-						}
-						dir = dir.substr(0, dir.length()-1);
-						if(!dir.empty())
-							song = dir+"/";
-						song += m_curItemName;
-					} else {
-						song = m_curSongPaths[m_curItemNum-1];
-					}
-					int pos = m_pl.lastQueued();
-					if(pos == -1)
-						pos = m_nowPlaying+1;
-					else 
-						++pos;
+						if(m_curItemType == (int)TYPE_FILE) {
+							std::string song = "";
+							if(m_view == VIEW_FILES) {
+								for(prevItems_t::iterator iIter = m_prevItems.begin();
+										iIter != m_prevItems.end();
+										++iIter) {
+									dir += (*iIter).first + "/";
+								}
+								dir = dir.substr(0, dir.length()-1);
+								if(!dir.empty())
+									song = dir+"/";
+								song += m_curItemName;
+							} else {
+								song = m_curSongPaths[m_curItemNum-1];
+							}
+							int pos = m_pl.lastQueued();
+							if(pos == -1)
+								pos = m_nowPlaying+1;
+							else 
+								++pos;
 
-					int id = mpd_sendAddIdCommand(m_mpd, song.c_str());
-					mpd_finishCommand(m_mpd);
-					mpd_sendMoveIdCommand(m_mpd, id, pos);
-					mpd_finishCommand(m_mpd);
-					m_pl.lastQueued(pos);
-					m_queued = true;
+							int id = mpd_sendAddIdCommand(m_mpd, song.c_str());
+							mpd_finishCommand(m_mpd);
+							mpd_sendMoveIdCommand(m_mpd, id, pos);
+							mpd_finishCommand(m_mpd);
+							m_pl.lastQueued(pos);
+							m_queued = true;
+						}
 					}
 					break;
 				case CMD_PREV_DIR:

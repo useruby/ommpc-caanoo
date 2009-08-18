@@ -38,6 +38,7 @@ using namespace std;
 SeekButton::SeekButton(string name)
 : Button(name)
 , m_width(0)
+, m_numWidth(0)
 , m_yOffset(0)
 , m_xOffset(0)
 , m_totalSeconds(0)
@@ -70,11 +71,36 @@ void SeekButton::init(Config& config)
 	m_font = TTF_OpenFont(config.getItem("sk_seek_font").c_str(),
 						  config.getItemAsNum("sk_seek_font_size"));
 	config.getItemAsColor("sk_seek_textColor", m_textColor.r, m_textColor.g, m_textColor.b);
+
+	setDisplayNumWidth();	
 } 
 
 int SeekButton::elapsedTime()
 {
 	return m_elapsedSeconds;
+}
+
+void SeekButton::setDisplayNumWidth()
+{
+	string displayText = "0:00";
+	if(m_timeType == 0 || m_timeType == 1) {
+		displayText = "0:00/0:00";
+	} 
+
+	if(m_totalSeconds >= 6000)  { //two digit minutes
+		displayText = "000:00";
+		if(m_timeType == 0 || m_timeType == 1) {
+			displayText = "000:00/000:00";
+		}
+	} else if(m_totalSeconds >= 600) {
+		displayText = "00:00";
+		if(m_timeType == 0 || m_timeType == 1) {
+			displayText = "00:00/00:00";
+		}
+	}	 
+
+	SDL_Surface* sText = TTF_RenderText_Blended(m_font, displayText.c_str(), m_textColor);
+	m_numWidth = sText->w+1;
 }
 
 void SeekButton::updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus,
@@ -97,7 +123,8 @@ void SeekButton::updateStatus(int mpdStatusChanged, mpd_Status* mpdStatus,
 			if(m_timeType == 3) {
 				m_remainingSeconds = m_totalSeconds - m_elapsedSeconds;
 				m_remaining = formattedRemaining(m_remainingSeconds);
-			}
+			}	
+			setDisplayNumWidth();
 		}
 		if(statusChanged & ELAPSED_CHG) { 
 			m_elapsedSeconds = status->elapsedTime;
@@ -191,7 +218,8 @@ void SeekButton::draw(SDL_Surface* screen, SDL_Surface* bg, bool forceRefresh, l
 				sText = TTF_RenderText_Blended(m_font, m_elapsed.c_str(), m_textColor);
 			}
 			SDL_BlitSurface(sText, NULL, screen, &m_destRect );
-			m_xOffset = sText->w+1;
+			m_xOffset = m_numWidth;
+			//m_xOffset = sText->w+1;
 			m_destRect.x += m_xOffset;
 			SDL_FreeSurface(sText);
 		}

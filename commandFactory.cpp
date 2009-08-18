@@ -272,7 +272,6 @@ int CommandFactory::processKeyUp(int curMode)
 			}
 		break;
 		case 1: //Playlist
-		case 2: //Playing
 			if(checkKey("PL_PLAY_PAUSE")) {
 				command = CMD_PLAY_PAUSE;
 			} else if(checkKey("PL_STOP")) {
@@ -297,6 +296,29 @@ int CommandFactory::processKeyUp(int curMode)
 				command = CMD_MOVE_IN_PL;
 			} else if(checkKey("PL_QUEUE_NEXT")) {
 				command = CMD_QUEUE;
+			}
+		break;
+		case 2: //Playing
+			if(checkKey("PL_PLAY_PAUSE")) {
+				command = CMD_PLAY_PAUSE;
+			} else if(checkKey("PL_STOP")) {
+				command = CMD_STOP;
+			} else if(checkKey("PL_NEXT")) {
+				command = CMD_NEXT;
+			} else if(checkKey("PL_FF")) {
+				command = CMD_FF;
+			} else if(checkKey("PL_PREV")) {
+				command = CMD_PREV;
+			} else if(checkKey("PL_REW")) {
+				command = CMD_RW;
+			} else if(checkKey("PL_TOGGLE_RND_RPT")) {
+				command = CMD_RAND_RPT ;
+			} else if(checkKey("PL_RND")) {
+				command = CMD_MODE_RANDOM;
+			} else if(checkKey("PL_RPT")) {
+				command = CMD_MODE_REPEAT;
+			} else if(checkKey("NP_FLIP_ART")) {
+				command = CMD_FLIP_ART;
 			}
 		break;
 		case 3: //PL browser

@@ -62,7 +62,9 @@ LANG_MENU_OPTIONS=Opciones
 LANG_MENU_SET=Configuracion 
 LANG_MENU_UPDATE=Actualizar BD 
 LANG_MENU_DETACH=Separar Cliente 
-LANG_MENU_EXIT=Salir 
+LANG_MENU_EXIT=Salir
+LANG_TS_POPUP=Menú contextual
+LANG_DISPLAY_OVERLAY=Controles de Pantalla
 #Keybinding names 
 LANG_BINDINGS=Mostrar Teclas Modo Actual 
 LANG_GLOBAL_BINDINGS=Mostrar Teclas Globales 
