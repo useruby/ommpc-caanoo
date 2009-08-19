@@ -202,7 +202,9 @@ void PlayerSettings::setOptionsText()
 					throw runtime_error(msg.c_str());
 				}
 
-				if (S_ISDIR(s.st_mode) && strncmp(dirent->d_name, "default", 7)) 
+				if (S_ISDIR(s.st_mode) && 
+					(strncmp(dirent->d_name, "default", 7) && 
+							strncmp(dirent->d_name, "fonts", 5))) 
 					curOption.push_back(dirent->d_name);
 			}
 			dirent = readdir(udir);

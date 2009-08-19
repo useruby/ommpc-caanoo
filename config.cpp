@@ -157,7 +157,8 @@ void Config::saveConfigFile()
 	++cIter) {
 		if((*cIter).first.substr(0,3) != "sk_" 
 			&& (*cIter).first.substr(0,4) != "LANG"
-			&& (*cIter).first.substr(0,4) != "BIND") {
+			&& (*cIter).first.substr(0,4) != "BIND"
+			&& (*cIter).first != "realSkin") {
 			configFile << (*cIter).first << "=" << (*cIter).second << endl;
 		}
 	}

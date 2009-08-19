@@ -676,7 +676,7 @@ bool Popup::showPopupHelp(SDL_Surface* screen, Config& config, int curMode)
 	popRect.x = (screen->w - popRect.w) / 2;
 	popRect.y = (screen->h - popRect.h) / 2;
 	setSize(popRect);
-	setTitle("  "+config.getItem("LANG_MENU")+"      ommpc v0.4.4b");
+	setTitle("  "+config.getItem("LANG_MENU")+"      ommpc v0.4.6");
 	show = true;
 
 	return show;
