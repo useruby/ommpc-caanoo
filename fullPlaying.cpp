@@ -234,6 +234,7 @@ int FullPlaying::processCommand(int command, GuiPos& guiPos, int delayTime)
 
 void FullPlaying::draw(bool forceRefresh, long timePerFrame, bool inBack)
 {
+m_refresh = true;
 	if(!m_good)
 		initAll();
 	if(forceRefresh || (!inBack && m_refresh)) {

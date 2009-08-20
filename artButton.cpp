@@ -51,7 +51,9 @@ ArtButton::ArtButton(artThreadParms_t& artParms, string label, string id)
 , m_genre("")
 , m_track("")
 , m_date("")
-, m_showInfo(false)			
+, m_showInfo(false)		
+, m_counter(0)	
+, m_counter2(0)	
 {
 	if(m_label.empty())
 		m_displayText = false;
@@ -212,6 +214,8 @@ int ArtButton::processCommand(int command, GuiPos& guiPos)
 					m_showInfo = !m_showInfo;
 					m_refresh = true;	
 					m_counter = m_clearRect.h;
+					m_counter = 0;
+					m_counter2 = 1;
 					m_moveRect = m_clearRect;
 					m_active = true;
 
@@ -225,13 +229,28 @@ int ArtButton::processCommand(int command, GuiPos& guiPos)
 
 bool ArtButton::draw2(SDL_Surface* screen, SDL_Surface* bg, bool forceRefresh)
 {
+m_refresh = true;
 	if(!m_artParms.doArtLoad && (m_refresh||forceRefresh)) {
 		//clear this portion of the screen 
 		cout << "here "<< m_clearRect.x<< endl;
 		SDL_SetClipRect(screen, &m_clearRect);
 		SDL_BlitSurface(bg, &m_clearRect, screen, &m_clearRect );
 		if(!m_showInfo) {
-			SDL_BlitSurface(m_artParms.artSurface, NULL, screen, &m_clearRect );
+				m_moveRect.w = 160;
+				m_moveRect.h = 160;
+				m_moveRect.x = 0;
+				m_moveRect.y = 0;
+			if(m_counter > 0) {
+			
+				m_counter = 0;
+				m_moveRect.y += m_counter2;
+				m_counter2 += 5;
+			} 
+
+			
+			SDL_BlitSurface(m_artParms.artSurface, &m_moveRect, screen, &m_clearRect );
+			++m_counter;
+cout << "mcouner  " << m_counter << endl;
 		}
 		else {
 			SDL_Rect saveRect = m_clearRect;

@@ -73,6 +73,7 @@ protected:
 	std::string m_date;
 	bool m_showInfo;
 	int m_counter;
+	int m_counter2;
 	SDL_Rect m_moveRect;
 	SDL_Surface* m_artistSurface;
 	SDL_Surface* m_albumSurface;
