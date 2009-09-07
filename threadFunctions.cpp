@@ -49,6 +49,8 @@ int pollMpdStatus(void *data)
 	int curRnd = -1;
 	int curBitRate = -1;
 	int prevBitRate = -1;
+	int curSampRate = -1;
+	int prevSampRate = -1;
 	int curElapsed = -1;
 	int prevElapsed = -1;
 	int curTotal = -1;
@@ -82,6 +84,7 @@ int pollMpdStatus(void *data)
 			curRpt = threadParms->mpdStatus->repeat;
 			curRnd = threadParms->mpdStatus->random;
 			curBitRate = threadParms->mpdStatus->bitRate;
+			curSampRate = threadParms->mpdStatus->sampleRate;
 			curElapsed = threadParms->mpdStatus->elapsedTime;
 			curTotal = threadParms->mpdStatus->totalTime;
 			curVol = threadParms->mpdStatus->volume;
@@ -110,6 +113,10 @@ int pollMpdStatus(void *data)
 			threadParms->mpdStatusChanged += RATE_CHG;
 			prevBitRate = curBitRate;
 		}	
+		if(prevSampRate != curSampRate) {
+			threadParms->mpdStatusChanged += FREQ_CHG;
+			prevSampRate = curSampRate;
+		}
 		if(prevElapsed != curElapsed) {
 			threadParms->mpdStatusChanged += ELAPSED_CHG;
 			prevElapsed = curElapsed;

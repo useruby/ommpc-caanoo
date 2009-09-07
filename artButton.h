@@ -36,6 +36,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 class GuiPos;
 class Config;
+class ID3Button;
 
 class ArtButton : public Button
 {
@@ -61,28 +62,32 @@ protected:
 	SDL_Color m_textColor;
 	SDL_Color m_itemColor;
 	SDL_Surface* m_sText;
-	SDL_Rect m_mouseRect;
-	SDL_Rect m_destRectB;
 	bool m_displayText;
 	artThreadParms_t& m_artParms;
-	std::string m_artist;
-	std::string m_album;
-	std::string m_type;
-	std::string m_genre;
-	std::string m_track;
-	std::string m_date;
 	bool m_showInfo;
-	int m_counter;
-	int m_counter2;
 	SDL_Rect m_moveRect;
-	SDL_Surface* m_artistSurface;
-	SDL_Surface* m_albumSurface;
-	SDL_Surface* m_typeSurface;
-	SDL_Surface* m_genreSurface;
-	SDL_Surface* m_trackSurface;
-	SDL_Surface* m_dateSurface;
-	SDL_Surface* m_rateSurface;
-	int m_skipVal;
+	SDL_Rect m_mouseRect;
+	bool m_animate;
+	//Both the artbutton and the buttonmanager can hold any or all of our id3buttons.
+	//So I think we will create a bunch of pointers to id3buttons and initialize what
+	//the skin asks for and then check that button is not null when we would access it
+	ID3Button * m_titleBtn;
+	ID3Button * m_artistBtn;
+	ID3Button * m_albumBtn;
+	ID3Button * m_genreBtn;
+	ID3Button * m_trackBtn;
+	ID3Button * m_typeBtn;
+	ID3Button * m_dateBtn;
+	ID3Button * m_composerBtn;
+	ID3Button * m_discBtn;
+	ID3Button * m_performerBtn;
+	ID3Button * m_commentBtn;
+	//bitrate found in status and not with song info
+	ID3Button * m_rateBtn;
+	//samplerate found in status and not with song info
+	ID3Button * m_freqBtn;
+
+	
 };
 
 #endif

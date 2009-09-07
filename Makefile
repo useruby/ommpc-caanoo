@@ -43,7 +43,7 @@ CXXFLAGS      = $(OPTIMIZATION_FLAG) $(INCDIR) $(LIB)
 .cpp:
 	$(CXX) $(CXXFLAGS) $< -o pc/$@
 
-SRC     = plBrowser.cpp browser.cpp playlist.cpp main.cpp config.cpp nowPlaying.cpp statsBar.cpp commandFactory.cpp popup.cpp scroller.cpp timestamp.cpp helpBar.cpp albumArt.cpp threadFunctions.cpp bookmarks.cpp gp2xregs.cpp overlay.cpp songDb.cpp keyboard.cpp button.cpp volButton.cpp buttonManager.cpp seekButton.cpp rndButton.cpp rptButton.cpp rndRptButton.cpp menu.cpp menuButton.cpp fullPlaying.cpp artButton.cpp settings.cpp
+SRC     = plBrowser.cpp browser.cpp playlist.cpp main.cpp config.cpp nowPlaying.cpp statsBar.cpp commandFactory.cpp popup.cpp scroller.cpp timestamp.cpp helpBar.cpp albumArt.cpp threadFunctions.cpp bookmarks.cpp gp2xregs.cpp overlay.cpp songDb.cpp keyboard.cpp button.cpp volButton.cpp buttonManager.cpp seekButton.cpp rndButton.cpp rptButton.cpp rndRptButton.cpp menu.cpp menuButton.cpp fullPlaying.cpp artButton.cpp settings.cpp id3Button.cpp
 
 OBJ = $(SRC:.cpp=.o) libmpdclient.o
 #-------------------------------------------------------------------------------
@@ -318,8 +318,9 @@ bookmarks.o: /usr/include/SDL/SDL_quit.h /usr/include/SDL/SDL_loadso.h
 bookmarks.o: /usr/include/SDL/SDL_timer.h /usr/include/SDL/SDL_version.h
 bookmarks.o: /usr/include/SDL/SDL_ttf.h libmpdclient.h scroller.h
 bookmarks.o: threadParms.h songDb.h sqlite3.h commandFactory.h timer.h
-bookmarks.o: config.h playlist.h keyboard.h statsBar.h guiPos.h
-bookmarks.o: /usr/include/SDL/SDL_image.h
+bookmarks.o: config.h playlist.h keyboard.h buttonManager.h
+bookmarks.o: /usr/include/SDL/SDL_image.h volButton.h button.h rndRptButton.h
+bookmarks.o: rndButton.h rptButton.h seekButton.h statsBar.h guiPos.h
 gp2xregs.o: gp2xregs.h
 overlay.o: overlay.h /usr/include/SDL/SDL.h /usr/include/SDL/SDL_main.h
 overlay.o: /usr/include/SDL/SDL_stdinc.h /usr/include/SDL/SDL_config.h
@@ -542,7 +543,7 @@ artButton.o: /usr/include/SDL/SDL_timer.h /usr/include/SDL/SDL_version.h
 artButton.o: /usr/include/SDL/SDL_ttf.h libmpdclient.h config.h playlist.h
 artButton.o: scroller.h timer.h threadParms.h songDb.h sqlite3.h
 artButton.o: commandFactory.h artButton.h /usr/include/SDL/SDL_image.h
-artButton.o: button.h guiPos.h rptButton.h
+artButton.o: button.h id3Button.h guiPos.h rptButton.h
 settings.o: settings.h /usr/include/SDL/SDL.h /usr/include/SDL/SDL_main.h
 settings.o: /usr/include/SDL/SDL_stdinc.h /usr/include/SDL/SDL_config.h
 settings.o: /usr/include/SDL/SDL_platform.h /usr/include/SDL/begin_code.h
@@ -560,3 +561,20 @@ settings.o: /usr/include/SDL/SDL_ttf.h libmpdclient.h scroller.h
 settings.o: threadParms.h songDb.h sqlite3.h commandFactory.h timer.h
 settings.o: config.h gp2xregs.h playlist.h keyboard.h guiPos.h
 settings.o: /usr/include/SDL/SDL_image.h
+id3Button.o: statsBar.h /usr/include/SDL/SDL.h /usr/include/SDL/SDL_main.h
+id3Button.o: /usr/include/SDL/SDL_stdinc.h /usr/include/SDL/SDL_config.h
+id3Button.o: /usr/include/SDL/SDL_platform.h /usr/include/SDL/begin_code.h
+id3Button.o: /usr/include/SDL/close_code.h /usr/include/SDL/SDL_audio.h
+id3Button.o: /usr/include/SDL/SDL_error.h /usr/include/SDL/SDL_endian.h
+id3Button.o: /usr/include/SDL/SDL_mutex.h /usr/include/SDL/SDL_thread.h
+id3Button.o: /usr/include/SDL/SDL_rwops.h /usr/include/SDL/SDL_cdrom.h
+id3Button.o: /usr/include/SDL/SDL_cpuinfo.h /usr/include/SDL/SDL_events.h
+id3Button.o: /usr/include/SDL/SDL_active.h /usr/include/SDL/SDL_keyboard.h
+id3Button.o: /usr/include/SDL/SDL_keysym.h /usr/include/SDL/SDL_mouse.h
+id3Button.o: /usr/include/SDL/SDL_video.h /usr/include/SDL/SDL_joystick.h
+id3Button.o: /usr/include/SDL/SDL_quit.h /usr/include/SDL/SDL_loadso.h
+id3Button.o: /usr/include/SDL/SDL_timer.h /usr/include/SDL/SDL_version.h
+id3Button.o: /usr/include/SDL/SDL_ttf.h libmpdclient.h config.h playlist.h
+id3Button.o: scroller.h timer.h threadParms.h songDb.h sqlite3.h
+id3Button.o: commandFactory.h menuButton.h /usr/include/SDL/SDL_image.h
+id3Button.o: button.h guiPos.h rptButton.h

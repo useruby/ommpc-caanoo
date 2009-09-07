@@ -63,8 +63,6 @@ LANG_MENU_SET=Einstellungen
 LANG_MENU_UPDATE=Aktualisiere DB
 LANG_MENU_DETACH=Schließe Client
 LANG_MENU_EXIT=Beenden
-LANG_TS_POPUP=Kontextmenü
-LANG_DISPLAY_OVERLAY=Display-Steuerung
 #Keybinding names
 LANG_BINDINGS=Zeige derzeitige Modus Tasten
 LANG_GLOBAL_BINDINGS=Zeige globale Tasten
